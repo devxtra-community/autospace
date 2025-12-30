@@ -4,8 +4,6 @@ import { gatewayRouter } from './gateway';
 
 const app = express();
 
-const test = 123;
-
 app.use(express.json());
 
 app.get('/health', (_req, res) => {
