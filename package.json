@@ -1,13 +1,18 @@
 {
-	"dependencies": {
-		"axios": "^1.13.2"
-	},
+  "dependencies": {
+    "axios": "^1.13.2"
+  },
   "scripts": {
-    "prepare": "husky"
+    "prepare": "husky",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "build": "pnpm -r build"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.2.0",
     "@commitlint/config-conventional": "^20.2.0",
-    "husky": "^9.1.7"
+    "@eslint/js": "^9.39.2",
+    "husky": "^9.1.7",
+    "typescript-eslint": "^8.51.0"
   }
 }

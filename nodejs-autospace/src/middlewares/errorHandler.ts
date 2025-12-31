@@ -7,6 +7,7 @@ export const globalErrorHandler = (
   res: Response,
   _next: NextFunction,
 ) => {
+  void _next;
   logError(err, 'global-error-handler');
 
   res.status(500).json({ message: 'Internal server error' });
