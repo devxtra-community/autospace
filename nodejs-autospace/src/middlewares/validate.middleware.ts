@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
+import { AuthErrorCode } from '../constants/auth.error';
 
 export const validate =
   (schema: z.ZodSchema) =>
@@ -14,7 +15,10 @@ export const validate =
 
       return res.status(400).json({
         success: false,
-        message: 'Validation failed',
+        error: {
+          code: AuthErrorCode.VALIDATION_FAILED,
+          message: 'Validation failed',
+        },
         errors,
       });
     }
