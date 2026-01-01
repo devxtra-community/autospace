@@ -174,4 +174,16 @@ All checks must pass before merging.
 - Asynchronous workflows only require
 - Infrastructure complexity is added only when justified
 
+### Error Response Format
+
+All authentication-related errors follow this format:
+
+{
+  "success": false,
+  "error": {
+    "code": "AUTH_INVALID_CREDENTIALS",
+    "message": "Invalid email or password"
+  }
+}
+
 
