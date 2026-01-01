@@ -1,5 +1,3 @@
 export default function OwnerPage() {
-    return (
-        <div>Owner page</div>
-    );
+  return <div>Owner page</div>;
 }

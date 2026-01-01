@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { logError } from '../utils/logger';
+import { Request, Response, NextFunction } from "express";
+import { logError } from "../utils/logger";
 
 export const globalErrorHandler = (
   err: unknown,
@@ -8,7 +8,7 @@ export const globalErrorHandler = (
   _next: NextFunction,
 ) => {
   void _next;
-  logError(err, 'global-error-handler');
+  logError(err, "global-error-handler");
 
-  res.status(500).json({ message: 'Internal server error' });
+  res.status(500).json({ message: "Internal server error" });
 };
