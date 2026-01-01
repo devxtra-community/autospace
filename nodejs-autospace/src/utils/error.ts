@@ -5,7 +5,7 @@ export const sendAuthError = (
   res: Response,
   code: AuthErrorCode,
   message: string,
-  statusCode: 401,
+  statusCode: number = 401,
 ) => {
   return res.status(statusCode).json({
     success: false,
