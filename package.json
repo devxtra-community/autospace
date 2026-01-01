@@ -4,7 +4,8 @@
   },
   "scripts": {
     "prepare": "husky",
-    "lint": "pnpm -r lint",
+    "lint": "pnpm --filter nodejs-autospace lint",
+    "lint:all": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "build": "pnpm -r build"
   },
