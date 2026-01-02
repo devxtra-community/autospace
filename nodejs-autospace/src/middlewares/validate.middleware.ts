@@ -1,0 +1,28 @@
+import { Request, Response, NextFunction } from "express";
+import { z } from "zod";
+import { AuthErrorCode } from "../constants/auth.error";
+
+export const validate =
+  (schema: z.ZodSchema) =>
+  async (req: Request, res: Response, next: NextFunction) => {
+    const result = await schema.safeParseAsync(req.body);
+
+    if (!result.success) {
+      const errors = result.error.issues.map((issue) => ({
+        field: issue.path.join("."),
+        message: issue.message,
+      }));
+
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: AuthErrorCode.VALIDATION_FAILED,
+          message: "Validation failed",
+        },
+        errors,
+      });
+    }
+
+    req.body = result.data;
+    next();
+  };
