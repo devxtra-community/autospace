@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-import { z } from 'zod';
-import { AuthErrorCode } from '../constants/auth.error';
+import { Request, Response, NextFunction } from "express";
+import { z } from "zod";
+import { AuthErrorCode } from "../constants/auth.error";
 
 export const validate =
   (schema: z.ZodSchema) =>
@@ -9,7 +9,7 @@ export const validate =
 
     if (!result.success) {
       const errors = result.error.issues.map((issue) => ({
-        field: issue.path.join('.'),
+        field: issue.path.join("."),
         message: issue.message,
       }));
 
@@ -17,7 +17,7 @@ export const validate =
         success: false,
         error: {
           code: AuthErrorCode.VALIDATION_FAILED,
-          message: 'Validation failed',
+          message: "Validation failed",
         },
         errors,
       });

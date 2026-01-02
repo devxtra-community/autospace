@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, dev ,rashid, shrijit]
+    branches: [main, dev, rashid, shrijit]
   pull_request:
     branches: [main, dev]
 
@@ -18,8 +18,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: pnpm
-
+           
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -30,6 +29,9 @@ jobs:
 
       - name: Run lint
         run: pnpm lint
+
+      - name: Run format check
+        run: pnpm format:check
 
       - name: Run typecheck
         run: pnpm typecheck

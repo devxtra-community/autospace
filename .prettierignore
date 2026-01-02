@@ -1,0 +1,20 @@
+# dependencies
+node_modules
+
+# build outputs
+dist
+build
+.next
+
+# coverage
+coverage
+
+# env files
+.env
+.env.*
+
+# pnpm
+pnpm-lock.yaml
+
+# misc
+*.log

@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { EmailSchema, PhoneSchema, PasswordSchema } from './common.schema';
+import { z } from "zod";
+import { EmailSchema, PhoneSchema, PasswordSchema } from "./common.schema";
 
 export const BaseRegisterSchema = z.object({
   fullname: z
@@ -16,29 +16,29 @@ export const BaseRegisterSchema = z.object({
 export const UserRegisterSchema = BaseRegisterSchema.extend({
   country: z
     .string()
-    .min(2, 'Country name must be at least 2 characters')
-    .max(56, 'Country name too long')
-    .regex(/^[a-zA-Z\s]+$/, 'Country can only contain letters and spaces'),
+    .min(2, "Country name must be at least 2 characters")
+    .max(56, "Country name too long")
+    .regex(/^[a-zA-Z\s]+$/, "Country can only contain letters and spaces"),
 
   state: z
     .string()
-    .min(2, 'State name must be at least 2 characters')
-    .max(100, 'State name too long')
-    .regex(/^[a-zA-Z\s]+$/, 'State can only contain letters and spaces'),
+    .min(2, "State name must be at least 2 characters")
+    .max(100, "State name too long")
+    .regex(/^[a-zA-Z\s]+$/, "State can only contain letters and spaces"),
 
   homeAddress: z
     .string()
-    .min(5, 'Address must be at least 5 characters')
-    .max(200, 'Address too long')
+    .min(5, "Address must be at least 5 characters")
+    .max(200, "Address too long")
     .regex(
       /^[a-zA-Z0-9\s,.-]+$/,
-      'Address can contain letters, numbers, commas, dots, and hyphens',
+      "Address can contain letters, numbers, commas, dots, and hyphens",
     ),
 }).superRefine((data, ctx) => {
   if (data.password !== data.confirmPassword) {
     ctx.addIssue({
-      path: ['confirmPassword'],
-      message: 'Passwords do not match',
+      path: ["confirmPassword"],
+      message: "Passwords do not match",
       code: z.ZodIssueCode.custom,
     });
   }
@@ -49,8 +49,8 @@ export const ValetRegisterSchema = BaseRegisterSchema.extend({
 }).superRefine((data, ctx) => {
   if (data.password !== data.confirmPassword) {
     ctx.addIssue({
-      path: ['confirmPassword'],
-      message: 'Passwords do not match',
+      path: ["confirmPassword"],
+      message: "Passwords do not match",
       code: z.ZodIssueCode.custom,
     });
   }
@@ -61,8 +61,8 @@ export const ManagerRegisterSchema = BaseRegisterSchema.extend({
 }).superRefine((data, ctx) => {
   if (data.password !== data.confirmPassword) {
     ctx.addIssue({
-      path: ['confirmPassword'],
-      message: 'Passwords do not match',
+      path: ["confirmPassword"],
+      message: "Passwords do not match",
       code: z.ZodIssueCode.custom,
     });
   }
@@ -77,16 +77,16 @@ export const CompanyRegisterSchema = BaseRegisterSchema.extend({
 }).superRefine((data, ctx) => {
   if (data.password !== data.confirmPassword) {
     ctx.addIssue({
-      path: ['confirmPassword'],
-      message: 'Passwords do not match',
+      path: ["confirmPassword"],
+      message: "Passwords do not match",
       code: z.ZodIssueCode.custom,
     });
   }
 });
 
 export const LoginSchema = z.object({
-  email: z.string().email('Invalid email format'),
-  password: z.string().min(1, 'Password is required'),
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(1, "Password is required"),
 });
 
 export type UserRegisterDto = z.infer<typeof UserRegisterSchema>;

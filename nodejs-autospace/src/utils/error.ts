@@ -1,5 +1,5 @@
-import { Response } from 'express';
-import { AuthErrorCode } from '../constants/auth.error';
+import { Response } from "express";
+import { AuthErrorCode } from "../constants/auth.error";
 
 export const sendAuthError = (
   res: Response,
