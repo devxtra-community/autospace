@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { AuthErrorCode } from "../constants/auth.error";
+import { AuthErrorCode } from "../modules/auth/constants/auth.error";
 
 export const validate =
   (schema: z.ZodSchema) =>
