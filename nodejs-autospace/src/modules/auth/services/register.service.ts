@@ -1,8 +1,8 @@
 import bcrypt from "bcrypt";
 import pool from "../../../db";
-import { RegisterInput } from "../validators/register.schema";
+import { RegisterApiInput } from "../validators/auth.api.schema";
 
-export const registerUser = async (data: RegisterInput) => {
+export const registerUser = async (data: RegisterApiInput) => {
   const { email, password, role } = data;
   const passwordHash = await bcrypt.hash(password, 10);
   // SQL query to insert user
