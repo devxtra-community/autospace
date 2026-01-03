@@ -1,6 +1,8 @@
 import { Router } from "express";
+import authRoutes from "./modules/auth/routes/auth.routes";
+
 export const gatewayRouter = Router();
 
-gatewayRouter.get("/health", (_req, res) => {
-  res.status(200).json({ status: "ok" });
-});
+gatewayRouter.use("/auth", authRoutes);
+
+export default gatewayRouter;
