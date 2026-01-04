@@ -1,4 +1,38 @@
-// Placeholder for auth request validators
-// Zod schemas will be added in later issues
+import { Request, Response, NextFunction } from "express";
+import { RegisterApiSchema, LoginApiSchema } from "./auth.api.schema";
 
-export {};
+export const validateRegister = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const parsed = RegisterApiSchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({
+      message: "Invalid input",
+      errors: parsed.error.flatten(),
+    });
+  }
+
+  req.body = parsed.data;
+  next();
+};
+
+export const validateLogin = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const parsed = LoginApiSchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({
+      message: "Invalid input",
+      errors: parsed.error.flatten(),
+    });
+  }
+
+  req.body = parsed.data;
+  next();
+};

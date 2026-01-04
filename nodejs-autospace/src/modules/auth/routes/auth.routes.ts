@@ -6,8 +6,10 @@ import { authMiddleware } from "../../../middlewares/auth.middleware";
 
 const router = Router();
 
-router.post("/register", register);
-router.post("/login", login);
 router.get("/protected", authMiddleware, protectedRoute);
+import { validateRegister, validateLogin } from "../validators/auth.validator";
+
+router.post("/register", validateRegister, register);
+router.post("/login", validateLogin, login);
 
 export default router;

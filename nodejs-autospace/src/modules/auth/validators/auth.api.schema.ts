@@ -1,7 +1,10 @@
 import { z } from "zod";
 import { BaseRegisterSchema, LoginSchema } from "../../../schemas/auth.schema";
 
-export const RegisterApiSchema = BaseRegisterSchema.extend({
+export const RegisterApiSchema = BaseRegisterSchema.pick({
+  email: true,
+  password: true,
+}).extend({
   role: z.enum(["admin", "owner", "manager", "valet", "customer"]),
 });
 

@@ -23,7 +23,12 @@ export const loginUser = async (data: LoginApiInput) => {
     throw new Error("Invalid credentials");
   }
 
-  if (user.status !== "active") {
+  if (
+    (user.role === "owner" ||
+      user.role === "manager" ||
+      user.role === "valet") &&
+    user.status !== "active"
+  ) {
     throw new Error("User not approved");
   }
 

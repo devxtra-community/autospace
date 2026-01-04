@@ -6,12 +6,17 @@ export const register = async (req: Request, res: Response) => {
     // Input is already validated by auth.validator middleware
     const user = await registerUser(req.body);
 
+    const message =
+      user.status === "pending"
+        ? "Registration successful, await admin approval"
+        : "Registration successful";
+
     return res.status(201).json({
-      message: "Registration successful, await admin approval",
+      message,
       user,
     });
   } catch (error: unknown) {
-    console.error("Register API error", error);
+    console.error("Register API error:", error);
 
     // Postgres unique constraint error (duplicate email)
     if (
