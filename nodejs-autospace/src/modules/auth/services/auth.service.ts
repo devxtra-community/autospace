@@ -2,12 +2,11 @@
 // Business logic will be implemented later
 export {};
 
-import { AuthRequest } from "../../../types/auth.type";
-import { Response } from "express";
+import { Response, Request } from "express";
 
 // test route of protected router //
 
-export const protectedRoute = (req: AuthRequest, res: Response): void => {
+export const protectedRoute = (req: Request, res: Response): void => {
   res.json({
     success: true,
     message: "Authenticated successfully",

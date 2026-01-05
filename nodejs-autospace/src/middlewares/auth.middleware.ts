@@ -1,5 +1,5 @@
-import { Response, NextFunction } from "express";
-import { AuthRequest } from "../types/auth.type";
+import { Request, Response, NextFunction } from "express";
+
 import { verifyAccessToken } from "../utils/jwt.util";
 import { sendAuthError } from "../utils/error";
 import { AuthErrorCode } from "../modules/auth/constants/auth.error";
@@ -11,7 +11,7 @@ import { AuthErrorCode } from "../modules/auth/constants/auth.error";
 // console.log("ACCESS SECRET (verify):", process.env.JWT_ACCESS_SECRET);
 
 export const authMiddleware = (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction,
 ): void => {

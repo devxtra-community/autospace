@@ -11,6 +11,7 @@ export const login = async (req: Request, res: Response) => {
       id: user.id,
       email: user.email,
       role: user.role,
+      status: user.status,
     });
     return res.status(200).json({
       success: true,
@@ -19,7 +20,7 @@ export const login = async (req: Request, res: Response) => {
         refreshToken: tokens.refreshToken,
       },
       user,
-      message: "Login successfull",
+      message: "Login successful",
     });
   } catch (error: unknown) {
     console.error("Login API error", error);

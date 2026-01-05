@@ -1,12 +1,13 @@
 import bcrypt from "bcrypt";
 import pool from "../../../db";
 import { LoginApiInput } from "../validators/auth.api.schema";
+import { UserRole, UserStatus } from "../constants";
 
 export interface LoginUserResult {
   id: string;
   email: string;
-  role: string;
-  status: string;
+  role: UserRole;
+  status: UserStatus;
 }
 
 export const loginUser = async (
@@ -44,7 +45,7 @@ export const loginUser = async (
   return {
     id: user.id,
     email: user.email,
-    role: user.role,
-    status: user.status,
+    role: user.role as UserRole,
+    status: user.status as UserStatus,
   };
 };

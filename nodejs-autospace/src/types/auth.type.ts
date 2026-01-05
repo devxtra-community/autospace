@@ -1,11 +1,13 @@
 import { Request } from "express";
 import { SignOptions } from "jsonwebtoken";
+import { UserRole, UserStatus } from "../modules/auth/constants";
 
 // JWT Payload for Access Token
 export interface JwtPayload {
   id: string;
   email: string;
-  role: string;
+  role: UserRole;
+  status: UserStatus;
 }
 
 // JWT Payload for Refresh Token
