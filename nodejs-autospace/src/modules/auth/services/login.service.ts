@@ -2,7 +2,16 @@ import bcrypt from "bcrypt";
 import pool from "../../../db";
 import { LoginApiInput } from "../validators/auth.api.schema";
 
-export const loginUser = async (data: LoginApiInput) => {
+export interface LoginUserResult {
+  id: string;
+  email: string;
+  role: string;
+  status: string;
+}
+
+export const loginUser = async (
+  data: LoginApiInput,
+): Promise<LoginUserResult> => {
   const { email, password } = data;
   const query = `
   SELECT id, email, password_hash, role, status

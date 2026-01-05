@@ -8,6 +8,8 @@ import {
   TokenResponse,
 } from "../types/auth.type";
 
+// console.log("ACCESS SECRET (sign):", env.JWT_ACCESS_SECRET);
+
 export const generateAccessToken = (Payload: JwtPayload): string => {
   return jwt.sign(Payload, env.JWT_ACCESS_SECRET, {
     expiresIn: env.JWT_ACCESS_EXPIRY,

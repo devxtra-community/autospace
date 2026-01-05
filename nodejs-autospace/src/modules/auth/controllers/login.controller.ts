@@ -1,12 +1,25 @@
 import { Request, Response } from "express";
 import { loginUser } from "../services/login.service";
+import { generateTokenPair } from "../../../utils/jwt.util";
 
 export const login = async (req: Request, res: Response) => {
   try {
     const user = await loginUser(req.body);
+
+    // add access token //
+    const tokens = generateTokenPair({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
     return res.status(200).json({
-      message: "Login successful",
+      success: true,
+      data: {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      },
       user,
+      message: "Login successfull",
     });
   } catch (error: unknown) {
     console.error("Login API error", error);

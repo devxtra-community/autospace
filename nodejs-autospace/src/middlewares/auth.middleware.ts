@@ -8,6 +8,8 @@ import { AuthErrorCode } from "../modules/auth/constants/auth.error";
  * Authentication middleware
  * Verifies JWT access token and attaches user identity to request
  */
+// console.log("ACCESS SECRET (verify):", process.env.JWT_ACCESS_SECRET);
+
 export const authMiddleware = (
   req: AuthRequest,
   res: Response,
