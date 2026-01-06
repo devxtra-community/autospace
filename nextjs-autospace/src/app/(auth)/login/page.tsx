@@ -2,20 +2,24 @@
 
 import { useState } from "react";
 import Image from "next/image";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+
+import { Mail, Phone, Lock, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [loginType, setLoginType] = useState<"email" | "phone">("email");
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 sm:px-6">
       <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-40 p-6 sm:p-10">
+        
         {/* LEFT (DESKTOP ONLY) */}
         <div className="hidden md:flex flex-col items-center justify-center text-center gap-6">
           <Image
@@ -37,17 +41,24 @@ export default function LoginPage() {
 
         {/* RIGHT */}
         <div className="flex flex-col justify-center gap-8 w-full max-w-md mx-auto">
+          
           {/* Heading */}
           <div className="space-y-1 text-center md:text-left">
-            <h1 className="text-3xl font-semibold">Login to your account</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-3xl text-center font-semibold">Login</h1>
+            <p className="text-sm text-center text-muted-foreground">
               Please enter your details below
             </p>
           </div>
 
-          {/* Tabs (FULL WIDTH like input) */}
-          <Tabs defaultValue="email" className="w-full">
-            <TabsList className="grid grid-cols-2 w-full bg-muted rounded-sm ">
+          {/* Tabs */}
+          <Tabs
+            value={loginType}
+            onValueChange={(value) =>
+              setLoginType(value as "email" | "phone")
+            }
+            className="w-full"
+          >
+            <TabsList className="grid grid-cols-2 w-full bg-muted rounded-sm">
               <TabsTrigger value="email" className="rounded-sm">
                 Email
               </TabsTrigger>
@@ -57,15 +68,28 @@ export default function LoginPage() {
             </TabsList>
           </Tabs>
 
-          {/* Email */}
+          {/* Email / Phone Input */}
           <div className="space-y-2">
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="email"
-                placeholder="Email Address"
-                className="pl-10 bg-muted rounded-none"
-              />
+              {loginType === "email" ? (
+                <>
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="email"
+                    placeholder="Email Address"
+                    className="pl-10 bg-muted rounded-none"
+                  />
+                </>
+              ) : (
+                <>
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="tel"
+                    placeholder="Phone Number"
+                    className="pl-10 bg-muted rounded-none"
+                  />
+                </>
+              )}
             </div>
           </div>
 
@@ -103,7 +127,9 @@ export default function LoginPage() {
           </div>
 
           {/* Button */}
-          <Button className="w-full rounded-sm text-text">Login</Button>
+          <Button className="w-full rounded-sm text-text">
+            Login
+          </Button>
 
           {/* Signup */}
           <p className="text-center text-sm text-foreground">
