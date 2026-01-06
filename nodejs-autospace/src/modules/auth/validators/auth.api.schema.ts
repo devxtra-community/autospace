@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BaseRegisterSchema, LoginSchema } from "../../../schemas/auth.schema";
+import { BaseRegisterSchema, LoginSchema } from "@autospace/shared";
 
 export const RegisterApiSchema = BaseRegisterSchema.pick({
   email: true,

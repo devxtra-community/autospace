@@ -23,7 +23,8 @@
     "express-rate-limit": "^8.2.1",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.16.3",
-    "zod": "^4.3.4"
+    "zod": "^4.3.4",
+    "@autospace/shared": "workspace:*"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
