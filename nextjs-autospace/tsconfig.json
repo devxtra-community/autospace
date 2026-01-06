@@ -18,8 +18,9 @@
         "name": "next"
       }
     ],
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@autospace/shared": ["../../packages/shared"]
     }
   },
   "include": [
