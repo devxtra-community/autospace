@@ -18,9 +18,10 @@
         "name": "next"
       }
     ],
-    "baseUrl": ".",
+
     "paths": {
-      "@autospace/shared": ["../../packages/shared"]
+      "@/*": ["./src/*"],
+      "@autospace/shared": ["../../packages/shared/src"]
     }
   },
   "include": [
@@ -29,7 +30,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "**/*.mts",
+    "src/types/**/*.d.ts"
   ],
   "exclude": ["node_modules"]
 }
