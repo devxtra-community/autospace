@@ -18,5 +18,7 @@
     "husky": "^9.1.7",
     "prettier": "^3.7.4",
     "typescript-eslint": "^8.51.0"
-  }
+  },
+  "name": "autospace",
+  "private": true
 }
