@@ -5,36 +5,38 @@ import { RegisterApiInput } from "../validators/auth.api.schema";
 import { UserRole, UserStatus } from "../constants";
 
 export const registerUser = async (data: RegisterApiInput) => {
-  const { email, password, role } = data;
+  const { fullname, email, phone, password, role } = data;
 
   const userRepo = AppDataSource.getRepository(User);
 
-  //  Hash password
+  // Hash password
   const passwordHash = await bcrypt.hash(password, 10);
 
-  //  Determine status based on role
+  //  Convert string to enum externally
+  const userRole = role as UserRole;
+
   const status: UserStatus =
-    role === "customer" || role === "admin"
+    userRole === UserRole.CUSTOMER || userRole === UserRole.ADMIN
       ? UserStatus.ACTIVE
       : UserStatus.PENDING;
 
-  //  Create user entity
+  // Create user entity
   const user = userRepo.create({
+    fullname,
     email,
+    phone,
     password_hash: passwordHash,
-    role,
+    role: userRole,
     status,
   });
 
-  // Save to DB
   const savedUser = await userRepo.save(user);
 
-  // Return same shape as before
   return {
     id: savedUser.id,
     email: savedUser.email,
-    role: savedUser.role as UserRole,
-    status: savedUser.status as UserStatus,
+    role: savedUser.role,
+    status: savedUser.status,
     created_at: savedUser.created_at,
   };
 };
