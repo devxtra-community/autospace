@@ -21,8 +21,8 @@ export default function RegisterLayout() {
           <img
             src="/valet-illustration.png"
             alt="Park Your Car"
-            // width={420}
-            // height={320}
+            width={420}
+            height={320}
             className="
                  w-[380px]  h-auto
                  min-[1440px]:w-[450px]
