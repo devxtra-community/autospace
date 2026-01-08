@@ -1,3 +1,3 @@
 export default function ManagerPage() {
-  return <div></div>;
+  return <div>Manager page</div>;
 }

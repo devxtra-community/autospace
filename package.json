@@ -20,5 +20,6 @@
     "typescript-eslint": "^8.51.0"
   },
   "name": "autospace",
-  "private": true
+  "private": true,
+  "packageManager": "pnpm@10.26.2"
 }
