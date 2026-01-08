@@ -12,14 +12,48 @@ import { Label } from "@/components/ui/label";
 
 import { Mail, Phone, Lock, Eye, EyeOff } from "lucide-react";
 
+// 👉 auth service (uses apiClient internally)
+import { loginUser } from "@/lib/auth.api";
+import { LoginDto } from "@autospace/shared";
+
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loginType, setLoginType] = useState<"email" | "phone">("email");
 
+  // 🔹 NEW STATES (logic only)
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // 🔹 LOGIN HANDLER (API INTEGRATION)
+  const handleLogin = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const payload =
+        loginType === "email"
+          ? { email: identifier, password }
+          : { phone: identifier, password };
+
+      const res = await loginUser(payload as LoginDto);
+
+      // ✅ store tokens (used by apiClient interceptor)
+      localStorage.setItem("accessToken", res.data.accessToken);
+
+      // temporary redirect
+      window.location.href = "/";
+    } catch (err: any) {
+      setError(err?.error?.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 sm:px-6">
       <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-40 p-6 sm:p-10">
-        
         {/* LEFT (DESKTOP ONLY) */}
         <div className="hidden md:flex flex-col items-center justify-center text-center gap-6">
           <Image
@@ -41,7 +75,6 @@ export default function LoginPage() {
 
         {/* RIGHT */}
         <div className="flex flex-col justify-center gap-8 w-full max-w-md mx-auto">
-          
           {/* Heading */}
           <div className="space-y-1 text-center md:text-left">
             <h1 className="text-3xl text-center font-semibold">Login</h1>
@@ -53,9 +86,10 @@ export default function LoginPage() {
           {/* Tabs */}
           <Tabs
             value={loginType}
-            onValueChange={(value) =>
-              setLoginType(value as "email" | "phone")
-            }
+            onValueChange={(value) => {
+              setLoginType(value as "email" | "phone");
+              setIdentifier(""); // clear input on toggle
+            }}
             className="w-full"
           >
             <TabsList className="grid grid-cols-2 w-full bg-muted rounded-sm">
@@ -78,6 +112,8 @@ export default function LoginPage() {
                     type="email"
                     placeholder="Email Address"
                     className="pl-10 bg-muted rounded-none"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
                   />
                 </>
               ) : (
@@ -87,6 +123,8 @@ export default function LoginPage() {
                     type="tel"
                     placeholder="Phone Number"
                     className="pl-10 bg-muted rounded-none"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
                   />
                 </>
               )}
@@ -98,9 +136,11 @@ export default function LoginPage() {
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                type={showPassword ? "password" : "text"}
+                type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 className="pl-10 pr-10 bg-muted rounded-none"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
               <button
                 type="button"
@@ -111,6 +151,11 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
+
+          {/* Error */}
+          {error && (
+            <p className="text-sm text-destructive text-center">{error}</p>
+          )}
 
           {/* Remember + Forgot */}
           <div className="flex items-center justify-between text-sm">
@@ -127,8 +172,12 @@ export default function LoginPage() {
           </div>
 
           {/* Button */}
-          <Button className="w-full rounded-sm text-text">
-            Login
+          <Button
+            className="w-full rounded-sm text-text"
+            onClick={handleLogin}
+            disabled={loading}
+          >
+            {loading ? "Logging in..." : "Login"}
           </Button>
 
           {/* Signup */}

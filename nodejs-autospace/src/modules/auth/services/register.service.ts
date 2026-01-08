@@ -1,20 +1,40 @@
 import bcrypt from "bcrypt";
-import pool from "../../../db";
+import { AppDataSource } from "../../../db/data-source";
+import { User } from "../entities/user.entity";
 import { RegisterApiInput } from "../validators/auth.api.schema";
+import { UserRole, UserStatus } from "../constants";
 
 export const registerUser = async (data: RegisterApiInput) => {
   const { email, password, role } = data;
+
+  const userRepo = AppDataSource.getRepository(User);
+
+  //  Hash password
   const passwordHash = await bcrypt.hash(password, 10);
-  const status = role === "customer" || role === "admin" ? "active" : "pending";
-  const query = `                                            
-    INSERT INTO users (email , password_hash , role , status)
-    VALUES($1 , $2 , $3 , $4)
-    RETURNING id , email , role , status , created_at
-    `;
 
-  const values = [email, passwordHash, role, status]; // values to replace placeholders in query
+  //  Determine status based on role
+  const status: UserStatus =
+    role === "customer" || role === "admin"
+      ? UserStatus.ACTIVE
+      : UserStatus.PENDING;
 
-  const { rows } = await pool.query(query, values); // query execute and extract returned rows
+  //  Create user entity
+  const user = userRepo.create({
+    email,
+    password_hash: passwordHash,
+    role,
+    status,
+  });
 
-  return rows[0]; // return the newly created user
+  // Save to DB
+  const savedUser = await userRepo.save(user);
+
+  // Return same shape as before
+  return {
+    id: savedUser.id,
+    email: savedUser.email,
+    role: savedUser.role as UserRole,
+    status: savedUser.status as UserStatus,
+    created_at: savedUser.created_at,
+  };
 };
