@@ -1,9 +1,13 @@
 import { z } from "zod";
 // import { EmailSchema, PhoneSchema, PasswordSchema } from "./common.schema"
 
-const EmailSchema = z.string().email("Invalid email format").min(5).max(255);
+export const EmailSchema = z
+  .string()
+  .email("Invalid email format")
+  .min(5)
+  .max(255);
 
-const PasswordSchema = z
+export const PasswordSchema = z
   .string()
   .min(8, "Password must be at least 8 characters")
   .max(100)
@@ -12,7 +16,7 @@ const PasswordSchema = z
     "Password must contain uppercase, lowercase, number, and special character",
   );
 
-const PhoneSchema = z
+export const PhoneSchema = z
   .string()
   .regex(
     /^\+[1-9]\d{1,14}$/,
@@ -112,3 +116,4 @@ export type ManagerRegisterDto = z.infer<typeof ManagerRegisterSchema>;
 export type ValetRegisterDto = z.infer<typeof ValetRegisterSchema>;
 export type CompanyRegisterDto = z.infer<typeof CompanyRegisterSchema>;
 export type LoginDto = z.infer<typeof LoginSchema>;
+export type BaseRegisterDto = z.infer<typeof BaseRegisterSchema>;

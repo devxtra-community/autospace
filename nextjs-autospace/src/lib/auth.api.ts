@@ -1,3 +1,4 @@
+import { RegisterApiInput } from "@autospace/shared/auth/register.schema";
 import { apiClient } from "./api";
 import type { UserRegisterDto, LoginDto } from "@autospace/shared";
 
@@ -21,7 +22,7 @@ interface AuthResponse {
 }
 
 export const registerUser = async (
-  data: UserRegisterDto,
+  data: RegisterApiInput,
 ): Promise<AuthResponse> => {
   const response = await apiClient.post<AuthResponse>(
     "/api/auth/register",

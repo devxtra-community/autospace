@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label";
 
 import { Mail, Phone, Lock, Eye, EyeOff } from "lucide-react";
 
-// 👉 auth service (uses apiClient internally)
 import { loginUser } from "@/lib/auth.api";
 import { LoginDto } from "@autospace/shared";
 
@@ -20,13 +19,11 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loginType, setLoginType] = useState<"email" | "phone">("email");
 
-  // 🔹 NEW STATES (logic only)
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 🔹 LOGIN HANDLER (API INTEGRATION)
   const handleLogin = async () => {
     try {
       setLoading(true);
@@ -39,7 +36,7 @@ export default function LoginPage() {
 
       const res = await loginUser(payload as LoginDto);
 
-      // ✅ store tokens (used by apiClient interceptor)
+      //  store tokens
       localStorage.setItem("accessToken", res.data.accessToken);
 
       // temporary redirect
@@ -88,7 +85,7 @@ export default function LoginPage() {
             value={loginType}
             onValueChange={(value) => {
               setLoginType(value as "email" | "phone");
-              setIdentifier(""); // clear input on toggle
+              setIdentifier(""); //
             }}
             className="w-full"
           >
