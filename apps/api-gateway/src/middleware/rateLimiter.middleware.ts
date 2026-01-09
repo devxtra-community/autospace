@@ -1,7 +1,7 @@
 import rateLimit from "express-rate-limit";
 import { Response, Request } from "express";
 import { sendAuthError } from "../utils/error";
-import { AuthErrorCode } from "../modules/auth/constants/auth.error";
+import { AuthErrorCode } from "../utils/error";
 
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
