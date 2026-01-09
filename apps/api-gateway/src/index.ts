@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 // import { authRateLimiter } from "./middleware/rateLimiter.middleware";
 import authRouter from "./routes/auth.proxy";
+import { checkAllServices } from "./utils/healthcheck";
 
 const app = express();
 const port = process.env.GATEWAY_PORT || 4000;
@@ -30,6 +31,17 @@ app.get("/health", (req, res) => {
   res.json({
     status: "ok",
     service: "api-gateway",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.get("/health/services", async (req, res) => {
+  const services = await checkAllServices();
+  const allUp = services.every((s) => s.status === "up");
+
+  res.status(allUp ? 200 : 503).json({
+    gateway: "ok",
+    services,
     timestamp: new Date().toISOString(),
   });
 });
