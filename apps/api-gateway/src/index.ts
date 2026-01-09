@@ -1,18 +1,31 @@
-// api-gateway/src/index.ts
-import express from "express";
+import express, { urlencoded } from "express";
 import cors from "cors";
 import helmet from "helmet";
-import { config } from "./config/env.config";
-import { authMiddleware } from "./middleware/auth.middleware";
+// import { authRateLimiter } from "./middleware/rateLimiter.middleware";
+import authRouter from "./routes/auth.proxy";
 
 const app = express();
+const port = process.env.GATEWAY_PORT || 4000;
 
-// Global middleware
 app.use(helmet());
-app.use(cors());
-app.use(express.json());
 
-// Health check
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
+
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
@@ -21,14 +34,11 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Test protected route
-app.get("/api/test-auth", authMiddleware, (req, res) => {
-  res.json({
-    message: "You are authenticated!",
-    user: req.user,
-  });
+app.use("/api/auth", authRouter);
+
+app.listen(port, () => {
+  console.log(`server running on port${port}`);
+  console.log("the health check on ");
 });
 
-app.listen(config.port, () => {
-  console.log(`API Gateway running on port ${config.port}`);
-});
+export default app;
