@@ -1,14 +1,8 @@
-import { Request, Response, NextFunction } from "express";
-
-import { verifyAccessToken } from "../utils/jwt.util";
+// api-gateway/src/middleware/auth.middleware.ts
+import type { Request, Response, NextFunction } from "express";
+import { verifyAccessToken } from "../utils/jwt.utils";
 import { sendAuthError } from "../utils/error";
-import { AuthErrorCode } from "../modules/auth/constants/auth.error";
-
-/**
- * Authentication middleware
- * Verifies JWT access token and attaches user identity to request
- */
-// console.log("ACCESS SECRET (verify):", process.env.JWT_ACCESS_SECRET);
+import { AuthErrorCode } from "../utils/error";
 
 export const authMiddleware = (
   req: Request,
@@ -18,7 +12,6 @@ export const authMiddleware = (
   try {
     const authHeader = req.headers.authorization;
 
-    //  Authorization header must exist
     if (!authHeader) {
       sendAuthError(
         res,
@@ -29,7 +22,6 @@ export const authMiddleware = (
       return;
     }
 
-    //  Must follow Bearer <token> format
     if (!authHeader.startsWith("Bearer ")) {
       sendAuthError(
         res,
@@ -40,7 +32,6 @@ export const authMiddleware = (
       return;
     }
 
-    //  Extract token
     const token = authHeader.split(" ")[1];
 
     if (!token) {
@@ -53,19 +44,24 @@ export const authMiddleware = (
       return;
     }
 
-    //  Verify token (throws if invalid or expired)
+    //  Verify token and attach to request
     const decoded = verifyAccessToken(token);
 
-    //  Attach authenticated user to request
-    req.user = decoded;
+    // Attach full payload to request
+    req.user = {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+      status: decoded.status,
+    };
 
-    //  Continue to next middleware / controller
     next();
-  } catch {
+  } catch (error: any) {
+    const isExpired = error.name === "TokenExpiredError";
     sendAuthError(
       res,
-      AuthErrorCode.TOKEN_INVALID,
-      "Invalid or expired token",
+      isExpired ? AuthErrorCode.TOKEN_EXPIRED : AuthErrorCode.TOKEN_INVALID,
+      isExpired ? "Token has expired" : "Invalid or expired token",
       401,
     );
     return;

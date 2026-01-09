@@ -29,9 +29,9 @@ export const generateTokenPair = (payload: JwtPayload): TokenResponse => {
   };
 }; //    * Generate access + refresh token pair  * Used during login //
 
-export const verifyAccessToken = (token: string): JwtPayload => {
-  return jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtPayload;
-}; //  * Verify access token * Throws error if token is invalid or expired
+// export const verifyAccessToken = (token: string): JwtPayload => {
+//   return jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtPayload;
+// }; //  * Verify access token * Throws error if token is invalid or expired
 
 export const verifyRefreshToken = (token: string): RefreshTokenPayload => {
   return jwt.verify(token, env.JWT_REFRESH_SECRET) as RefreshTokenPayload;
