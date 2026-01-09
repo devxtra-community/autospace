@@ -1,7 +1,8 @@
 import express, { urlencoded } from "express";
 import cors from "cors";
 import helmet from "helmet";
-import { authRateLimiter } from "./middleware/rateLimiter.middleware";
+// import { authRateLimiter } from "./middleware/rateLimiter.middleware";
+import authRouter from "./routes/auth.proxy";
 
 const app = express();
 const port = process.env.GATEWAY_PORT || 4000;
@@ -10,7 +11,7 @@ app.use(helmet());
 
 app.use(
   cors({
-    origin: process.env.FRONTENT_URL || "http://localhost:3000",
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -32,6 +33,8 @@ app.get("/health", (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+app.use("/api/auth", authRouter);
 
 app.listen(port, () => {
   console.log(`server running on port${port}`);
