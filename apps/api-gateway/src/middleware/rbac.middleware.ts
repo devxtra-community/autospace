@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { UserRole } from "../modules/auth/constants";
+import { UserRole } from "../constants/role.enum";
 
 export const rbac =
   (...allowedRoles: UserRole[]) =>
