@@ -9,7 +9,7 @@ import { protectedRoute } from "../services/auth.service";
 
 const router = Router();
 
-router.get("/protected",  protectedRoute);
+router.get("/protected", protectedRoute);
 
 // Temp test route
 // // router.get(
