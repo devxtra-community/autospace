@@ -63,7 +63,12 @@ export default function RegisterLayout() {
           <img
             src="/valet-illustration.png"
             alt="Park Your Car"
-            className="w-[380px] h-auto min-[1440px]:w-[450px] min-[1440px]:h-[350px]"
+            width={420}
+            height={320}
+            className="
+                 w-[380px]  h-auto
+                 min-[1440px]:w-[450px]
+                 min-[1440px]:h-[350px] "
           />
 
           <h2 className="mt-6 text-3xl font-semibold text-foreground">

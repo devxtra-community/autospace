@@ -7,6 +7,7 @@ import type { UserRegisterDto, LoginDto } from "@autospace/shared";
  * - refreshToken is NOT returned
  * - user is top-level
  */
+
 interface AuthResponse {
   success: boolean;
   message: string;
