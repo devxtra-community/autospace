@@ -16,8 +16,12 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 
-app.get("/health", (_req, res) => {
-  res.status(200).json({ status: "ok" });
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    service: "auth-service",
+    timestamp: new Date().toISOString(),
+  });
 });
 
 app.use("/api", authRoutes);
