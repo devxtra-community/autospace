@@ -1,6 +1,9 @@
+import "dotenv/config";
+
 import express, { urlencoded } from "express";
 import cors from "cors";
 import helmet from "helmet";
+
 // import { authRateLimiter } from "./middleware/rateLimiter.middleware";
 import authRouter from "./routes/auth.proxy";
 import { checkAllServices } from "./utils/healthcheck";
@@ -9,6 +12,8 @@ const app = express();
 const port = process.env.GATEWAY_PORT || 4000;
 
 app.use(helmet());
+
+console.log("AUTH_SERVICE_URL =", process.env.AUTH_SERVICE_URL);
 
 app.use(
   cors({
@@ -19,8 +24,8 @@ app.use(
   }),
 );
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
@@ -47,6 +52,14 @@ app.get("/health/services", async (req, res) => {
 });
 
 app.use("/api/auth", authRouter);
+
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+    path: req.path,
+  });
+});
 
 app.listen(port, () => {
   console.log(`server running on port${port}`);

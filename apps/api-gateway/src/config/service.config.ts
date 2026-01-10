@@ -1,15 +1,15 @@
 // api-gateway/src/config/services.config.ts
 export const servicesConfig = {
   auth: {
-    url: process.env.AUTH_SERVICE_URL || "http://localhost:3001",
+    url: process.env.AUTH_SERVICE_URL || "http://localhost:4001",
     healthEndpoint: "/health",
   },
   booking: {
-    url: process.env.BOOKING_SERVICE_URL || "http://localhost:3002",
+    url: process.env.BOOKING_SERVICE_URL || "http://localhost:4002",
     healthEndpoint: "/health",
   },
   resource: {
-    url: process.env.RESOURCE_SERVICE_URL || "http://localhost:3003",
+    url: process.env.RESOURCE_SERVICE_URL || "http://localhost:4003",
     healthEndpoint: "/health",
   },
 };

@@ -34,21 +34,6 @@ export const checkHealth = async (
 };
 
 export const checkAllServices = async (): Promise<ServiceHealth[]> => {
-  const services = [
-    {
-      name: "auth-service",
-      url: process.env.AUTH_SERVICE_URL || "http://localhost:4001",
-    },
-    {
-      name: "booking-service",
-      url: process.env.BOOKING_SERVICE_URL || "http://localhost:4002",
-    },
-    {
-      name: "resource-service",
-      url: process.env.RESOURCE_SERVICE_URL || "http://localhost:4003",
-    },
-  ];
-
   return Promise.all(
     Object.entries(servicesConfig).map(([serviceName, service]) =>
       checkHealth(serviceName, service.url),
