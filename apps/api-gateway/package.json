@@ -6,8 +6,6 @@
     "dev": "nodemon src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "docker:build": "docker build -t api-gateway .",
-    "docker:run": "docker run -p 4000:4000 --env-file .env api-gateway",
     "lint": "eslint src/**/*.ts",
     "type-check": "tsc --noEmit"
   },
