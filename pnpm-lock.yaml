@@ -5055,7 +5055,7 @@ snapshots:
       content-type: 1.0.5
       debug: 4.4.3(supports-color@5.5.0)
       http-errors: 2.0.1
-      iconv-lite: 0.7.2
+      iconv-lite: 0.7.1
       on-finished: 2.4.1
       qs: 6.14.1
       raw-body: 3.0.2
@@ -6753,7 +6753,7 @@ snapshots:
     dependencies:
       bytes: 3.1.2
       http-errors: 2.0.1
-      iconv-lite: 0.7.2
+      iconv-lite: 0.7.1
       unpipe: 1.0.0
 
   react-dom@19.2.3(react@19.2.3):
