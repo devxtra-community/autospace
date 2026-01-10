@@ -1,5 +1,4 @@
-import { UserStatus } from "../constants/role.enum";
-import { UserRole } from "../modules/auth/constants";
+import type { UserStatus, UserRole } from "../constants/role.enum";
 
 declare global {
   namespace Express {
@@ -14,3 +13,5 @@ declare global {
     }
   }
 }
+
+export {};

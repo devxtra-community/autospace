@@ -1,6 +1,6 @@
 import express from "express";
 import { globalErrorHandler } from "./middlewares/errorHandler";
-import { gatewayRouter } from "./gateway";
+import authRoutes from "./modules/auth/routes/auth.routes";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
@@ -20,6 +20,6 @@ app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
-app.use("/api", gatewayRouter);
+app.use("/api", authRoutes);
 app.use(globalErrorHandler);
 export default app;
