@@ -36,7 +36,7 @@ export const registerUser = async (
 export const loginUser = async (data: LoginDto): Promise<AuthResponse> => {
   const response = await apiClient.post<AuthResponse>("/api/auth/login", data);
 
-  // ✅ ONLY store access token
+  // ONLY store access token
   localStorage.setItem("accessToken", response.data.data.accessToken);
 
   return response.data;
