@@ -4,8 +4,9 @@
   },
   "scripts": {
     "prepare": "husky",
-    "lint": "pnpm --filter nodejs-autospace lint",
-    "lint:all": "pnpm -r lint",
+    "lint": "pnpm -r lint",
+    "lint:backend": "pnpm -r --filter './backend/**' lint",
+    "lint:frontend": "pnpm --filter frontend lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "typecheck": "pnpm -r typecheck",
@@ -15,6 +16,9 @@
     "@commitlint/cli": "^20.2.0",
     "@commitlint/config-conventional": "^20.2.0",
     "@eslint/js": "^9.39.2",
+    "@typescript-eslint/eslint-plugin": "^8.52.0",
+    "@typescript-eslint/parser": "^8.52.0",
+    "eslint": "^9.39.2",
     "husky": "^9.1.7",
     "prettier": "^3.7.4",
     "typescript-eslint": "^8.51.0"
