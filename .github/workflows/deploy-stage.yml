@@ -1,0 +1,32 @@
+name: Deploy to EC2 (stage)
+
+on:
+  push:
+    branches:
+      - stage
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to EC2
+        run: |
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            cd ~/autospace
+            git fetch origin
+            git checkout stage
+            git pull origin stage
+
+            cd nodejs-autospace/api-gateway
+            pnpm install
+            pnpm build
+            pm2 restart api-gateway
+          EOF

@@ -1,4 +1,13 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+
+dotenv.config({
+  path:
+    process.env.NODE_ENV === "production"
+      ? ".env.prod"
+      : process.env.NODE_ENV === "stage"
+        ? ".env.stage"
+        : ".env",
+});
 
 import express, { urlencoded } from "express";
 import cors from "cors";
