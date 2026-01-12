@@ -1,4 +1,5 @@
 packages:
-  - "backend/**"
-  - "packages/**"
-  - "frontend"
+  - "packages/*"
+  - "nodejs-autospace/*"
+  - "nextjs-autospace"
+  
