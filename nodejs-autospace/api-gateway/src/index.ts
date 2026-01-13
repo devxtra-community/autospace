@@ -22,6 +22,8 @@ const port = process.env.GATEWAY_PORT || 4000;
 
 app.use(helmet());
 
+// app.use(express.json())
+
 console.log("AUTH_SERVICE_URL =", process.env.AUTH_SERVICE_URL);
 
 app.use(
