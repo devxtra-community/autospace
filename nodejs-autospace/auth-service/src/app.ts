@@ -1,8 +1,8 @@
 import express from "express";
 import { globalErrorHandler } from "./middlewares/errorHandler";
-import authRoutes from "./modules/auth/routes/auth.routes";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { ownerRoutes, authRoutes } from "./modules/auth";
 
 const app = express();
 
@@ -25,6 +25,7 @@ app.get("/health", (req, res) => {
   });
 });
 
+app.use("/api/owner", ownerRoutes);
 app.use("/api", authRoutes);
 app.use(globalErrorHandler);
 export default app;

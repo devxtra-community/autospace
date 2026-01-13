@@ -29,6 +29,7 @@ router.use(
       "^/register": "/api/register",
       "^/refresh": "/api/refresh",
       "^/me": "/api/me",
+      "^/owner/register": "/api/owner/register",
     },
 
     timeout: 10000,
