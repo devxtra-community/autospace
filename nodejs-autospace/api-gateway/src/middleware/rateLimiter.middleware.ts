@@ -28,19 +28,18 @@ export const checkHealth = async (
       responseTime: responceTime,
       url: serviceUrl,
     };
-} catch (error) {
-  console.error(
-    `[HealthCheck] ${serviceName} is DOWN → ${serviceUrl}`,
-    error instanceof Error ? error.message : error
-  );
+  } catch (error) {
+    console.error(
+      `[HealthCheck] ${serviceName} is DOWN → ${serviceUrl}`,
+      error instanceof Error ? error.message : error,
+    );
 
-  return {
-    name: serviceName,
-    status: "down",
-    url: serviceUrl,
-  };
-}
-
+    return {
+      name: serviceName,
+      status: "down",
+      url: serviceUrl,
+    };
+  }
 };
 
 export const checkAllServices = async (): Promise<ServiceHealth[]> => {
