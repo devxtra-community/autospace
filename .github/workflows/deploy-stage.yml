@@ -30,7 +30,7 @@ jobs:
           git checkout stage
           git pull origin stage
 
-          nodejs-autospace/api-gateway
+          cd nodejs-autospace/api-gateway
           pnpm install
           pnpm build
           pm2 restart api-gateway
