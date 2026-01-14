@@ -4,6 +4,7 @@ import { login } from "../controllers/login.controller";
 import { validateRegister, validateLogin } from "../validators/auth.validator";
 import { protectedRoute } from "../services/auth.service";
 import { refresh } from "../controllers/refresh.controller";
+import { Logout } from "../controllers/logout.controller";
 
 // import { authMiddleware } from "../../../../../api-gateway/src/middleware/auth.middleware.js"
 // import { rbac } from "../../../middlewares/rbac.middleware";
@@ -26,5 +27,6 @@ router.get("/protected", protectedRoute);
 router.post("/register", validateRegister, register);
 router.post("/login", validateLogin, login);
 router.post("/refresh", refresh);
+router.post("logout", Logout);
 
 export default router;

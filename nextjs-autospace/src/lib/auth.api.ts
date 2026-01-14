@@ -1,6 +1,7 @@
 import { RegisterApiInput } from "@autospace/shared/auth/register.schema";
 import { apiClient } from "./api";
 import type { LoginDto } from "@autospace/shared";
+import axios from "axios";
 
 /**
  * Backend response shape (UPDATED)
@@ -22,6 +23,11 @@ interface AuthResponse {
   };
 }
 
+export const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000",
+  withCredentials: true, //  REQUIRED
+});
+
 export const registerUser = async (
   data: RegisterApiInput,
 ): Promise<AuthResponse> => {
@@ -36,9 +42,6 @@ export const registerUser = async (
 export const loginUser = async (data: LoginDto): Promise<AuthResponse> => {
   const response = await apiClient.post<AuthResponse>("/api/auth/login", data);
 
-  // ✅ ONLY store access token
-  localStorage.setItem("accessToken", response.data.data.accessToken);
-
   return response.data;
 };
 
@@ -47,7 +50,7 @@ export const logoutUser = async (): Promise<void> => {
     // Backend should clear refresh token cookie
     await apiClient.post("/api/auth/logout");
   } finally {
-    // ✅ Remove ONLY access token
+    // Remove ONLY access token
     localStorage.removeItem("accessToken");
   }
 };

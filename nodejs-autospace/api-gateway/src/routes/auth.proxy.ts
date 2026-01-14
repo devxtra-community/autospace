@@ -9,6 +9,7 @@ const AUTH_SERVICE_URL =
   process.env.AUTH_SERVICE_URL || "http://localhost:4001";
 
 router.use("/login", authRateLimiter);
+router.use("/logout", authRateLimiter);
 router.use("/register", authRateLimiter);
 router.use("/me", authMiddleware);
 // router.use("/refresh");
@@ -24,6 +25,7 @@ router.use(
       "^/refresh": "/api/refresh",
       "^/me": "/api/me",
       "^/owner/register": "/api/owner/register",
+      "^/logout": "api/logout",
     },
 
     timeout: 10000,

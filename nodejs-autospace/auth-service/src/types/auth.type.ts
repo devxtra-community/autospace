@@ -14,6 +14,10 @@ export interface JwtPayload {
 export interface RefreshTokenPayload {
   id: string;
 }
+export interface AccessTokenPayload {
+  sub: string;
+  role: string;
+}
 
 // Extended Request with user info
 export interface AuthRequest extends Request {
