@@ -44,7 +44,7 @@ export const authMiddleware = (
       return;
     }
 
-    //  Verify token and attach to request
+    // Verify token and attach to request
     const decoded = verifyAccessToken(token);
 
     // Attach full payload to request
@@ -54,6 +54,8 @@ export const authMiddleware = (
       role: decoded.role,
       status: decoded.status,
     };
+
+    req.headers["x-user-id"] = decoded.id;
 
     next();
   } catch (error: any) {

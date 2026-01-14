@@ -270,6 +270,9 @@ importers:
       typeorm:
         specifier: ^0.3.28
         version: 0.3.28(pg@8.16.3)(ts-node@10.9.2(@types/node@25.0.6)(typescript@5.9.3))
+      zod:
+        specifier: ^4.3.5
+        version: 4.3.5
     devDependencies:
       '@types/cors':
         specifier: ^2.8.19
@@ -289,6 +292,9 @@ importers:
 
   packages/shared:
     dependencies:
+      '@autospace/shared':
+        specifier: workspace:*
+        version: 'link:'
       zod:
         specifier: ^4.3.4
         version: 4.3.5
