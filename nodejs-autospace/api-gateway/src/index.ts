@@ -16,6 +16,7 @@ import helmet from "helmet";
 // import { authRateLimiter } from "./middleware/rateLimiter.middleware";
 import authRouter from "./routes/auth.proxy";
 import { checkAllServices } from "./utils/healthcheck";
+import resourceRouter from "./routes/resource.proxy";
 
 const app = express();
 const port = process.env.GATEWAY_PORT || 4000;
@@ -63,6 +64,7 @@ app.get("/health/services", async (req, res) => {
 });
 
 app.use("/api/auth", authRouter);
+app.use("/api/companies", resourceRouter);
 
 app.use((req, res) => {
   res.status(404).json({

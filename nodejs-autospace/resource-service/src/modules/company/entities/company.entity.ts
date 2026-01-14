@@ -9,7 +9,7 @@ import {
 
 export enum CompanyStatus {
   PENDING = "pending",
-  APPROVED = "approved",
+  ACTIVE = "active",
   REJECTED = "rejected",
 }
 @Entity("companies")

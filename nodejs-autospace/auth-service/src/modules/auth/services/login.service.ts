@@ -43,9 +43,9 @@ export const loginUser = async (
 
   //  Role approval check
   if (
-    (user.role === "owner" ||
-      user.role === "manager" ||
-      user.role === "valet") &&
+    (user.role === UserRole.OWNER ||
+      user.role === UserRole.MANAGER ||
+      user.role === UserRole.VALET) &&
     user.status !== "active"
   ) {
     throw new Error("User not approved");

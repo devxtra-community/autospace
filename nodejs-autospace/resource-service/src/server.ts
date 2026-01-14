@@ -12,7 +12,7 @@ dotenv.config({
 import "dotenv/config";
 import "reflect-metadata";
 
-import { app } from "./app";
+import app from "./app";
 import { AppDataSource } from "./db/data-source";
 
 const start = async () => {
@@ -20,7 +20,7 @@ const start = async () => {
     await AppDataSource.initialize();
     console.log("Database connected");
 
-    const PORT = process.env.PORT || 4002;
+    const PORT = process.env.PORT || 4003;
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
