@@ -24,3 +24,28 @@ export const createCompany = async (
   });
   return await companyRepo.save(company);
 };
+
+export const getCompanyByStatus = async (
+  status: CompanyStatus,
+  page = 1,
+  limit = 10,
+) => {
+  const repo = AppDataSource.getRepository(Company);
+
+  const [data, total] = await repo.findAndCount({
+    where: { status },
+    skip: (page - 1) * limit,
+    take: limit,
+    order: { createdAt: "DESC" },
+  });
+
+  return {
+    data,
+    meta: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
