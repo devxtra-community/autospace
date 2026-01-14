@@ -7,4 +7,3 @@ export declare const CreateCompanySchema: z.ZodObject<{
     contactPhone: z.ZodString;
 }, z.core.$strip>;
 export type CreateCompanyInput = z.infer<typeof CreateCompanySchema>;
-//# sourceMappingURL=company.schema.d.ts.map

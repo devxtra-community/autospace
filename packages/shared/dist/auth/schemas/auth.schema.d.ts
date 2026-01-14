@@ -55,4 +55,3 @@ export type ValetRegisterDto = z.infer<typeof ValetRegisterSchema>;
 export type CompanyRegisterDto = z.infer<typeof CompanyRegisterSchema>;
 export type LoginDto = z.infer<typeof LoginSchema>;
 export type BaseRegisterDto = z.infer<typeof BaseRegisterSchema>;
-//# sourceMappingURL=auth.schema.d.ts.map

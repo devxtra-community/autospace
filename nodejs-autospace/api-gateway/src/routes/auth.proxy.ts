@@ -11,6 +11,7 @@ const AUTH_SERVICE_URL =
 router.use("/login", authRateLimiter);
 router.use("/register", authRateLimiter);
 router.use("/me", authMiddleware);
+// router.use("/refresh");
 
 router.use(
   createProxyMiddleware({

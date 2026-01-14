@@ -1,9 +1,3 @@
 {
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@autospace/shared": ["packages/shared/dist"],
-      "@autospace/shared/*": ["packages/shared/dist/*"]
-    }
-  }
+  "compilerOptions": {}
 }

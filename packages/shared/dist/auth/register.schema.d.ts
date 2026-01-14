@@ -14,4 +14,3 @@ export declare const RegisterApiSchema: z.ZodObject<{
     }>;
 }, z.core.$strip>;
 export type RegisterApiInput = z.infer<typeof RegisterApiSchema>;
-//# sourceMappingURL=register.schema.d.ts.map
