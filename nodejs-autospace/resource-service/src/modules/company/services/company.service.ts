@@ -49,3 +49,32 @@ export const getCompanyByStatus = async (
     },
   };
 };
+
+export const updateCompanyStatus = async (
+  companyId: string,
+  status: CompanyStatus,
+  adminUserId: string,
+) => {
+  const repo = AppDataSource.getRepository(Company);
+
+  const company = await repo.findOne({
+    where: { id: companyId },
+  });
+
+  if (!company) {
+    throw new Error("Company not found");
+  }
+
+  if (company.status !== CompanyStatus.PENDING) {
+    throw new Error("Company already processed");
+  }
+
+  company.status = status;
+  await repo.save(company);
+
+  console.log(
+    `[AUDIT] Admin ${adminUserId} set company ${companyId} to ${status}`,
+  );
+
+  return company;
+};
