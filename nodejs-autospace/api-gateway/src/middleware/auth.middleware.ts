@@ -58,8 +58,13 @@ export const authMiddleware = (
     req.headers["x-user-id"] = decoded.id;
 
     next();
-  } catch (error: any) {
-    const isExpired = error.name === "TokenExpiredError";
+  } catch (error: unknown) {
+    let isExpired = false;
+
+    if (error instanceof Error) {
+      isExpired = error.name === "TokenExpiredError";
+    }
+
     sendAuthError(
       res,
       isExpired ? AuthErrorCode.TOKEN_EXPIRED : AuthErrorCode.TOKEN_INVALID,

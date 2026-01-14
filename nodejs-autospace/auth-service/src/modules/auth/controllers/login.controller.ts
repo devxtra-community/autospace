@@ -6,6 +6,8 @@ export const login = async (req: Request, res: Response) => {
     //  Service handles validation, token creation & DB
     const { user, tokens } = await loginUser(req.body);
 
+    console.log("RAW BODY:", req.body);
+
     //  Set refresh token in HTTP-only cookie
     res.cookie("refreshToken", tokens.refreshToken, {
       httpOnly: true,

@@ -5,7 +5,7 @@ import { AppDataSource } from "./db/data-source";
 
 const startServer = async () => {
   try {
-    //  TypeORM connection
+    // TypeORM connection
     await AppDataSource.initialize();
     console.log("Database connected");
 

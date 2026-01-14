@@ -1,4 +1,13 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+
+dotenv.config({
+  path:
+    process.env.NODE_ENV === "production"
+      ? ".env.prod"
+      : process.env.NODE_ENV === "stage"
+        ? ".env.stage"
+        : ".env",
+});
 
 import express, { urlencoded } from "express";
 import cors from "cors";
@@ -13,6 +22,8 @@ const app = express();
 const port = process.env.GATEWAY_PORT || 4000;
 
 app.use(helmet());
+
+// app.use(express.json())
 
 console.log("AUTH_SERVICE_URL =", process.env.AUTH_SERVICE_URL);
 

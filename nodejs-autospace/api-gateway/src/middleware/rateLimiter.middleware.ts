@@ -29,6 +29,11 @@ export const checkHealth = async (
       url: serviceUrl,
     };
   } catch (error) {
+    console.error(
+      `[HealthCheck] ${serviceName} is DOWN → ${serviceUrl}`,
+      error instanceof Error ? error.message : error,
+    );
+
     return {
       name: serviceName,
       status: "down",

@@ -6,10 +6,10 @@ dotenv.config();
 export const config = {
   port: process.env.GATEWAY_PORT || 4000,
   jwtAccessSecret: process.env.JWT_ACCESS_SECRET!,
-  authServiceUrl: process.env.AUTH_SERVICE_URL || "http://localhost:3001",
-  bookingServiceUrl: process.env.BOOKING_SERVICE_URL || "http://localhost:3002",
+  authServiceUrl: process.env.AUTH_SERVICE_URL || "http://localhost:4001",
+  bookingServiceUrl: process.env.BOOKING_SERVICE_URL || "http://localhost:4002",
   resourceServiceUrl:
-    process.env.RESOURCE_SERVICE_URL || "http://localhost:3003",
+    process.env.RESOURCE_SERVICE_URL || "http://localhost:4003",
   nodeEnv: process.env.NODE_ENV || "development",
 };
 

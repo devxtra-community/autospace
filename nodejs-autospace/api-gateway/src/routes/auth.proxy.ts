@@ -8,17 +8,10 @@ const router = Router();
 const AUTH_SERVICE_URL =
   process.env.AUTH_SERVICE_URL || "http://localhost:4001";
 
-/**
- * Gateway-level middleware
- */
 router.use("/login", authRateLimiter);
 router.use("/register", authRateLimiter);
 router.use("/me", authMiddleware);
 
-/**
- * SINGLE proxy
- * /api/auth/* → /api/*
- */
 router.use(
   createProxyMiddleware({
     target: AUTH_SERVICE_URL,

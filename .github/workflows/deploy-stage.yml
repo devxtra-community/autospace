@@ -1,0 +1,61 @@
+name: Deploy to EC2 (stage)
+
+on:
+  push:
+    branches:
+      - stage
+
+
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to EC2
+        run: |
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          set -e
+
+          echo "Deploying API Gateway..."
+          cd ~/autospace
+          git fetch origin
+          git checkout stage
+          git pull origin stage
+
+          cd nodejs-autospace/api-gateway
+          pnpm install
+          pnpm build
+          pm2 restart api-gateway
+
+          echo "Deploying Auth Service..."
+          cd ~/auth-service/autospace
+          git fetch origin
+          git checkout stage
+          git pull origin stage
+
+          cd nodejs-autospace/auth-service
+          pnpm install
+          pnpm build
+          pm2 restart auth-service || NODE_ENV=stage pm2 start dist/server.js --name auth-service
+
+          echo "Deploying Resource Service..."
+          cd ~/resource-service/autospace
+          git fetch origin
+          git checkout stage
+          git pull origin stage
+
+          cd nodejs-autospace/resource-service
+          pnpm install
+          pnpm build
+          NODE_ENV=stage pm2 restart resource-service || NODE_ENV=stage pm2 start dist/server.js --name resource-service
+
+          pm2 save
+          EOF

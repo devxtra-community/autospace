@@ -6,7 +6,7 @@
     "dev": "nodemon src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "lint": "eslint src/**/*.ts",
+    "lint": "pnpm eslint src/**/*.ts",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

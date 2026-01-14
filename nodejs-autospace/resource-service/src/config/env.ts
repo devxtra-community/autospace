@@ -1,5 +1,19 @@
+console.log("CWD =", process.cwd());
+console.log("__dirname =", __dirname);
+
 import dotenv from "dotenv";
-dotenv.config();
+import path from "path";
+
+const envFile =
+  process.env.NODE_ENV === "production"
+    ? ".env.prod"
+    : process.env.NODE_ENV === "stage"
+      ? ".env.stage"
+      : ".env";
+
+dotenv.config({
+  path: path.resolve(__dirname, `../../${envFile}`),
+});
 
 export const env = {
   PORT: process.env.PORT || 4002,
