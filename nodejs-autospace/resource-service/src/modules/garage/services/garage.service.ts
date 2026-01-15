@@ -45,3 +45,57 @@ export const createGarage = async (
     createdAt: saved.createdAt,
   };
 };
+
+export const getGarageByStatus = async (
+  status: GarageStatus,
+  page = 1,
+  limit = 10,
+) => {
+  const repo = AppDataSource.getRepository(Garage);
+
+  const [data, total] = await repo.findAndCount({
+    where: { status },
+    skip: (page - 1) * limit,
+    take: limit,
+    order: { createdAt: "DESC" },
+  });
+
+  return {
+    data,
+    meta: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
+export const updateGarageStatus = async (
+  companyId: string,
+  status: GarageStatus,
+  adminUserId: string,
+) => {
+  const repo = AppDataSource.getRepository(Garage);
+
+  const garage = await repo.findOne({
+    where: { id: companyId },
+  });
+
+  if (!garage) {
+    throw new Error("Garage not found");
+  }
+
+  if (garage.status !== GarageStatus.PENDING) {
+    throw new Error("Garage already processed");
+  }
+
+  garage.status = status;
+  await repo.save(garage);
+
+  console.log(
+    `[AUDIT] Admin ${adminUserId} set company ${companyId} to ${status}`,
+  );
+
+  return garage;
+};
