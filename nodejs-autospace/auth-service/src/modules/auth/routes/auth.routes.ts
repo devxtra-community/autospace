@@ -27,6 +27,6 @@ router.get("/protected", protectedRoute);
 router.post("/register", validateRegister, register);
 router.post("/login", validateLogin, login);
 router.post("/refresh", refresh);
-router.post("logout", Logout);
+router.post("/logout", Logout);
 
 export default router;

@@ -9,7 +9,7 @@ export const Logout = async (req: Request, res: Response) => {
     const refreshToken = req.cookies?.refreshToken;
 
     if (refreshToken) {
-      const refreshRepo = AppDataSource.getRepository(refreshToken);
+      const refreshRepo = AppDataSource.getRepository(RefreshToken);
       await refreshRepo.delete({
         token_hash: hashToken(refreshToken),
       });
@@ -35,8 +35,11 @@ export const Logout = async (req: Request, res: Response) => {
       message: "Logged out successfully",
     });
   } catch (error) {
-    return res.status(500).json({
-      message: "Logout failed",
+    res.clearCookie("accessToken", { path: "/" });
+    res.clearCookie("refreshToken", { path: "/" });
+    return res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
     });
   }
 };

@@ -14,6 +14,13 @@ router.use("/register", authRateLimiter);
 router.use("/me", authMiddleware);
 // router.use("/refresh");
 
+router.get("/me", authMiddleware, (req, res) => {
+  res.status(200).json({
+    success: true,
+    data: req.user,
+  });
+});
+
 router.use(
   createProxyMiddleware({
     target: AUTH_SERVICE_URL,
@@ -23,9 +30,8 @@ router.use(
       "^/login": "/api/login",
       "^/register": "/api/register",
       "^/refresh": "/api/refresh",
-      "^/me": "/api/me",
       "^/owner/register": "/api/owner/register",
-      "^/logout": "api/logout",
+      "^/logout": "/api/logout",
     },
 
     timeout: 10000,
