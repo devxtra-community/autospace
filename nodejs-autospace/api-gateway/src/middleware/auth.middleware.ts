@@ -10,29 +10,19 @@ export const authMiddleware = (
   next: NextFunction,
 ): void => {
   try {
+    // console.log("Cookies in gateway:", req.cookies);
+
+    const tokenFromCookie = req.cookies?.accessToken;
+
     const authHeader = req.headers.authorization;
 
-    if (!authHeader) {
-      sendAuthError(
-        res,
-        AuthErrorCode.AUTH_REQUIRED,
-        "Authorization header missing",
-        401,
-      );
-      return;
-    }
+    const tokenFromHeader =
+      authHeader && authHeader.startsWith("Bearer ")
+        ? authHeader.split(" ")[1]
+        : null;
 
-    if (!authHeader.startsWith("Bearer ")) {
-      sendAuthError(
-        res,
-        AuthErrorCode.TOKEN_INVALID,
-        "Invalid authorization format. Use Bearer <token>",
-        401,
-      );
-      return;
-    }
-
-    const token = authHeader.split(" ")[1];
+    const token = tokenFromCookie || tokenFromHeader;
+    // console.log("Access token used:", token);
 
     if (!token) {
       sendAuthError(

@@ -9,10 +9,10 @@ dotenv.config({
         : ".env",
 });
 
-import express, { urlencoded } from "express";
+import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-
+import cookieParser from "cookie-parser";
 // import { authRateLimiter } from "./middleware/rateLimiter.middleware";
 import authRouter from "./routes/auth.proxy";
 import { checkAllServices } from "./utils/healthcheck";
@@ -22,7 +22,7 @@ const app = express();
 const port = process.env.GATEWAY_PORT || 4000;
 
 app.use(helmet());
-
+app.use(cookieParser());
 // app.use(express.json())
 
 console.log("AUTH_SERVICE_URL =", process.env.AUTH_SERVICE_URL);
