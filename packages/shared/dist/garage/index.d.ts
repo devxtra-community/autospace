@@ -1,2 +1,2 @@
-export * from "./company.schema";
+export * from "./garage.schema";
 //# sourceMappingURL=index.d.ts.map

@@ -9,7 +9,9 @@ const router = Router();
 const RESOURCE_SERVICE_URL =
   process.env.RESOURCE_SERVICE_URL || "http://localhost:4003";
 
+// company routes
 router.use(
+  "/companies",
   authMiddleware,
   rbac(UserRole.OWNER, UserRole.ADMIN),
   createProxyMiddleware({
@@ -17,6 +19,18 @@ router.use(
     changeOrigin: true,
 
     pathRewrite: (path) => `/companies${path}`,
+  }),
+);
+
+// garage routes
+router.use(
+  "/garages",
+  authMiddleware,
+  rbac(UserRole.OWNER, UserRole.ADMIN),
+  createProxyMiddleware({
+    target: RESOURCE_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/garages${path}`,
   }),
 );
 
