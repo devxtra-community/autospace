@@ -1,1 +1,6 @@
-[00:00:01.734] Server  LOG     ✓ Ready in 1219ms
+[00:00:02.134] Server  LOG     ✓ Ready in 1605ms
+[00:00:09.134] Server  LOG     ○ Compiling / ...
+[00:00:10.996] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:02:17.860] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:02:20.524] Browser WARN    Image with src "/valet-illustration.png" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio.
+[00:03:41.620] Server  LOG     ✓ Compiled in 52ms
