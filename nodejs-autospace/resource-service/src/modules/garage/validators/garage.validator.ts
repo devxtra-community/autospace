@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from "express";
-import { CreateCompanySchema } from "@autospace/shared";
+import { CreateGarageSchema } from "@autospace/shared";
 
-export const validateCreateCompany = (
+export const validateCreateGarage = (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
-  const result = CreateCompanySchema.safeParse(req.body);
+  const result = CreateGarageSchema.safeParse(req.body);
+
   if (!result.success) {
     return res.status(400).json({
       success: false,

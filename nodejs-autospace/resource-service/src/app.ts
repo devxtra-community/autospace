@@ -2,6 +2,7 @@ import "reflect-metadata";
 import express from "express";
 import cors from "cors";
 import companyRoutes from "./modules/company/routes/company.routes";
+import garageRoutes from "./modules/garage/routes/garage.routes";
 
 const app = express();
 
@@ -17,5 +18,6 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/companies", companyRoutes);
+app.use("/garages", garageRoutes);
 
 export default app;
