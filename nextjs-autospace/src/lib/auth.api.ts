@@ -9,22 +9,18 @@ import axios from "axios";
  * - user is top-level
  */
 
-interface AuthResponse {
+export interface AuthResponse {
   success: boolean;
-  message: string;
   data: {
-    accessToken: string;
-  };
-  user: {
     id: string;
     email: string;
-    role: string;
-    status: "pending" | "active" | "inactive" | "rejected";
+    role: "admin" | "owner" | "manager" | "valet" | "customer";
+    status: "active" | "pending" | "rejected";
   };
 }
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000",
   withCredentials: true, //  REQUIRED
 });
 
@@ -43,6 +39,10 @@ export const loginUser = async (data: LoginDto): Promise<AuthResponse> => {
   const response = await apiClient.post<AuthResponse>("/api/auth/login", data);
 
   return response.data;
+};
+
+export const getMe = () => {
+  return api.get<AuthResponse>("/api/auth/me");
 };
 
 export const logoutUser = async (): Promise<void> => {

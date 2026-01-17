@@ -1,5 +1,12 @@
 import { Request, Response } from "express";
-import { createCompany } from "../services/company.service";
+import {
+  createCompany,
+  getCompanyByOwnerId,
+} from "../services/company.service";
+import { AppDataSource } from "../../../db/data-source";
+import { Company } from "../entities/company.entity";
+
+const companyRepository = AppDataSource.getRepository(Company);
 
 export const registerCompany = async (req: Request, res: Response) => {
   try {
@@ -32,4 +39,15 @@ export const registerCompany = async (req: Request, res: Response) => {
       message: "Company registration failed",
     });
   }
+};
+
+export const getMyCompany = async (req: Request, res: Response) => {
+  const ownerUserId = req.user!.id;
+
+  const company = await getCompanyByOwnerId(ownerUserId);
+
+  return res.status(200).json({
+    success: true,
+    data: company || null,
+  });
 };
