@@ -18,7 +18,7 @@ router.use(
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
 
-    pathRewrite: (path) => `/companies${path}`,
+    // pathRewrite: (path) => `${path}`,
   }),
 );
 

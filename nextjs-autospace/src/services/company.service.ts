@@ -1,7 +1,7 @@
 import { api } from "@/lib/auth.api";
 
 export const getMyCompany = async () => {
-  const res = await api.get("/api/company/my");
+  const res = await api.get("/api/companies/my");
   return res.data.data;
 };
 

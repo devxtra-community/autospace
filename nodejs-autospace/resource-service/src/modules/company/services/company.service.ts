@@ -78,3 +78,15 @@ export const updateCompanyStatus = async (
 
   return company;
 };
+
+export const getCompanyByOwnerId = async (ownerUserId: string) => {
+  const repo = AppDataSource.getRepository(Company);
+
+  const company = await repo.findOne({
+    where: {
+      ownerUserId: ownerUserId,
+    },
+  });
+
+  return company;
+};

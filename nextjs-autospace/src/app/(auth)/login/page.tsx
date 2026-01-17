@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-
+import { AxiosError } from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardContent } from "@/components/ui/card";
@@ -12,8 +12,15 @@ import { Label } from "@/components/ui/label";
 
 import { Mail, Phone, Lock, Eye, EyeOff } from "lucide-react";
 
-import { loginUser } from "@/lib/auth.api";
+import { loginUser, getMe } from "@/lib/auth.api";
+import { redirectByRole } from "@/lib/roleredirect";
 import { LoginDto } from "@autospace/shared";
+
+interface ApiErrorResponse {
+  success: false;
+  message: string;
+  code?: string;
+}
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -29,21 +36,23 @@ export default function LoginPage() {
       setLoading(true);
       setError(null);
 
-      const payload =
+      const payload: LoginDto =
         loginType === "email"
           ? { email: identifier, password }
           : { phone: identifier, password };
 
-      const res = await loginUser(payload as LoginDto);
+      await loginUser(payload);
+      console.log("LOGIN OK");
 
-      //  store tokens
-      localStorage.setItem("accessToken", res.data.accessToken);
+      const meRes = await getMe();
+      console.log("ME RESPONSE", meRes.data);
 
-      // temporary redirect
-      window.location.href = "/";
+      redirectByRole(meRes.data.data.role);
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
+      const axiosError = err as AxiosError<ApiErrorResponse>;
+      console.error("LOGIN ERROR", err);
+      if (axiosError.response?.data?.message) {
+        setError(axiosError.response.data.message);
       } else {
         setError("Login failed");
       }
