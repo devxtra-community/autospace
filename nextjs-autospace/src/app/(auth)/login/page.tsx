@@ -16,11 +16,11 @@ import { loginUser, getMe } from "@/lib/auth.api";
 import { redirectByRole } from "@/lib/roleredirect";
 import { LoginDto } from "@autospace/shared";
 
-interface ApiErrorResponse {
-  success: false;
-  message: string;
-  code?: string;
-}
+// interface ApiErrorResponse {
+//   success: false;
+//   message: string;
+//   code?: string;
+// }
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -48,16 +48,17 @@ export default function LoginPage() {
       console.log("ME RESPONSE", meRes.data);
 
       redirectByRole(meRes.data.data.role);
-    } catch (err: unknown) {
-      const axiosError = err as AxiosError<ApiErrorResponse>;
-      console.error("LOGIN ERROR", err);
-      if (axiosError.response?.data?.message) {
-        setError(axiosError.response.data.message);
+    } catch (err) {
+      const axiosError = err as AxiosError<{
+        success: false;
+        error: { code: string; message: string };
+      }>;
+
+      if (axiosError.response?.data?.error?.message) {
+        setError(axiosError.response.data.error.message);
       } else {
-        setError("Login failed");
+        setError("Login failed. Please try again.");
       }
-    } finally {
-      setLoading(false);
     }
   };
 

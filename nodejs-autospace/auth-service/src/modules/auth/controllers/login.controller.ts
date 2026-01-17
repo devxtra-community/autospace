@@ -40,16 +40,32 @@ export const login = async (req: Request, res: Response) => {
 
     if (error instanceof Error) {
       if (error.message === "Invalid credentials") {
-        return res.status(401).json({ message: "Invalid credentials" });
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: "INVALID_CREDENTIALS",
+            message: "Invalid email or password",
+          },
+        });
       }
 
       if (error.message === "User not approved") {
-        return res.status(403).json({ message: "User not approved" });
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: "USER_NOT_APPROVED",
+            message: "Your account is pending approval",
+          },
+        });
       }
     }
 
     return res.status(500).json({
-      message: "Login failed",
+      success: false,
+      error: {
+        code: "UNKNOWN_ERROR",
+        message: "Something went wrong",
+      },
     });
   }
 };
