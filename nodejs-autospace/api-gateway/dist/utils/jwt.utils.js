@@ -7,7 +7,7 @@ exports.verifyAccessToken = void 0;
 // api-gateway/src/utils/jwt.utils.ts
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 /**
- * ✅ ONLY verification - Gateway doesn't generate tokens
+ *  ONLY verification - Gateway doesn't generate tokens
  * Verify access token from incoming requests
  */
 const verifyAccessToken = (token) => {
@@ -15,6 +15,16 @@ const verifyAccessToken = (token) => {
     if (!secret) {
         throw new Error("JWT_ACCESS_SECRET not configured in gateway");
     }
-    return jsonwebtoken_1.default.verify(token, secret);
+    try {
+        const decoded = jsonwebtoken_1.default.verify(token, secret);
+        if (!decoded.id || !decoded.email || !decoded.role || !decoded.status) {
+            throw new Error("Invalid token payload structure");
+        }
+        return decoded;
+    }
+    catch (error) {
+        console.log(error);
+        throw error;
+    }
 };
 exports.verifyAccessToken = verifyAccessToken;

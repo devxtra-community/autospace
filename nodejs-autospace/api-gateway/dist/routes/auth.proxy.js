@@ -7,8 +7,16 @@ const rateLimiter_middleware_1 = require("../middleware/rateLimiter.middleware")
 const router = (0, express_1.Router)();
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || "http://localhost:4001";
 router.use("/login", rateLimiter_middleware_1.authRateLimiter);
+router.use("/logout", rateLimiter_middleware_1.authRateLimiter);
 router.use("/register", rateLimiter_middleware_1.authRateLimiter);
 router.use("/me", auth_middleware_1.authMiddleware);
+// router.use("/refresh");
+router.get("/me", auth_middleware_1.authMiddleware, (req, res) => {
+    res.status(200).json({
+        success: true,
+        data: req.user,
+    });
+});
 router.use((0, http_proxy_middleware_1.createProxyMiddleware)({
     target: AUTH_SERVICE_URL,
     changeOrigin: true,
@@ -16,8 +24,9 @@ router.use((0, http_proxy_middleware_1.createProxyMiddleware)({
         "^/login": "/api/login",
         "^/register": "/api/register",
         "^/refresh": "/api/refresh",
-        "^/me": "/api/me",
         "^/owner/register": "/api/owner/register",
+        "^/logout": "/api/logout",
+        "^/manager/register": "/api/manager/register",
     },
     timeout: 10000,
     proxyTimeout: 10000,

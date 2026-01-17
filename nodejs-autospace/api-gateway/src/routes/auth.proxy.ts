@@ -32,6 +32,7 @@ router.use(
       "^/refresh": "/api/refresh",
       "^/owner/register": "/api/owner/register",
       "^/logout": "/api/logout",
+      "^/manager/register": "/api/manager/register",
     },
 
     timeout: 10000,

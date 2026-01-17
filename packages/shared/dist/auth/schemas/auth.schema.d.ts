@@ -33,7 +33,7 @@ export declare const ManagerRegisterSchema: z.ZodObject<{
     phone: z.ZodString;
     password: z.ZodString;
     confirmPassword: z.ZodString;
-    accessCode: z.ZodCoercedNumber<unknown>;
+    businessRegistrationNumber: z.ZodPipe<z.ZodString, z.ZodTransform<string, string>>;
 }, z.core.$strip>;
 export declare const CompanyRegisterSchema: z.ZodObject<{
     fullname: z.ZodString;

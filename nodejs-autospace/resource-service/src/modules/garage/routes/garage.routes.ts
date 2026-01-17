@@ -10,8 +10,8 @@ import {
 const router = Router();
 
 router.post("/", validateCreateGarage, createGarageController);
-router.put("/admin/garages/:id/active", approveGarage);
-router.put("/admin/garages/:id/reject", rejectGarage);
-router.get("/admin/garages", getPendingGarages);
+router.put("/admin/:id/active", approveGarage);
+router.put("/admin/:id/reject", rejectGarage);
+router.get("/admin", getPendingGarages);
 
 export default router;
