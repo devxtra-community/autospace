@@ -7,24 +7,41 @@ export const createCompany = async (
   data: CreateCompanyInput,
 ) => {
   const companyRepo = AppDataSource.getRepository(Company);
-  const existing = await companyRepo.findOne({
-    where: { businessRegistrationNumber: data.businessRegistrationNumber },
-  });
-  if (existing) {
-    throw new Error("Company already exists");
-  }
+
+  const result = await AppDataSource.query(
+    `SELECT nextval('company_code_seq') AS seq`,
+  );
+
+  const seqNumber = result[0].seq;
+  const businessRegistrationNumber = `CPY-${String(seqNumber).padStart(4, "0")}`;
+
   const company = companyRepo.create({
     ownerUserId,
     companyName: data.companyName,
-    businessRegistrationNumber: data.businessRegistrationNumber,
+    businessRegistrationNumber,
     contactEmail: data.contactEmail,
     contactPhone: data.contactPhone,
     businessLocation: data.businessLocation,
     status: CompanyStatus.PENDING,
   });
-  return await companyRepo.save(company);
-};
 
+  try {
+    const saved = await companyRepo.save(company);
+
+    return {
+      id: saved.id,
+      companyName: saved.companyName,
+      businessRegistrationNumber: saved.businessRegistrationNumber,
+      status: saved.status,
+      createdAt: saved.createdAt,
+    };
+  } catch (err: any) {
+    if (err.code === "23505") {
+      throw new Error("Company already exists");
+    }
+    throw err;
+  }
+};
 export const getCompanyByStatus = async (
   status: CompanyStatus,
   page = 1,

@@ -81,9 +81,9 @@ exports.ValetRegisterSchema = exports.BaseRegisterSchema.extend({
     });
   }
 });
-exports.ManagerRegisterSchema = exports.BaseRegisterSchema.extend({
-  accessCode: zod_1.z.coerce.number(),
-}).superRefine((data, ctx) => {
+exports.ManagerRegisterSchema = exports.BaseRegisterSchema.extend(
+  {},
+).superRefine((data, ctx) => {
   if (data.password !== data.confirmPassword) {
     ctx.addIssue({
       path: ["confirmPassword"],

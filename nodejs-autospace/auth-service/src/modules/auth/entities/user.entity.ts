@@ -6,6 +6,7 @@ import {
 } from "typeorm";
 
 import { UserRole, UserStatus } from "../constants";
+import { ManagerState } from "../constants/manager-state.enum";
 
 @Entity("users")
 export class User {
@@ -35,6 +36,16 @@ export class User {
     enum: UserStatus,
   })
   status!: UserStatus;
+
+  @Column({ type: "uuid", nullable: true })
+  companyId!: string | null;
+
+  @Column({
+    type: "enum",
+    enum: ManagerState,
+    nullable: true,
+  })
+  managerState!: ManagerState | null;
 
   @CreateDateColumn({ type: "timestamptz" })
   created_at!: Date;

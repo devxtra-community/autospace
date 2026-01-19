@@ -64,7 +64,10 @@ exports.ValetRegisterSchema = exports.BaseRegisterSchema.extend({
     }
 });
 exports.ManagerRegisterSchema = exports.BaseRegisterSchema.extend({
-    accessCode: zod_1.z.coerce.number(),
+    businessRegistrationNumber: zod_1.z
+        .string()
+        .min(5)
+        .transform((v) => v.trim().toUpperCase()),
 }).superRefine((data, ctx) => {
     if (data.password !== data.confirmPassword) {
         ctx.addIssue({

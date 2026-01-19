@@ -79,7 +79,10 @@ export const ValetRegisterSchema = BaseRegisterSchema.extend({
 });
 
 export const ManagerRegisterSchema = BaseRegisterSchema.extend({
-  accessCode: z.coerce.number(),
+  businessRegistrationNumber: z
+    .string()
+    .min(5)
+    .transform((v) => v.trim().toUpperCase()),
 }).superRefine((data, ctx) => {
   if (data.password !== data.confirmPassword) {
     ctx.addIssue({

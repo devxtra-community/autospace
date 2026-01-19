@@ -14,6 +14,7 @@ dotenv_1.default.config({
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
+const cookie_parser_1 = __importDefault(require("cookie-parser"));
 // import { authRateLimiter } from "./middleware/rateLimiter.middleware";
 const auth_proxy_1 = __importDefault(require("./routes/auth.proxy"));
 const healthcheck_1 = require("./utils/healthcheck");
@@ -21,6 +22,7 @@ const resource_proxy_1 = __importDefault(require("./routes/resource.proxy"));
 const app = (0, express_1.default)();
 const port = process.env.GATEWAY_PORT || 4000;
 app.use((0, helmet_1.default)());
+app.use((0, cookie_parser_1.default)());
 // app.use(express.json())
 console.log("AUTH_SERVICE_URL =", process.env.AUTH_SERVICE_URL);
 app.use((0, cors_1.default)({
@@ -52,7 +54,7 @@ app.get("/health/services", async (req, res) => {
     });
 });
 app.use("/api/auth", auth_proxy_1.default);
-app.use("/api/companies", resource_proxy_1.default);
+app.use("/api", resource_proxy_1.default);
 app.use((req, res) => {
     res.status(404).json({
         success: false,

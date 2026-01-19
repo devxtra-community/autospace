@@ -13,10 +13,7 @@ export const registerCompany = async (req: Request, res: Response) => {
     const ownerUserId = req.headers["x-user-id"] as string;
 
     if (!ownerUserId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
+      return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
     const company = await createCompany(ownerUserId, req.body);
@@ -27,10 +24,10 @@ export const registerCompany = async (req: Request, res: Response) => {
       data: company,
     });
   } catch (error: any) {
-    if (error.message === "Company already exists") {
+    if (error.message.includes("already exists")) {
       return res.status(409).json({
         success: false,
-        message: "Company with this registration number already exists",
+        message: error.message,
       });
     }
 
