@@ -1,5 +1,6 @@
-import { Router } from "express";
-import { createProxyMiddleware } from "http-proxy-middleware";
+import { Router, Request, Response } from "express";
+import axios from "axios";
+import express from "express";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { authRateLimiter } from "../middleware/rateLimiter.middleware";
 
@@ -8,12 +9,11 @@ const router = Router();
 const AUTH_SERVICE_URL =
   process.env.AUTH_SERVICE_URL || "http://localhost:4001";
 
-router.use("/login", authRateLimiter);
-router.use("/logout", authRateLimiter);
-router.use("/register", authRateLimiter);
-router.use("/me", authMiddleware);
-// router.use("/refresh");
+// Parse JSON
+router.use(express.json());
+router.use(express.urlencoded({ extended: true }));
 
+// /me endpoint - handled by gateway
 router.get("/me", authMiddleware, (req, res) => {
   res.status(200).json({
     success: true,
@@ -21,23 +21,59 @@ router.get("/me", authMiddleware, (req, res) => {
   });
 });
 
-router.use(
-  createProxyMiddleware({
-    target: AUTH_SERVICE_URL,
-    changeOrigin: true,
+// Proxy helper with proper typing
+const createAuthProxy = (targetPath: string) => {
+  return async (req: Request, res: Response) => {
+    try {
+      const url = `${AUTH_SERVICE_URL}${targetPath}`;
 
-    pathRewrite: {
-      "^/login": "/api/login",
-      "^/register": "/api/register",
-      "^/refresh": "/api/refresh",
-      "^/owner/register": "/api/owner/register",
-      "^/logout": "/api/logout",
-      "^/manager/register": "/api/manager/register",
-    },
+      const response = await axios({
+        method: req.method,
+        url,
+        data: req.body,
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: req.headers.cookie || "",
+        },
+        timeout: 10000,
+        validateStatus: () => true,
+      });
 
-    timeout: 10000,
-    proxyTimeout: 10000,
-  }),
-);
+      if (response.headers["set-cookie"]) {
+        res.setHeader("Set-Cookie", response.headers["set-cookie"]);
+      }
+
+      res.status(response.status).json(response.data);
+    } catch (error: unknown) {
+      console.error("Auth proxy error:", error);
+
+      if (axios.isAxiosError(error)) {
+        if (error.code === "ECONNABORTED") {
+          return res.status(504).json({
+            success: false,
+            message: "Auth service timeout",
+          });
+        }
+
+        if (error.response) {
+          return res.status(error.response.status).json(error.response.data);
+        }
+      }
+
+      res.status(500).json({
+        success: false,
+        message: "Gateway error",
+      });
+    }
+  };
+};
+
+// Auth routes with rate limiting
+router.post("/login", authRateLimiter, createAuthProxy("/api/login"));
+router.post("/register", authRateLimiter, createAuthProxy("/api/register"));
+router.post("/logout", authRateLimiter, createAuthProxy("/api/logout"));
+router.post("/refresh", createAuthProxy("/api/refresh"));
+router.post("/owner/register", createAuthProxy("/api/owner/register"));
+router.post("/manager/register", createAuthProxy("/api/manager/register"));
 
 export default router;

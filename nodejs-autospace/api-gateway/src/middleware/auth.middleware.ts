@@ -12,6 +12,9 @@ export const authMiddleware = (
   try {
     // console.log("Cookies in gateway:", req.cookies);
 
+    console.log("COOKIE:", req.cookies);
+    console.log("AUTH HEADER:", req.headers.authorization);
+
     const tokenFromCookie = req.cookies?.accessToken;
 
     const authHeader = req.headers.authorization;

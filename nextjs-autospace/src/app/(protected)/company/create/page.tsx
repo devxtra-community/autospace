@@ -22,7 +22,6 @@ export default function CreateCompanyPage() {
       email: form.email.value,
       phone: form.phone.value,
       location: form.location.value,
-      registrationNumber: form.registrationNumber.value,
     };
 
     try {
