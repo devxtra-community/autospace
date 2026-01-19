@@ -14,7 +14,7 @@ import {
   Building2,
   Warehouse,
 } from "lucide-react";
-import { registerUser } from "@/lib/auth.api";
+import { registerOwner } from "@/lib/auth.api";
 import type { RegisterApiInput } from "@autospace/shared/auth/register.schema";
 
 interface ApiErrorResponse {
@@ -75,7 +75,7 @@ export function RegisterForm({ role }: Props) {
         ...(role === "manager" && { garageId: Number(form.garageId) }),
       };
 
-      await registerUser(payload);
+      await registerOwner(payload);
       window.location.href = "/login";
     } catch (err) {
       const axiosError = err as AxiosError<ApiErrorResponse>;

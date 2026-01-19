@@ -35,6 +35,17 @@ export const registerUser = async (
   return response.data;
 };
 
+export const registerOwner = async (
+  data: RegisterApiInput,
+): Promise<AuthResponse> => {
+  const response = await apiClient.post<AuthResponse>(
+    "/api/auth/owner/register",
+    data,
+  );
+
+  return response.data;
+};
+
 export const loginUser = async (data: LoginDto): Promise<AuthResponse> => {
   const response = await apiClient.post<AuthResponse>("/api/auth/login", data);
 

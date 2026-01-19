@@ -42,12 +42,29 @@ export const registerCompany = async (req: Request, res: Response) => {
 };
 
 export const getMyCompany = async (req: Request, res: Response) => {
-  const ownerUserId = req.user!.id;
+  try {
+    const ownerUserId = req.headers["x-user-id"] as string;
 
-  const company = await getCompanyByOwnerId(ownerUserId);
+    if (!ownerUserId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
 
-  return res.status(200).json({
-    success: true,
-    data: company || null,
-  });
+    console.log("RESOURCE → ownerUserId:", ownerUserId);
+
+    const company = await getCompanyByOwnerId(ownerUserId);
+
+    return res.status(200).json({
+      success: true,
+      data: company ?? null,
+    });
+  } catch (error) {
+    console.error("Get my company error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch company",
+    });
+  }
 };

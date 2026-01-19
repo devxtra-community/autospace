@@ -17,8 +17,7 @@ router.use(
   createProxyMiddleware({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
-
-    // pathRewrite: (path) => `${path}`,
+    pathRewrite: (path) => `/companies${path}`,
   }),
 );
 
