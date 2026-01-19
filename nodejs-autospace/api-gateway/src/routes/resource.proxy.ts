@@ -18,6 +18,26 @@ router.use(
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
     pathRewrite: (path) => `/companies${path}`,
+    on: {
+      proxyReq: (proxyReq, req: unknown) => {
+        if (
+          typeof req === "object" &&
+          req !== null &&
+          "body" in req &&
+          typeof (req as { body?: unknown }).body === "object" &&
+          (req as { body: Record<string, unknown> }).body !== null &&
+          Object.keys((req as { body: Record<string, unknown> }).body).length >
+            0
+        ) {
+          const body = (req as { body: Record<string, unknown> }).body;
+          const bodyData = JSON.stringify(body);
+
+          proxyReq.setHeader("Content-Type", "application/json");
+          proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
+          proxyReq.write(bodyData);
+        }
+      },
+    },
   }),
 );
 

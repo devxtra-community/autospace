@@ -13,6 +13,7 @@ import { getPendingCompanies } from "../controllers/admin.company.controller";
 const router = Router();
 
 router.post("/create", validateCreateCompany, registerCompany);
+
 router.put("/admin/companies/:id/active", approveCompany);
 router.put("/admin/companies/:id/reject", rejectCompany);
 router.get("/admin/companies", getPendingCompanies);
