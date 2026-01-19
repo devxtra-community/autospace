@@ -22,6 +22,12 @@ export class Garage {
   @Column("uuid")
   companyId!: string;
 
+  @Column({ type: "uuid", nullable: true })
+  managerId!: string | null;
+
+  @Column({ type: "varchar", length: 20, nullable: true })
+  garageRegistrationNumber!: string | null;
+
   @Column({ type: "varchar", length: 150 })
   name!: string;
 

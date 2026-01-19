@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { createGarageController } from "../controllers/garage.controller";
+import {
+  assignManagerController,
+  createGarageController,
+} from "../controllers/garage.controller";
 import { validateCreateGarage } from "../validators/garage.validator";
 import {
   getPendingGarages,
@@ -13,5 +16,6 @@ router.post("/", validateCreateGarage, createGarageController);
 router.put("/admin/:id/active", approveGarage);
 router.put("/admin/:id/reject", rejectGarage);
 router.get("/admin", getPendingGarages);
+router.post("/assign-manager", assignManagerController);
 
 export default router;

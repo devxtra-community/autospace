@@ -6,6 +6,11 @@ import garageRoutes from "./modules/garage/routes/garage.routes";
 
 const app = express();
 
+app.use((req, _res, next) => {
+  console.log("🔥 RESOURCE HIT:", req.method, req.originalUrl);
+  next();
+});
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
