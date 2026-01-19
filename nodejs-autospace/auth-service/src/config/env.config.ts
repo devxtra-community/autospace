@@ -13,8 +13,7 @@ const NODE_ENV = process.env.NODE_ENV ?? "development";
 export const env = {
   // core
   NODE_ENV,
-
-  PORT: process.env.PORT ? Number(process.env.PORT) : 3000,
+  PORT: Number(process.env.PORT ?? 4001),
 
   // database
   DATABASE_URL: requireEnv("DATABASE_URL"),
@@ -31,9 +30,7 @@ export const env = {
     "JWT_REFRESH_EXPIRY",
   ) as SignOptions["expiresIn"],
 
-  // cookies (DERIVED, not from .env)
+  // cookies (derived, NOT from .env)
   COOKIE_SECURE: NODE_ENV === "production",
-  COOKIE_SAMESITE: "lax" as const,
-};
-
-// this file is for when we call env process.env in every where instead we can import this envin that file and use like env.SECRET_ so the error chance is low
+  COOKIE_SAMESITE: NODE_ENV === "production" ? "none" : "lax",
+} as const;

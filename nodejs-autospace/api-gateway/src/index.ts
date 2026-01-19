@@ -23,7 +23,6 @@ const port = process.env.GATEWAY_PORT || 4000;
 
 app.use(helmet());
 app.use(cookieParser());
-// app.use(express.json())
 
 console.log("AUTH_SERVICE_URL =", process.env.AUTH_SERVICE_URL);
 

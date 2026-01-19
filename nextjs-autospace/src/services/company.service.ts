@@ -1,3 +1,4 @@
+import { apiClient } from "@/lib/api";
 import { api } from "@/lib/auth.api";
 
 export const getMyCompany = async () => {
@@ -10,14 +11,12 @@ export const createCompany = async (payload: {
   email: string;
   phone: string;
   location: string;
-  registrationNumber: string;
 }) => {
-  const res = await api.post("/api/companies/create", {
+  const res = await apiClient.post("/api/companies/create", {
     companyName: payload.name,
     contactEmail: payload.email,
     contactPhone: payload.phone,
     businessLocation: payload.location,
-    businessRegistrationNumber: payload.registrationNumber,
   });
   return res.data.data;
 };
