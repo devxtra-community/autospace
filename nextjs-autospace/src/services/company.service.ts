@@ -12,6 +12,6 @@ export const createCompany = async (payload: {
   location: string;
   registrationNumber: string;
 }) => {
-  const res = await api.post("/api/company", payload);
+  const res = await api.post("/api/companies", payload);
   return res.data.data;
 };

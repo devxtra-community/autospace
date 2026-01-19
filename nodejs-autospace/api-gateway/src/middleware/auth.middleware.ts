@@ -46,7 +46,7 @@ export const authMiddleware = (
     };
 
     req.headers["x-user-id"] = decoded.id;
-
+    console.log("AUTH USER:", req.user);
     next();
   } catch (error: unknown) {
     let isExpired = false;

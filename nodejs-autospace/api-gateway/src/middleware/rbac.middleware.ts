@@ -4,6 +4,11 @@ import { UserRole } from "../constants/role.enum";
 export const rbac =
   (...allowedRoles: UserRole[]) =>
   (req: Request, res: Response, next: NextFunction) => {
+    console.log("RBAC CHECK:", {
+      user: req.user,
+      allowedRoles,
+    });
+
     const user = req.user; // set by auth middleware
 
     if (!user) {
