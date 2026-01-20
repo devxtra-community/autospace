@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createCompany } from "@/services/company.service";
+import { createGarage } from "@/services/garage.service";
 import axios from "axios";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -19,16 +19,15 @@ import {
 } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
-const companySchema = z.object({
-  name: z.string().min(2, "Company name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().min(10, "Phone number must be at least 10 digits"),
+const garageSchema = z.object({
+  name: z.string().min(2, "Garage name must be at least 2 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
   location: z.string().min(2, "Location is required"),
 });
 
-type CompanyFormjsValues = z.infer<typeof companySchema>;
+type GarageFormValues = z.infer<typeof garageSchema>;
 
-export default function CreateCompanyPage() {
+export default function CreateGaragePage() {
   const router = useRouter();
   const [error, setError] = useState("");
 
@@ -36,20 +35,20 @@ export default function CreateCompanyPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<CompanyFormjsValues>({
-    resolver: zodResolver(companySchema),
+  } = useForm<GarageFormValues>({
+    resolver: zodResolver(garageSchema),
   });
 
-  const onSubmit = async (data: CompanyFormjsValues) => {
+  const onSubmit = async (data: GarageFormValues) => {
     setError("");
     try {
-      await createCompany(data);
-      router.replace("/company/status");
+      await createGarage(data);
+      router.push("/garage/dashboard");
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || "Company creation failed");
+        setError(err.response?.data?.message || "Garage creation failed");
       } else {
-        setError("Company creation failed");
+        setError("Garage creation failed");
       }
     }
   };
@@ -58,10 +57,8 @@ export default function CreateCompanyPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50/50 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Register Your Company</CardTitle>
-          <CardDescription>
-            Enter your company details to get started.
-          </CardDescription>
+          <CardTitle>Create Garage</CardTitle>
+          <CardDescription>Add a new garage to your company.</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -72,10 +69,10 @@ export default function CreateCompanyPage() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Company Name</Label>
+              <Label htmlFor="name">Garage Name</Label>
               <Input
                 id="name"
-                placeholder="Enter company name"
+                placeholder="Enter garage name"
                 {...register("name")}
               />
               {errors.name && (
@@ -84,36 +81,24 @@ export default function CreateCompanyPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Contact Email</Label>
+              <Label htmlFor="description">Description</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="company@example.com"
-                {...register("email")}
+                id="description"
+                placeholder="Describe the garage"
+                {...register("description")}
               />
-              {errors.email && (
-                <p className="text-sm text-red-500">{errors.email.message}</p>
+              {errors.description && (
+                <p className="text-sm text-red-500">
+                  {errors.description.message}
+                </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="+1 (555) 000-0000"
-                {...register("phone")}
-              />
-              {errors.phone && (
-                <p className="text-sm text-red-500">{errors.phone.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="location">Business Location</Label>
+              <Label htmlFor="location">Location</Label>
               <Input
                 id="location"
-                placeholder="City, State"
+                placeholder="Address or GPS"
                 {...register("location")}
               />
               {errors.location && (
@@ -130,14 +115,10 @@ export default function CreateCompanyPage() {
                   Creating...
                 </>
               ) : (
-                "Register Company"
+                "Create Garage"
               )}
             </Button>
           </form>
-
-          <p className="mt-4 text-xs text-muted-foreground text-center">
-            Your company will be reviewed by our team before approval
-          </p>
         </CardContent>
       </Card>
     </div>
