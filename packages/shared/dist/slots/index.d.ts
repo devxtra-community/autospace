@@ -1,1 +1,1 @@
-export * from './slots.schema';
+export * from "./slots.schema";

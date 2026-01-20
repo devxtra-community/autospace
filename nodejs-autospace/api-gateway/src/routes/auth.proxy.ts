@@ -33,6 +33,7 @@ router.use(
       "^/owner/register": "/api/owner/register",
       "^/logout": "/api/logout",
       "^/manager/register": "/api/manager/register",
+      "^/valet/register": "/api/valet/register",
     },
 
     timeout: 10000,

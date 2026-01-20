@@ -25,7 +25,8 @@ export declare const ValetRegisterSchema: z.ZodObject<{
     phone: z.ZodString;
     password: z.ZodString;
     confirmPassword: z.ZodString;
-    garageId: z.ZodCoercedNumber<unknown>;
+    companyBrn: z.ZodString;
+    garageCode: z.ZodString;
 }, z.core.$strip>;
 export declare const ManagerRegisterSchema: z.ZodObject<{
     fullname: z.ZodString;
