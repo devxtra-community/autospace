@@ -46,6 +46,7 @@ export const authMiddleware = (
     };
 
     req.headers["x-user-id"] = decoded.id;
+    req.headers["x-user-role"] = decoded.role;
 
     next();
   } catch (error: unknown) {

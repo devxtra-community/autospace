@@ -19,4 +19,10 @@ router.use("/garages", auth_middleware_1.authMiddleware, (0, rbac_middleware_1.r
     changeOrigin: true,
     pathRewrite: (path) => `/garages${path}`,
 }));
+// slots routes
+router.use("/slots", auth_middleware_1.authMiddleware, (0, rbac_middleware_1.rbac)(role_enum_1.UserRole.MANAGER), (0, http_proxy_middleware_1.createProxyMiddleware)({
+    target: RESOURCE_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/slots${path}`,
+}));
 exports.default = router;

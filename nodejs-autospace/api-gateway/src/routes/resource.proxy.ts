@@ -34,4 +34,16 @@ router.use(
   }),
 );
 
+// slots routes
+router.use(
+  "/slots",
+  authMiddleware,
+  rbac(UserRole.MANAGER),
+  createProxyMiddleware({
+    target: RESOURCE_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/slots${path}`,
+  }),
+);
+
 export default router;
