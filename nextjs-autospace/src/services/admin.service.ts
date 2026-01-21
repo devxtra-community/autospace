@@ -1,7 +1,7 @@
 import { apiClient } from "@/lib/api";
 
 export const getPendingCompanies = async () => {
-  const res = await apiClient.get("/api/admin/companies/pending");
+  const res = await apiClient.get("/api/companies/admin/pending");
   return res.data;
 };
 
@@ -16,8 +16,9 @@ export const rejectCompany = async (id: number) => {
 };
 
 export const getPendingGarages = async () => {
-  const res = await apiClient.get("/api/admin/garages/pending");
-  return res.data;
+  // const res = await apiClient.get("/api/admin/garages/pending");
+  // return res.data;
+  return { data: [] };
 };
 
 export const approveGarage = async (id: number) => {

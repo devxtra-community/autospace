@@ -43,3 +43,27 @@ export const Logout = async (req: Request, res: Response) => {
     });
   }
 };
+
+// export const getMe = (req: Request, res: Response) => {
+//   const user = req.user; // injected by API Gateway
+
+//   if (!user) {
+//     return res.status(401).json({
+//       success: false,
+//       error: {
+//         code: "UNAUTHORIZED",
+//         message: "User not authenticated",
+//       },
+//     });
+//   }
+
+//   return res.status(200).json({
+//     success: true,
+//     data: {
+//       id: user.id,
+//       email: user.email,
+//       role: user.role,
+//       status: user.status,
+//     },
+//   });
+// };

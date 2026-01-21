@@ -22,10 +22,6 @@ const app = express();
 const port = process.env.GATEWAY_PORT || 4000;
 
 app.use(helmet());
-app.use(cookieParser());
-
-console.log("AUTH_SERVICE_URL =", process.env.AUTH_SERVICE_URL);
-
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
@@ -35,8 +31,15 @@ app.use(
   }),
 );
 
-// app.use(express.json());
-// app.use(express.urlencoded({ extended: true }));
+console.log("AUTH_SERVICE_URL =", process.env.AUTH_SERVICE_URL);
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+app.get("/debug-cookies", (req, res) => {
+  res.json(req.cookies);
+});
 
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
