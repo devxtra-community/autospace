@@ -18,7 +18,7 @@ const router = Router();
 router.post("/", validateCreateGarage, createGarageController);
 router.put("/admin/:id/active", approveGarage);
 router.put("/admin/:id/reject", rejectGarage);
-router.get("/admin", getPendingGarages);
+router.get("/admin/pending", getPendingGarages);
 router.post("/assign-manager", assignManagerController);
 router.get("/:id", getGarageByIdController);
 router.get("/admin/all", getAllGaragesController);

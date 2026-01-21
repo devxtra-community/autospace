@@ -5,28 +5,27 @@ export const getPendingCompanies = async () => {
   return res.data;
 };
 
-export const approveCompany = async (id: number) => {
+export const approveCompany = async (id: number | string) => {
   const res = await apiClient.post(`/api/admin/companies/${id}/approve`);
   return res.data;
 };
 
-export const rejectCompany = async (id: number) => {
+export const rejectCompany = async (id: number | string) => {
   const res = await apiClient.post(`/api/admin/companies/${id}/reject`);
   return res.data;
 };
 
 export const getPendingGarages = async () => {
-  // const res = await apiClient.get("/api/admin/garages/pending");
-  // return res.data;
-  return { data: [] };
+  const res = await apiClient.get("/api/garages/admin/pending");
+  return res.data;
 };
 
-export const approveGarage = async (id: number) => {
+export const approveGarage = async (id: number | string) => {
   const res = await apiClient.post(`/api/admin/garages/${id}/approve`);
   return res.data;
 };
 
-export const rejectGarage = async (id: number) => {
+export const rejectGarage = async (id: number | string) => {
   const res = await apiClient.post(`/api/admin/garages/${id}/reject`);
   return res.data;
 };

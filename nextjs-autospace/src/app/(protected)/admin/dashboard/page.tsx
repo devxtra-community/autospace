@@ -9,7 +9,7 @@ import {
   getPendingCompanies,
   approveCompany,
   rejectCompany,
-  // getPendingGarages,
+  getPendingGarages,
   approveGarage,
   rejectGarage,
 } from "@/services/admin.service";
@@ -42,11 +42,18 @@ interface Company {
 }
 
 interface Garage {
-  id: number;
+  id: string; // Changed from number to string (UUID)
   name: string;
-  description: string;
-  location: string;
+  locationName: string; // Changed from "location" to "locationName"
+  capacity: number;
+  garageRegistrationNumber: string;
+  status: string;
+  valetAvailable: boolean;
   createdAt: string;
+  companyId: string;
+  managerId: string | null;
+  latitude: string;
+  longitude: string;
 }
 
 // --- Components ---
@@ -84,15 +91,17 @@ export default function AdminPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
+  type EntityId = number | string;
+
   // Modals
   const [confirmData, setConfirmData] = useState<{
-    id: number;
+    id: EntityId;
     type: "company" | "garage";
     action: "approve";
   } | null>(null);
 
   const [rejectData, setRejectData] = useState<{
-    id: number;
+    id: EntityId;
     type: "company" | "garage";
   } | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
@@ -105,15 +114,15 @@ export default function AdminPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      // const [companiesData, garagesData] = await Promise.all([
-      //   getPendingCompanies(),
-      //   getPendingGarages(),
-      // ]);
-      const companiesData = await getPendingCompanies();
+      const [companiesData, garagesData] = await Promise.all([
+        getPendingCompanies(),
+        getPendingGarages(),
+      ]);
+
       console.log("pendingcompany", companiesData.data);
+      console.log("pendinggarages", garagesData.data);
       setCompanies(companiesData.data || []);
-      // setGarages(garagesData.data || []);
-      setGarages([]);
+      setGarages(garagesData.data || []);
     } catch (error) {
       console.error("Failed to fetch admin data", error);
     } finally {
@@ -194,7 +203,10 @@ export default function AdminPage() {
   const filteredGarages = garages.filter(
     (g) =>
       g.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      g.location.toLowerCase().includes(searchTerm.toLowerCase()),
+      g.locationName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      g.garageRegistrationNumber
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()),
   );
 
   const formatDate = (dateStr: string) => {
@@ -466,7 +478,8 @@ export default function AdminPage() {
                             </h3>
                             <div className="flex items-center text-sm text-slate-500 mt-1 gap-3">
                               <span className="flex items-center gap-1">
-                                <MapPin className="h-3 w-3" /> {garage.location}
+                                <MapPin className="h-3 w-3" />{" "}
+                                {garage.locationName}
                               </span>
                             </div>
                           </div>
@@ -514,10 +527,9 @@ export default function AdminPage() {
                         <div className="px-6 pb-6 pt-0 animate-in slide-in-from-top-2">
                           <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 grid md:grid-cols-2 gap-4 text-sm">
                             <div className="md:col-span-2">
-                              <p className="text-slate-500 mb-1">Description</p>
+                              <p className="text-slate-500 mb-1">capacity</p>
                               <p className="font-medium text-slate-800">
-                                {garage.description ||
-                                  "No description provided."}
+                                {garage.capacity || "No description provided."}
                               </p>
                             </div>
                             <div>
@@ -533,7 +545,7 @@ export default function AdminPage() {
                                 Location Details
                               </p>
                               <p className="font-medium text-slate-800">
-                                {garage.location}
+                                {garage.locationName}
                               </p>
                             </div>
                           </div>
