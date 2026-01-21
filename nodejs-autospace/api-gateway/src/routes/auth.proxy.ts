@@ -75,5 +75,6 @@ router.post("/logout", authRateLimiter, createAuthProxy("/api/logout"));
 router.post("/refresh", createAuthProxy("/api/refresh"));
 router.post("/owner/register", createAuthProxy("/api/owner/register"));
 router.post("/manager/register", createAuthProxy("/api/manager/register"));
+router.post("/valet/register", createAuthProxy("/api/valet/register"));
 
 export default router;

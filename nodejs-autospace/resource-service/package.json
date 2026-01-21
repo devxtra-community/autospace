@@ -9,7 +9,11 @@
     "start": "node dist/server.js",
     "lint": "pnpm eslint src/**/*.ts",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "typeorm": "typeorm-ts-node-commonjs -d src/db/data-source.ts",
+    "migration:generate": "pnpm typeorm migration:generate src/db/migrations/CreateValetsTable",
+    "migration:run": "pnpm typeorm migration:run",
+    "migration:revert": "pnpm typeorm migration:revert"
   },
   "dependencies": {
     "@autospace/shared": "workspace:*",
@@ -26,6 +30,8 @@
     "@types/dotenv": "^8.2.3",
     "@types/express": "^5.0.6",
     "@types/node": "^25.0.8",
-    "tsx": "^4.21.0"
+    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
+    "typeorm-ts-node-commonjs": "^0.3.20"
   }
 }

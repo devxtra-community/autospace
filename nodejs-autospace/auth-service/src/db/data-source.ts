@@ -11,7 +11,7 @@ export const AppDataSource = new DataSource({
     rejectUnauthorized: false,
   },
 
-  synchronize: true,
+  synchronize: false,
   logging: false,
   entities: [User, RefreshToken],
 });

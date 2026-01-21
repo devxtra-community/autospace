@@ -107,3 +107,36 @@ export const getCompanyByOwnerId = async (ownerUserId: string) => {
 
   return company;
 };
+export const getCompanyById = async (id: string) => {
+  const repo = AppDataSource.getRepository(Company);
+
+  const company = await repo.findOne({
+    where: { id },
+  });
+
+  if (!company) {
+    throw new Error("Company not found");
+  }
+
+  return company;
+};
+
+export const getAllCompanies = async (page = 1, limit = 10) => {
+  const repo = AppDataSource.getRepository(Company);
+
+  const [data, total] = await repo.findAndCount({
+    skip: (page - 1) * limit,
+    take: limit,
+    order: { createdAt: "DESC" },
+  });
+
+  return {
+    data,
+    meta: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
