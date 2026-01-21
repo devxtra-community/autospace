@@ -3,7 +3,8 @@ import { MapPin, Search } from "lucide-react";
 
 export default function Hero() {
   return (
-    <section className="flex flex-col items-center pt-16 pb-24 px-4 max-w-7xl mx-auto text-center">
+    <section className="flex flex-col items-center pt-8 pb-24 px-4 max-w-7xl mx-auto text-center">
+      {/* Original Headings */}
       <h1 className="text-4xl md:text-5xl font-bold text-black mb-4">
         No More Parking Hassles. Just Park
       </h1>
@@ -12,7 +13,7 @@ export default function Hero() {
       </p>
 
       {/* Search Bar */}
-      <div className="relative w-full max-w-2xl mb-24">
+      <div className="relative w-full max-w-2xl mb-16">
         <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
           <MapPin className="text-red-500 w-6 h-6" />
         </div>
@@ -26,29 +27,33 @@ export default function Hero() {
         </div>
       </div>
 
-      <div className="w-full grid grid-cols-1 md:grid-cols-2 items-center gap-8 mt-8">
-        <div className="text-left md:pl-12">
-          <h2 className="text-3xl font-serif text-[#917C0E] mb-2">
-            Hand Over{" "}
-            <span className="text-black font-sans font-normal">Your Car.</span>
-          </h2>
-          <p className="text-gray-800 text-lg mb-6">We Handle Rest</p>
-          <button className="px-8 py-3 bg-[#F4DA71] border border-black rounded-xl font-bold text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all">
-            Book your
-            <br />
-            <span className="text-sm font-normal">Valet Parking</span>
-          </button>
-        </div>
+      {/* New Title Section */}
+      <h2 className="text-6xl md:text-8xl font-bold uppercase tracking-tighter text-black mb-12">
+        Park Your Car
+      </h2>
 
-        <div className="relative h-64 md:h-80 w-full">
-          {/* Placeholder for Car Image */}
-          <div className="w-full h-full relative">
+      {/* Container for Image and Button */}
+      <div className="relative w-full max-w-4xl mx-auto mt-4">
+        {/* Pill/Oval Container */}
+        <div className="relative w-full h-[400px] md:h-[500px] rounded-[5rem] overflow-hidden shadow-2xl">
+          {/* Background Image with Blur/Dark Effect */}
+          <div className="absolute inset-0 z-0">
             <Image
-              src="https://placehold.co/800x400/1a1a1a/FFF?text=Sports+Car"
-              alt="Sports Car"
+              src="/herocar2.jpg"
+              alt="Park Your Car"
               fill
-              className="object-contain"
+              className="object-cover brightness-[0.7] blur-[1px] scale-105" // Slight scale to avoid blur edges
             />
+          </div>
+
+          {/* Overlay Content (Button) */}
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center">
+            <p className="text-white/80 font-serif italic text-2xl md:text-3xl mb-8 tracking-wide">
+              We Handle Rest
+            </p>
+            <button className="px-8 py-4 bg-[#F4DA71] border-2 border-black rounded-xl font-bold text-black text-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all uppercase tracking-wide">
+              Book your Valet Parking
+            </button>
           </div>
         </div>
       </div>

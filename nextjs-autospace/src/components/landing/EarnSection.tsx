@@ -6,7 +6,7 @@ export default function EarnSection() {
       <div className="relative rounded-[2rem] overflow-hidden bg-gray-200 h-[500px] w-full border border-gray-200 shadow-lg">
         {/* Background Image Placeholder */}
         <Image
-          src="https://placehold.co/1200x600/e0e0e0/333?text=Parking+Garage+Background"
+          src="/bgparking1.jpg"
           alt="Parking Garage"
           fill
           className="object-cover"
