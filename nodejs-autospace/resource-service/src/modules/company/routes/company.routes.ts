@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { registerCompany } from "../controllers/company.controller";
+import {
+  getAllCompaniesController,
+  getCompanyDetails,
+  registerCompany,
+} from "../controllers/company.controller";
 import {
   approveCompany,
   rejectCompany,
@@ -14,8 +18,10 @@ router.post("/", validateCreateCompany, registerCompany);
 router.put("/admin/:id/active", approveCompany);
 router.put("/admin/:id/reject", rejectCompany);
 router.get("/admin/", getPendingCompanies);
+router.get("/:id", getCompanyDetails);
+router.get("/admin/all", getAllCompaniesController);
 
-// internal (service-to-service)
+// internal (resource service-to- auth service) check is company approved while manager registers
 router.get(
   "/internal/brn/:brn/validate",
   (req, res, next) => {
