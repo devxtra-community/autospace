@@ -7,7 +7,7 @@ export const AppDataSource = new DataSource({
   ssl: {
     rejectUnauthorized: false,
   },
-  synchronize: true,
+  synchronize: false,
   logging: true,
   entities: [__dirname + "/../modules/**/*.entity.{ts,js}"],
 });

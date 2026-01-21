@@ -3,6 +3,8 @@ import express from "express";
 import cors from "cors";
 import companyRoutes from "./modules/company/routes/company.routes";
 import garageRoutes from "./modules/garage/routes/garage.routes";
+import slotsRoutes from "./modules/slots/routes/slot.routes";
+import internalValetRoutes from "./modules/valets/routes/internal-valet.routes";
 
 const app = express();
 
@@ -25,5 +27,9 @@ app.get("/health", (_req, res) => {
 
 app.use("/companies", companyRoutes);
 app.use("/garages", garageRoutes);
+app.use("/slots", slotsRoutes);
+
+// auth service only
+app.use(internalValetRoutes);
 
 export default app;

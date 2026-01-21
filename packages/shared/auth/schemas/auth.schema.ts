@@ -67,7 +67,8 @@ export const UserRegisterSchema = BaseRegisterSchema.extend({
 });
 
 export const ValetRegisterSchema = BaseRegisterSchema.extend({
-  garageId: z.coerce.number(),
+  companyBrn: z.string().min(3, "Company BRN is required"),
+  garageCode: z.string().min(3, "Garage code is required"),
 }).superRefine((data, ctx) => {
   if (data.password !== data.confirmPassword) {
     ctx.addIssue({
@@ -77,7 +78,6 @@ export const ValetRegisterSchema = BaseRegisterSchema.extend({
     });
   }
 });
-
 export const ManagerRegisterSchema = BaseRegisterSchema.extend({
   businessRegistrationNumber: z
     .string()

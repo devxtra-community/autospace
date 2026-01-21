@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
 import { createGarage } from "../services/garage.service";
-import { assignManagerToGarage } from "../services/garage.service";
+import {
+  assignManagerToGarage,
+  getGaragesByCompanyId,
+} from "../services/garage2.service";
 
 export const createGarageController = async (req: Request, res: Response) => {
   try {
@@ -72,6 +75,38 @@ export const assignManagerController = async (req: Request, res: Response) => {
     return res.status(400).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+export const getGaragesByCompanyController = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const companyId = req.params.companyId as string;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
+    if (page < 1 || limit < 1) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid pagination parameters",
+      });
+    }
+
+    const result = await getGaragesByCompanyId(companyId, page, limit);
+
+    return res.status(200).json({
+      success: true,
+      message: "Garages fetched successfully",
+      data: result.data,
+      meta: result.meta,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch garages",
     });
   }
 };

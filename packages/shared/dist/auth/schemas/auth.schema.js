@@ -53,7 +53,8 @@ exports.UserRegisterSchema = exports.BaseRegisterSchema.extend({
     }
 });
 exports.ValetRegisterSchema = exports.BaseRegisterSchema.extend({
-    garageId: zod_1.z.coerce.number(),
+    companyBrn: zod_1.z.string().min(3, "Company BRN is required"),
+    garageCode: zod_1.z.string().min(3, "Garage code is required"),
 }).superRefine((data, ctx) => {
     if (data.password !== data.confirmPassword) {
         ctx.addIssue({
