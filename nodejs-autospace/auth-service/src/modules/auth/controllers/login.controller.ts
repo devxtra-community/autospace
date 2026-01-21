@@ -9,20 +9,22 @@ export const login = async (req: Request, res: Response) => {
 
     console.log("RAW BODY:", env.COOKIE_SAMESITE, env.COOKIE_SECURE);
 
-    //  Set refresh token in HTTP-only cookie
-    res.cookie("refreshToken", tokens.refreshToken, {
+    const cookieOptions = {
       httpOnly: true,
       secure: env.COOKIE_SECURE,
       sameSite: env.COOKIE_SAMESITE,
       path: "/",
+      // domain:  "localhost",
+    };
+
+    //  Set refresh token in HTTP-only cookie
+    res.cookie("refreshToken", tokens.refreshToken, {
+      ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
     res.cookie("accessToken", tokens.accessToken, {
-      httpOnly: true,
-      secure: env.COOKIE_SECURE,
-      sameSite: env.COOKIE_SAMESITE,
-      path: "/",
+      ...cookieOptions,
       maxAge: 15 * 60 * 1000,
     });
 

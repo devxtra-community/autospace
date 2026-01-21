@@ -15,12 +15,11 @@ const router = Router();
 
 router.post("/create", validateCreateCompany, registerCompany);
 
-router.get("/admin/companies", getPendingCompanies);
 router.get("/my", getMyCompany);
 
 router.put("/admin/:id/active", approveCompany);
 router.put("/admin/:id/reject", rejectCompany);
-router.get("/admin/", getPendingCompanies);
+router.get("/admin/pending", getPendingCompanies);
 
 // internal (service-to-service)
 router.get(

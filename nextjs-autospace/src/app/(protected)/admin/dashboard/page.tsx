@@ -9,7 +9,7 @@ import {
   getPendingCompanies,
   approveCompany,
   rejectCompany,
-  getPendingGarages,
+  // getPendingGarages,
   approveGarage,
   rejectGarage,
 } from "@/services/admin.service";
@@ -105,12 +105,15 @@ export default function AdminPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [companiesData, garagesData] = await Promise.all([
-        getPendingCompanies(),
-        getPendingGarages(),
-      ]);
+      // const [companiesData, garagesData] = await Promise.all([
+      //   getPendingCompanies(),
+      //   getPendingGarages(),
+      // ]);
+      const companiesData = await getPendingCompanies();
+      console.log("pendingcompany", companiesData.data);
       setCompanies(companiesData.data || []);
-      setGarages(garagesData.data || []);
+      // setGarages(garagesData.data || []);
+      setGarages([]);
     } catch (error) {
       console.error("Failed to fetch admin data", error);
     } finally {
