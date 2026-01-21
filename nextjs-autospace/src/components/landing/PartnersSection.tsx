@@ -3,17 +3,17 @@
 import Image from "next/image";
 
 const partners = [
-  { name: "Nova", src: "https://placehold.co/150x50/003366/FFF?text=NOVA" },
-  { name: "Kross", src: "https://placehold.co/150x50/333/FFF?text=CROSS" },
-  { name: "Fact", src: "https://placehold.co/150x50/000/FFF?text=FACT" },
-  { name: "Trek", src: "https://placehold.co/150x50/000/FFF?text=TREK" },
-  { name: "X", src: "https://placehold.co/150x50/000/FFF?text=X" },
+  { name: "Nova", src: "/company1.jpg" },
+  { name: "Kross", src: "/company3.jpg" },
+  { name: "Fact", src: "/company4.jpg" },
+  { name: "Trek", src: "/company5.jpg" },
+  { name: "X", src: "/comapany6.jpg" },
   // Duplicate for seamless loop
-  { name: "Nova", src: "https://placehold.co/150x50/003366/FFF?text=NOVA" },
-  { name: "Kross", src: "https://placehold.co/150x50/333/FFF?text=CROSS" },
-  { name: "Fact", src: "https://placehold.co/150x50/000/FFF?text=FACT" },
-  { name: "Trek", src: "https://placehold.co/150x50/000/FFF?text=TREK" },
-  { name: "X", src: "https://placehold.co/150x50/000/FFF?text=X" },
+  { name: "Nova", src: "/company1.jpg" },
+  { name: "Kross", src: "/company3.jpg" },
+  { name: "Fact", src: "/company4.jpg" },
+  { name: "Trek", src: "/company5.jpg" },
+  { name: "X", src: "/comapany6.jpg" },
 ];
 
 export default function PartnersSection() {
@@ -30,7 +30,7 @@ export default function PartnersSection() {
               key={index}
               className="flex-shrink-0 w-[10%] flex justify-center items-center px-4"
             >
-              <div className="relative w-32 h-12 grayscale opacity-80 hover:grayscale-0 hover:opacity-100 transition-all">
+              <div className="relative w-42 h-42 grayscale opacity-80 hover:grayscale-0 hover:opacity-100 transition-all">
                 <Image
                   src={partner.src}
                   alt={partner.name}
