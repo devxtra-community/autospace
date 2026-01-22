@@ -89,6 +89,7 @@ export const getAllGarages = async (page = 1, limit = 10) => {
   const [data, total] = await repo.findAndCount({
     skip: (page - 1) * limit,
     take: limit,
+    // valetAvailable : valetAvailable,
     order: { createdAt: "DESC" },
   });
 
