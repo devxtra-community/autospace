@@ -27,7 +27,8 @@ router.use(
   createProxyMiddleware({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
-    pathRewrite: (path) => path.replace("/public/garages", "/garages"),
+    // pathRewrite: (path) => path.replace("/public/garages", "/garages"),
+    pathRewrite: () => "/garages",
   }),
 );
 

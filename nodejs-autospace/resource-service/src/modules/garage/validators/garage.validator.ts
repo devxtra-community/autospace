@@ -65,7 +65,8 @@ export const validatePublicGarageQuery = (
   }
 
   // Attach validated data to req for controller to use
-  req.query = result.data as any;
+  // req.query = result.data as any;
+  req.validateQuery = result.data;
 
   next();
 };
