@@ -22,6 +22,15 @@ router.use(
   }),
 );
 
+router.use(
+  "/public/garages",
+  createProxyMiddleware({
+    target: RESOURCE_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => path.replace("/public/garages", "/garages"),
+  }),
+);
+
 // garage routes
 router.use(
   "/garages",
