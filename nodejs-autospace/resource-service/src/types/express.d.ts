@@ -1,4 +1,6 @@
+import "express";
 import { UserRole, UserStatus } from "@autospace/shared";
+import { PublicGarageQuery } from "../modules/garage/validators/garage.validator";
 
 declare global {
   namespace Express {
@@ -11,6 +13,7 @@ declare global {
 
     interface Request {
       user: User;
+      validateQuery?: PublicGarageQuery;
     }
   }
 }
