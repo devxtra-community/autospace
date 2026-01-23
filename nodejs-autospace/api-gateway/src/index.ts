@@ -66,6 +66,7 @@ app.get("/health/services", async (req, res) => {
 });
 
 app.use("/api/auth", authRouter);
+
 app.use("/api", resourceRouter);
 
 app.use((req, res) => {

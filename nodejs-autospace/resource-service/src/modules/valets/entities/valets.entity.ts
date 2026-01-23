@@ -33,6 +33,9 @@ export class Valet {
   @Column({ type: "boolean", default: true })
   availabilityStatus!: boolean;
 
+  @Column({ type: "uuid", nullable: true })
+  approvedBy!: string | null;
+
   @CreateDateColumn()
   createdAt!: Date;
 

@@ -9,6 +9,13 @@ const router = Router();
 const RESOURCE_SERVICE_URL =
   process.env.RESOURCE_SERVICE_URL || "http://localhost:4003";
 
+router.use("/companies", (req, _, next) => {
+  console.log("Companies route hit:", req.method, req.originalUrl);
+  next();
+});
+
+console.log("RESOURCE_SERVICE_URL =", process.env.RESOURCE_SERVICE_URL);
+
 // company routes
 router.use(
   "/companies",
@@ -27,7 +34,6 @@ router.use(
   createProxyMiddleware({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
-    // pathRewrite: (path) => path.replace("/public/garages", "/garages"),
     pathRewrite: () => "/garages",
   }),
 );

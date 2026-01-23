@@ -9,13 +9,17 @@ import Footer from "@/components/landing/Footer";
 export default function LandingPage() {
   return (
     <main className="min-h-screen bg-white">
-      <Navbar />
+      <div className="bg-background">
+        <Navbar />
+      </div>
       <Hero />
       <EarnSection />
       <ChooseParkerSection />
       <PartnersSection />
       <AboutSection />
-      <Footer />
+      <div className="bg-background">
+        <Footer />
+      </div>
     </main>
   );
 }
