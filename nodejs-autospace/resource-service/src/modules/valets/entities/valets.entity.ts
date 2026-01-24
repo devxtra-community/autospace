@@ -25,8 +25,6 @@ export class Valet {
   @PrimaryColumn("uuid")
   id!: string;
 
-  
-
   @Column({ type: "uuid" })
   companyId!: string;
 
