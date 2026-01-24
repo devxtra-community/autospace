@@ -1,5 +1,5 @@
 import { AppDataSource } from "../../../db/data-source";
-import { Valet, ValetStatus } from "../entities/valets.entity";
+import { Valet, ValetEmployementStatus } from "../entities/valets.entity";
 import { getValetsByGarageService } from "./valet.service";
 
 // Get all company valets (for owner)
@@ -7,7 +7,7 @@ export const getCompanyValetsService = async (
   companyId: string,
   //   ownerUserId: string,
   filters: {
-    status?: ValetStatus;
+    status?: ValetEmployementStatus;
     page: number;
     limit: number;
   },
@@ -19,7 +19,7 @@ export const getCompanyValetsService = async (
   // Build query
   const where: any = { companyId };
   if (filters.status) {
-    where.status = filters.status;
+    where.employmentStatus = filters.status;
   }
 
   const skip = (filters.page - 1) * filters.limit;
@@ -65,7 +65,7 @@ export const getPendingValetsService = async (
   limit: number = 10,
 ) => {
   return await getValetsByGarageService(garageId, managerUserId, {
-    status: ValetStatus.PENDING,
+    status: ValetEmployementStatus.PENDING,
     page,
     limit,
   });

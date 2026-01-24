@@ -1,6 +1,6 @@
 import { AppDataSource } from "../../../db/data-source";
-import { Valet } from "../entities/valets.entity";
-import { ValetStatus } from "../entities/valets.entity";
+import { Valet, ValetAvailabilityStatus } from "../entities/valets.entity";
+import { ValetEmployementStatus } from "../entities/valets.entity";
 
 export const registerValetService = async ({
   userId,
@@ -25,8 +25,8 @@ export const registerValetService = async ({
     id: userId,
     companyId,
     garageId,
-    status: ValetStatus.PENDING,
-    availabilityStatus: true,
+    employmentStatus: ValetEmployementStatus.PENDING,
+    availabilityStatus: ValetAvailabilityStatus.AVAILABLE,
   });
 
   return await valetRepo.save(valet);

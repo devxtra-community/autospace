@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/api";
+import apiClient from "@/lib/apiClient";
 
 export const getPendingCompanies = async () => {
   const res = await apiClient.get("/api/companies/admin/pending");

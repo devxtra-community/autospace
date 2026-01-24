@@ -1,4 +1,3 @@
-// api-gateway/src/middleware/auth.middleware.ts
 import type { Request, Response, NextFunction } from "express";
 import { verifyAccessToken } from "../utils/jwt.utils";
 import { sendAuthError } from "../utils/error";

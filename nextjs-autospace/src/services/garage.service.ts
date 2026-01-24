@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/api";
+import apiClient from "@/lib/apiClient";
 
 export const createGarage = async (payload: {
   name: string;
