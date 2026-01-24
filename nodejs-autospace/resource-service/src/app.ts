@@ -5,6 +5,7 @@ import companyRoutes from "./modules/company/routes/company.routes";
 import garageRoutes from "./modules/garage/routes/garage.routes";
 import slotsRoutes from "./modules/slots/routes/slot.routes";
 import internalValetRoutes from "./modules/valets/routes/internal-valet.routes";
+import valetRoutes from "./modules/valets/routes/valet.routes";
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.get("/health", (_req, res) => {
 app.use("/companies", companyRoutes);
 app.use("/garages", garageRoutes);
 app.use("/slots", slotsRoutes);
+app.use("/valets", valetRoutes);
 
 // auth service only
 app.use(internalValetRoutes);

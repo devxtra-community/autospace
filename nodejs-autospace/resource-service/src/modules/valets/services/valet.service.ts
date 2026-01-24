@@ -1,7 +1,7 @@
 // services/valet.service.ts
 
 import { AppDataSource } from "../../../db/data-source";
-import { Valet, ValetStatus } from "../entities/valets.entity";
+import { Valet, ValetEmployementStatus } from "../entities/valets.entity";
 import { Garage } from "../../garage/entities/garage.entity";
 
 // Approve valet
@@ -22,8 +22,8 @@ export const approveValetService = async (
   }
 
   // 2. Check if already processed
-  if (valet.status !== ValetStatus.PENDING) {
-    throw new Error(`Valet is already ${valet.status.toLowerCase()}`);
+  if (valet.employmentStatus !== ValetEmployementStatus.PENDING) {
+    throw new Error(`Valet is already ${valet.employmentStatus.toLowerCase()}`);
   }
 
   // 3. Verify manager is assigned to this garage
@@ -40,7 +40,7 @@ export const approveValetService = async (
   }
 
   // 4. Approve valet
-  valet.status = ValetStatus.ACTIVE;
+  valet.employmentStatus = ValetEmployementStatus.ACTIVE;
   valet.approvedBy = managerUserId;
 
   return await valetRepo.save(valet);
@@ -64,8 +64,8 @@ export const rejectValetService = async (
   }
 
   // 2. Check if already processed
-  if (valet.status !== ValetStatus.PENDING) {
-    throw new Error(`Valet is already ${valet.status.toLowerCase()}`);
+  if (valet.employmentStatus !== ValetEmployementStatus.PENDING) {
+    throw new Error(`Valet is already ${valet.employmentStatus.toLowerCase()}`);
   }
 
   // 3. Verify manager is assigned to this garage
@@ -82,7 +82,7 @@ export const rejectValetService = async (
   }
 
   // 4. Reject valet
-  valet.status = ValetStatus.REJECTED;
+  valet.employmentStatus = ValetEmployementStatus.REJECTED;
   valet.approvedBy = managerUserId;
 
   return await valetRepo.save(valet);
@@ -93,7 +93,7 @@ export const getValetsByGarageService = async (
   garageId: string,
   managerUserId: string,
   filters: {
-    status?: ValetStatus;
+    status?: ValetEmployementStatus;
     page: number;
     limit: number;
   },
@@ -117,7 +117,7 @@ export const getValetsByGarageService = async (
   // 2. Build query
   const where: any = { garageId };
   if (filters.status) {
-    where.status = filters.status;
+    where.employmentStatus = filters.status;
   }
 
   const skip = (filters.page - 1) * filters.limit;

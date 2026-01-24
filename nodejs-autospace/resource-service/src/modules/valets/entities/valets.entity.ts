@@ -6,10 +6,18 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 
-export enum ValetStatus {
+export enum ValetEmployementStatus {
   PENDING = "PENDING",
   ACTIVE = "ACTIVE",
   REJECTED = "REJECTED",
+  SUSPENDED = "SUSPENDED",
+}
+
+export enum ValetAvailabilityStatus {
+  AVAILABLE = "AVAILABLE", // Ready to take jobs
+  BUSY = "BUSY", // Currently assigned to a booking/job
+  OFF_DUTY = "OFF_DUTY", // Not working (break, end of shift)
+  OFFLINE = "OFFLINE", // Not logged in
 }
 
 @Entity("valets")
@@ -25,13 +33,21 @@ export class Valet {
 
   @Column({
     type: "enum",
-    enum: ValetStatus,
-    default: ValetStatus.PENDING,
+    enum: ValetEmployementStatus,
+    default: ValetEmployementStatus.PENDING,
   })
-  status!: ValetStatus;
+  employmentStatus!: ValetEmployementStatus;
 
-  @Column({ type: "boolean", default: true })
-  availabilityStatus!: boolean;
+  @Column({
+    type: "enum",
+    enum: ValetAvailabilityStatus,
+    default: ValetAvailabilityStatus.OFFLINE,
+  })
+  availabilityStatus!: ValetAvailabilityStatus;
+
+  // Optional: Track current booking they're working on
+  @Column({ type: "uuid", nullable: true })
+  currentBookingId!: string | null;
 
   @Column({ type: "uuid", nullable: true })
   approvedBy!: string | null;
