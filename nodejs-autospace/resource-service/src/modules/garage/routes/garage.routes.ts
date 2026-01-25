@@ -22,7 +22,7 @@ const router = Router();
 router.get("/", validatePublicGarageQuery, getPUblicGarageController);
 router.get("/:id", getGarageByIdController);
 
-router.post("/", validateCreateGarage, createGarageController);
+router.post("/register", validateCreateGarage, createGarageController);
 router.put("/admin/:id/active", approveGarage);
 router.put("/admin/:id/reject", rejectGarage);
 router.get("/admin/pending", getPendingGarages);

@@ -29,7 +29,7 @@ app.get("/health", (_req, res) => {
 app.use("/companies", companyRoutes);
 app.use("/garages", garageRoutes);
 app.use("/slots", slotsRoutes);
-app.use("/valets", valetRoutes);
+app.use("/valet", valetRoutes);
 
 // auth service only
 app.use(internalValetRoutes);

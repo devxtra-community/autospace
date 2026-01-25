@@ -16,22 +16,16 @@ export const registerValetService = async (data: ValetRegisterDto) => {
   const exists = await userRepo.findOne({
     where: [{ email }, { phone }],
   });
-
   if (exists) {
     throw new Error("User with this email or phone already exists");
   }
 
-  //  Resolve companyId + garageId via resource-service
   const { data: resolveData } = await axios.post(
     `${RESOURCE_SERVICE_URL}/internal/resolve-garage`,
-    {
-      companyBrn,
-      garageCode,
-    },
+    { companyBrn, garageCode },
   );
 
   const { companyId, garageId } = resolveData;
-
   if (!companyId || !garageId) {
     throw new Error("Invalid company BRN or garage code");
   }
@@ -51,11 +45,16 @@ export const registerValetService = async (data: ValetRegisterDto) => {
 
   const savedUser = await userRepo.save(user);
 
-  await axios.post(`${RESOURCE_SERVICE_URL}/internal/valets/register`, {
-    userId: savedUser.id,
-    companyId,
-    garageId,
-  });
+  try {
+    await axios.post(`${RESOURCE_SERVICE_URL}/internal/valets/register`, {
+      userId: savedUser.id,
+      companyId,
+      garageId,
+    });
+  } catch (err) {
+    await userRepo.delete(savedUser.id);
+    throw new Error("Valet creation failed, auth user rolled back");
+  }
 
   return {
     id: savedUser.id,

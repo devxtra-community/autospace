@@ -62,4 +62,16 @@ router.use(
   }),
 );
 
+// valet routes
+router.use(
+  "/valet",
+  authMiddleware,
+  rbac(UserRole.MANAGER, UserRole.VALET),
+  createProxyMiddleware({
+    target: RESOURCE_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/valet${path}`,
+  }),
+);
+
 export default router;
