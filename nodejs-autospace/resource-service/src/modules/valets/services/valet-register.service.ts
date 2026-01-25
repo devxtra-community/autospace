@@ -11,6 +11,12 @@ export const registerValetService = async ({
   companyId: string;
   garageId: string;
 }) => {
+  console.log("INTERNAL VALET REGISTER PAYLOAD:", {
+    userId,
+    companyId,
+    garageId,
+  });
+
   const valetRepo = AppDataSource.getRepository(Valet);
 
   const exists = await valetRepo.findOne({

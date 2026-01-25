@@ -25,13 +25,14 @@ export class Valet {
   @PrimaryColumn("uuid")
   id!: string;
 
-  @Column({ type: "uuid" })
+  @Column({ name: "company_id", type: "uuid" })
   companyId!: string;
 
-  @Column({ type: "uuid" })
+  @Column({ name: "garage_id", type: "uuid" })
   garageId!: string;
 
   @Column({
+    name: "employment_status",
     type: "enum",
     enum: ValetEmployementStatus,
     default: ValetEmployementStatus.PENDING,
@@ -39,22 +40,22 @@ export class Valet {
   employmentStatus!: ValetEmployementStatus;
 
   @Column({
+    name: "availability_status",
     type: "enum",
     enum: ValetAvailabilityStatus,
     default: ValetAvailabilityStatus.OFFLINE,
   })
   availabilityStatus!: ValetAvailabilityStatus;
 
-  // Optional: Track current booking they're working on
-  @Column({ type: "uuid", nullable: true })
+  @Column({ name: "current_booking_id", type: "uuid", nullable: true })
   currentBookingId!: string | null;
 
-  @Column({ type: "uuid", nullable: true })
+  @Column({ name: "approved_by", type: "uuid", nullable: true })
   approvedBy!: string | null;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: "created_at" })
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: "updated_at" })
   updatedAt!: Date;
 }

@@ -17,14 +17,19 @@ import {
 
 const router = Router();
 
-router.put("/:id/approve", validateValetIdParam, approveValetController);
-router.put("/:id/reject", validateValetIdParam, rejectValetController);
+router.put(
+  "/:id/manager/approve",
+  validateValetIdParam,
+  approveValetController,
+);
+router.put("/:id//manager/reject", validateValetIdParam, rejectValetController);
 router.get("/pending", getPendingValetsController);
 router.get(
   "/garage/:garageId",
   validateGetValetsByGarage,
   getValetsByGarageController,
 );
+
 router.get(
   "/company/:compoanyId",
   validateGetValetsByGarage,
