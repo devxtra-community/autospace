@@ -6,7 +6,7 @@ import {
   getPendingCompanies,
   approveCompany,
   rejectCompany,
-  // getCompanyAdmin,
+  getCompanyAdmin,
 } from "@/services/admin.service";
 import { Loader2, Building2 } from "lucide-react";
 
@@ -36,7 +36,7 @@ type EntityId = number | string;
 
 export default function AdminCompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
-  // const [allComapnies , setAllCompanies] = useState<Company[]>([]);
+  const [allCompanies, setAllCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
@@ -63,8 +63,8 @@ export default function AdminCompaniesPage() {
       setLoading(true);
       const res = await getPendingCompanies();
       setCompanies(res.data || []);
-      // const response = await getCompanyAdmin();
-      // setAllCompanies(res.data || []);
+      const response = await getCompanyAdmin();
+      setAllCompanies(response.data || []);
     } catch (error) {
       console.error("Failed to fetch admin data", error);
     } finally {
@@ -127,6 +127,17 @@ export default function AdminCompaniesPage() {
     [companies, searchTerm],
   );
 
+  const filteredActiveCompanies = useMemo(
+    () =>
+      allCompanies.filter(
+        (c) =>
+          (c.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            c.contactEmail.toLowerCase().includes(searchTerm.toLowerCase())) &&
+          !companies.some((pc) => pc.id === c.id),
+      ),
+    [allCompanies, companies, searchTerm],
+  );
+
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("en-US", {
       year: "numeric",
@@ -165,7 +176,7 @@ export default function AdminCompaniesPage() {
               value="active"
               className="rounded-lg px-6 py-2.5 text-sm font-medium transition-all data-[state=active]:bg-primary data-[state=active]:text-secondary-foreground data-[state=active]:shadow-sm"
             >
-              Active Companies
+              Active Companies ({filteredActiveCompanies.length})
             </TabsTrigger>
           </TabsList>
 
@@ -196,11 +207,30 @@ export default function AdminCompaniesPage() {
           </TabsContent>
 
           <TabsContent value="active" className="space-y-4 outline-none">
-            <EmptyState
-              icon={Building2}
-              title="Active Companies"
-              description="List of active companies will appear here."
-            />
+            {filteredActiveCompanies.length === 0 ? (
+              <EmptyState
+                icon={Building2}
+                title="No active companies"
+                description="There are no active companies matching your criteria."
+              />
+            ) : (
+              <div className="grid gap-4">
+                {filteredActiveCompanies.map((company) => (
+                  <CompanyCard
+                    key={company.id}
+                    company={company}
+                    isExpanded={expandedItems.has(`c-${company.id}`)}
+                    onToggleExpand={toggleExpand}
+                    onReject={(id) => setRejectData({ id, type: "company" })}
+                    onApprove={(id) =>
+                      setConfirmData({ id, type: "company", action: "approve" })
+                    }
+                    formatDate={formatDate}
+                    showActions={false}
+                  />
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>

@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   getPendingGarages,
+  getGarageAdmin,
   approveGarage,
   rejectGarage,
 } from "@/services/admin.service";
@@ -45,6 +46,7 @@ type EntityId = number | string;
 
 export default function AdminGaragesPage() {
   const [garages, setGarages] = useState<Garage[]>([]);
+  const [garagesAll, setGaragesAll] = useState<Garage[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
@@ -71,6 +73,8 @@ export default function AdminGaragesPage() {
       setLoading(true);
       const res = await getPendingGarages();
       setGarages(res.data || []);
+      const response = await getGarageAdmin();
+      setGaragesAll(response.data || []);
     } catch (error) {
       console.error("Failed to fetch admin data", error);
     } finally {
@@ -136,6 +140,20 @@ export default function AdminGaragesPage() {
     [garages, searchTerm],
   );
 
+  const filteredActiveGarages = useMemo(
+    () =>
+      garagesAll.filter(
+        (g) =>
+          (g.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            g.locationName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            g.garageRegistrationNumber
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())) &&
+          !garages.some((pg) => pg.id === g.id),
+      ),
+    [garagesAll, garages, searchTerm],
+  );
+
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("en-US", {
       year: "numeric",
@@ -174,7 +192,7 @@ export default function AdminGaragesPage() {
               value="active"
               className="rounded-lg px-6 py-2.5 text-sm font-medium transition-all data-[state=active]:bg-primary data-[state=active]:text-secondary-foreground data-[state=active]:shadow-sm"
             >
-              Active Garages
+              Active Garages ({filteredActiveGarages.length})
             </TabsTrigger>
           </TabsList>
 
@@ -205,11 +223,30 @@ export default function AdminGaragesPage() {
           </TabsContent>
 
           <TabsContent value="active" className="space-y-4 outline-none">
-            <EmptyState
-              icon={Warehouse}
-              title="Active Garages"
-              description="List of active garages will appear here."
-            />
+            {filteredActiveGarages.length === 0 ? (
+              <EmptyState
+                icon={Warehouse}
+                title="No active garages"
+                description="There are no active garages matching your criteria."
+              />
+            ) : (
+              <div className="grid gap-4">
+                {filteredActiveGarages.map((garage) => (
+                  <GarageCard
+                    key={garage.id}
+                    garage={garage}
+                    isExpanded={expandedItems.has(`g-${garage.id}`)}
+                    onToggleExpand={toggleExpand}
+                    onReject={(id) => setRejectData({ id, type: "garage" })}
+                    onApprove={(id) =>
+                      setConfirmData({ id, type: "garage", action: "approve" })
+                    }
+                    formatDate={formatDate}
+                    showActions={false}
+                  />
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>

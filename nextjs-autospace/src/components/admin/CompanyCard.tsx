@@ -18,6 +18,7 @@ interface CompanyCardProps {
   onReject: (id: number) => void;
   onApprove: (id: number) => void;
   formatDate: (date: string) => string;
+  showActions?: boolean;
 }
 
 export const CompanyCard = ({
@@ -27,6 +28,7 @@ export const CompanyCard = ({
   onReject,
   onApprove,
   formatDate,
+  showActions = true,
 }: CompanyCardProps) => {
   return (
     <Card className="border-border shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden rounded-2xl">
@@ -65,18 +67,22 @@ export const CompanyCard = ({
               <ChevronDown className="ml-2 h-4 w-4" />
             )}
           </Button>
-          <Button
-            className="bg-card border-destructive/10 text-destructive hover:bg-destructive/10 hover:border-destructive/20 shadow-sm border"
-            onClick={() => onReject(company.id)}
-          >
-            Reject
-          </Button>
-          <Button
-            className="bg-primary text-secondary-foreground hover:bg-primary/90 shadow-sm font-medium"
-            onClick={() => onApprove(company.id)}
-          >
-            Approve
-          </Button>
+          {showActions && (
+            <>
+              <Button
+                className="bg-card border-destructive/10 text-destructive hover:bg-destructive/10 hover:border-destructive/20 shadow-sm border"
+                onClick={() => onReject(company.id)}
+              >
+                Reject
+              </Button>
+              <Button
+                className="bg-primary text-secondary-foreground hover:bg-primary/90 shadow-sm font-medium"
+                onClick={() => onApprove(company.id)}
+              >
+                Approve
+              </Button>
+            </>
+          )}
         </div>
       </div>
 

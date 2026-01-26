@@ -17,6 +17,8 @@ export const rejectCompany = async (id: number | string) => {
 
 export const getPendingGarages = async () => {
   const res = await apiClient.get("/api/garages/admin/pending");
+  console.log("pending", res.data);
+
   return res.data;
 };
 
@@ -32,6 +34,12 @@ export const rejectGarage = async (id: number | string) => {
 
 export const getCompanyAdmin = async () => {
   const res = await apiClient.get("/api/companies/admin/all");
-  console.log(res.data);
+  console.log("all companies", res.data);
+  return res.data;
+};
+
+export const getGarageAdmin = async () => {
+  const res = await apiClient.get("api/garages/admin/all");
+  console.log("all garages", res.data);
   return res.data;
 };
