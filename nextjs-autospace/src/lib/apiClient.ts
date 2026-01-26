@@ -45,10 +45,10 @@ apiClient.interceptors.request.use(
   },
 );
 
-type AuthErrorResponse = {
-  code?: string;
-  message?: string;
-};
+// type AuthErrorResponse = {
+//   code?: string;
+//   message?: string;
+// };
 
 // Response interceptor - handle token refresh
 apiClient.interceptors.response.use(
@@ -65,72 +65,30 @@ apiClient.interceptors.response.use(
 
     // Only handle 401 errors
     if (error.response?.status === 401 && !originalRequest._retry) {
-      const errorData = error.response.data as AuthErrorResponse | undefined;
+      originalRequest._retry = true;
 
-      // Check for token expired error
-      const isTokenExpired =
-        errorData?.code === "TOKEN_EXPIRED" ||
-        errorData?.message?.includes("expired") ||
-        errorData?.message?.includes("Token has expired");
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(() => apiClient(originalRequest));
+      }
 
-      if (isTokenExpired) {
-        console.log(" Access token expired, attempting refresh...");
+      isRefreshing = true;
 
-        // If already refreshing, queue this request
-        if (isRefreshing) {
-          console.log("⏳ Refresh in progress, queuing request...");
-          return new Promise((resolve, reject) => {
-            failedQueue.push({ resolve, reject });
-          })
-            .then(() => {
-              console.log(" Retrying queued request");
-              return apiClient(originalRequest);
-            })
-            .catch((err) => {
-              return Promise.reject(err);
-            });
-        }
-
-        originalRequest._retry = true;
-        isRefreshing = true;
-
-        try {
-          console.log(" Calling refresh endpoint...");
-
-          // Call refresh endpoint
-          const response = await axios.post(
-            `${BASE_URL}/api/auth/refresh`,
-            {},
-            {
-              withCredentials: true, // Send refresh token cookie
-            },
-          );
-
-          console.log(response.status, "Token refreshed successfully");
-
-          isRefreshing = false;
-          processQueue(null);
-
-          // Retry the original request
-          console.log(" Retrying original request");
-          return apiClient(originalRequest);
-        } catch (refreshError) {
-          console.error(" Token refresh failed:", refreshError);
-
-          isRefreshing = false;
-          processQueue(refreshError as Error, null);
-
-          // Redirect to login
-          if (typeof window !== "undefined") {
-            console.log(" Redirecting to login...");
-            // Clear any stored data
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.href = "/login";
-          }
-
-          return Promise.reject(refreshError);
-        }
+      try {
+        await apiClient.post(
+          "/api/auth/refresh",
+          {},
+          { withCredentials: true },
+        );
+        processQueue(null);
+        return apiClient(originalRequest);
+      } catch (err) {
+        processQueue(err as Error);
+        window.location.href = "/login";
+        return Promise.reject(err);
+      } finally {
+        isRefreshing = false;
       }
     }
 

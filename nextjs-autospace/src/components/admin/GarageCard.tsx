@@ -17,6 +17,7 @@ interface GarageCardProps {
   onReject: (id: string) => void;
   onApprove: (id: string) => void;
   formatDate: (date: string) => string;
+  showActions?: boolean;
 }
 
 export const GarageCard = ({
@@ -26,12 +27,13 @@ export const GarageCard = ({
   onReject,
   onApprove,
   formatDate,
+  showActions = true,
 }: GarageCardProps) => {
   return (
     <Card className="border-border shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden rounded-2xl">
       <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-start gap-4">
-          <div className="h-12 w-12 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0 text-orange-600 font-bold text-lg">
+          <div className="h-12 w-12 rounded-full bg-secondary/10 flex items-center justify-center flex-shrink-0 text-secondary font-bold text-lg">
             {garage.name.charAt(0).toUpperCase()}
           </div>
           <div>
@@ -58,18 +60,22 @@ export const GarageCard = ({
               <ChevronDown className="ml-2 h-4 w-4" />
             )}
           </Button>
-          <Button
-            className="bg-card border-destructive/10 text-destructive hover:bg-destructive/10 hover:border-destructive/20 shadow-sm border"
-            onClick={() => onReject(garage.id)}
-          >
-            Reject
-          </Button>
-          <Button
-            className="bg-primary text-secondary-foreground hover:bg-primary/90 shadow-sm font-medium"
-            onClick={() => onApprove(garage.id)}
-          >
-            Approve
-          </Button>
+          {showActions && (
+            <>
+              <Button
+                className="bg-card border-destructive/10 text-destructive hover:bg-destructive/10 hover:border-destructive/20 shadow-sm border"
+                onClick={() => onReject(garage.id)}
+              >
+                Reject
+              </Button>
+              <Button
+                className="bg-primary text-secondary-foreground hover:bg-primary/90 shadow-sm font-medium"
+                onClick={() => onApprove(garage.id)}
+              >
+                Approve
+              </Button>
+            </>
+          )}
         </div>
       </div>
 

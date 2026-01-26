@@ -20,7 +20,7 @@ import { getPUblicGarageController } from "../controllers/public.garage.controll
 
 const router = Router();
 
-router.get("/", validatePublicGarageQuery, getPUblicGarageController);
+router.get("/admin/all", validatePublicGarageQuery, getPUblicGarageController);
 router.get("/:id", getGarageByIdController);
 
 router.post("/register", validateCreateGarage, createGarageController);
