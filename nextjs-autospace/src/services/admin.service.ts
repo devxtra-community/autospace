@@ -29,3 +29,9 @@ export const rejectGarage = async (id: number | string) => {
   const res = await apiClient.put(`/api/admin/garages/${id}/reject`);
   return res.data;
 };
+
+export const getCompanyAdmin = async () => {
+  const res = await apiClient.get("/api/companies/admin/all");
+  console.log(res.data);
+  return res.data;
+};

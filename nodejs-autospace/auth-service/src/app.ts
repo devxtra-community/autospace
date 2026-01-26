@@ -26,7 +26,7 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/api/owner", ownerRoutes);
-app.use("/api", authRoutes);
 app.use("/api/manager", managerRoutes);
+app.use("/api", authRoutes);
 app.use(globalErrorHandler);
 export default app;
