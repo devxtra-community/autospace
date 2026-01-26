@@ -7,6 +7,11 @@ const error_2 = require("../utils/error");
 const authMiddleware = (req, res, next) => {
     try {
         // console.log("Cookies in gateway:", req.cookies);
+        console.log("=== AUTH MIDDLEWARE DEBUG ===");
+        console.log("Cookies:", req.cookies);
+        console.log("Authorization header:", req.headers.authorization);
+        console.log("All headers:", req.headers);
+        console.log("===========================");
         const tokenFromCookie = req.cookies?.accessToken;
         const authHeader = req.headers.authorization;
         const tokenFromHeader = authHeader && authHeader.startsWith("Bearer ")
@@ -28,6 +33,8 @@ const authMiddleware = (req, res, next) => {
             status: decoded.status,
         };
         req.headers["x-user-id"] = decoded.id;
+        console.log("AUTH USER:", req.user);
+        req.headers["x-user-role"] = decoded.role;
         next();
     }
     catch (error) {

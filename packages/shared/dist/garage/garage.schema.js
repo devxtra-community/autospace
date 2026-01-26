@@ -8,4 +8,9 @@ exports.CreateGarageSchema = zod_1.z.object({
     latitude: zod_1.z.number().min(-90).max(90),
     longitude: zod_1.z.number().min(-180).max(180),
     capacity: zod_1.z.number().int().positive(),
+    contactEmail: zod_1.z.string().email().optional(),
+    contactPhone: zod_1.z
+        .string()
+        .regex(/^\+?[0-9]{7,15}$/, "Invalid phone number")
+        .optional(),
 });

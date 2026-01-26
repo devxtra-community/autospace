@@ -3,6 +3,7 @@ import {
   assignManagerController,
   createGarageController,
   getGaragesByCompanyController,
+  updateGarageProfileController,
 } from "../controllers/garage.controller";
 import { validateCreateGarage } from "../validators/garage.validator";
 import {
@@ -23,5 +24,6 @@ router.post("/assign-manager", assignManagerController);
 router.get("/:id", getGarageByIdController);
 router.get("/admin/all", getAllGaragesController);
 router.get("/byCompany/:companyId", getGaragesByCompanyController);
+router.put("/:id", updateGarageProfileController);
 
 export default router;

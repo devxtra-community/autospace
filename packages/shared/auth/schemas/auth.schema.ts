@@ -114,6 +114,14 @@ export const LoginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+export const UpdateProfileSchema = z.object({
+  name: z.string().min(2).optional(),
+  email: z.string().email().optional(),
+  phone: z.string().min(7).max(20).optional(),
+});
+
+export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>;
+
 export type UserRegisterDto = z.infer<typeof UserRegisterSchema>;
 export type ManagerRegisterDto = z.infer<typeof ManagerRegisterSchema>;
 export type ValetRegisterDto = z.infer<typeof ValetRegisterSchema>;

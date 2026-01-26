@@ -76,5 +76,6 @@ router.post("/refresh", createAuthProxy("/api/refresh"));
 router.post("/owner/register", createAuthProxy("/api/owner/register"));
 router.post("/manager/register", createAuthProxy("/api/manager/register"));
 router.post("/valet/register", createAuthProxy("/api/valet/register"));
+router.patch("/profile/my", createAuthProxy("api/profile/my"));
 
 export default router;

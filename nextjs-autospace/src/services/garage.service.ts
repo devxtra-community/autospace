@@ -10,7 +10,7 @@ export const createGarage = async (payload: {
   return res.data.data;
 };
 
-export const getMyGarages = async () => {
-  const res = await apiClient.get("/api/garages/my");
+export const getMyGarages = async (companyId: string) => {
+  const res = await apiClient.get(`/api/garages/byCompany/${companyId}`);
   return res.data.data;
 };

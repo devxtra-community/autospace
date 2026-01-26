@@ -4,6 +4,7 @@ import {
   getAllCompaniesController,
   getCompanyDetails,
   registerCompany,
+  updateCompanyProfileController,
 } from "../controllers/company.controller";
 import {
   approveCompany,
@@ -24,6 +25,7 @@ router.put("/admin/:id/reject", rejectCompany);
 router.get("/admin/pending", getPendingCompanies);
 router.get("/:id", getCompanyDetails);
 router.get("/admin/all", getAllCompaniesController);
+router.put("/:id", updateCompanyProfileController);
 
 // internal (resource service-to- auth service) check is company approved while manager registers
 router.get(

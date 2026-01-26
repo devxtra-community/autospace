@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LoginSchema = exports.CompanyRegisterSchema = exports.ManagerRegisterSchema = exports.ValetRegisterSchema = exports.UserRegisterSchema = exports.BaseRegisterSchema = exports.PhoneSchema = exports.PasswordSchema = exports.EmailSchema = void 0;
+exports.UpdateProfileSchema = exports.LoginSchema = exports.CompanyRegisterSchema = exports.ManagerRegisterSchema = exports.ValetRegisterSchema = exports.UserRegisterSchema = exports.BaseRegisterSchema = exports.PhoneSchema = exports.PasswordSchema = exports.EmailSchema = void 0;
 const zod_1 = require("zod");
 // import { EmailSchema, PhoneSchema, PasswordSchema } from "./common.schema"
 exports.EmailSchema = zod_1.z
@@ -94,4 +94,9 @@ exports.CompanyRegisterSchema = exports.BaseRegisterSchema.extend({
 exports.LoginSchema = zod_1.z.object({
     email: zod_1.z.string().email("Invalid email format"),
     password: zod_1.z.string().min(1, "Password is required"),
+});
+exports.UpdateProfileSchema = zod_1.z.object({
+    name: zod_1.z.string().min(2).optional(),
+    email: zod_1.z.string().email().optional(),
+    phone: zod_1.z.string().min(7).max(20).optional(),
 });
