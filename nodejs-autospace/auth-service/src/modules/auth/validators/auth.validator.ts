@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { RegisterApiSchema, LoginApiSchema } from "./auth.api.schema";
+import { UpdateProfileSchema } from "@autospace/shared";
 
 export const validateRegister = (
   req: Request,
@@ -34,5 +35,23 @@ export const validateLogin = (
   }
 
   req.body = parsed.data;
+  next();
+};
+
+export const validateUpdateProfile = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const result = UpdateProfileSchema.safeParse(req.body);
+
+  if (!result.success) {
+    return res.status(400).json({
+      success: false,
+      errors: result.error.issues,
+    });
+  }
+
+  req.body = result.data;
   next();
 };

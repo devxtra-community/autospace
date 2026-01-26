@@ -46,19 +46,16 @@ export declare const CompanyRegisterSchema: z.ZodObject<{
     bussinessNumber: z.ZodCoercedNumber<unknown>;
     location: z.ZodString;
 }, z.core.$strip>;
-
-export declare const LoginSchema: z.ZodUnion<
-  [
-    z.ZodObject<{
-      email: z.ZodString;
-      password: z.ZodString;
-    }>,
-    z.ZodObject<{
-      phone: z.ZodString;
-      password: z.ZodString;
-    }>
-  ]
->;
+export declare const LoginSchema: z.ZodObject<{
+    email: z.ZodString;
+    password: z.ZodString;
+}, z.core.$strip>;
+export declare const UpdateProfileSchema: z.ZodObject<{
+    name: z.ZodOptional<z.ZodString>;
+    email: z.ZodOptional<z.ZodString>;
+    phone: z.ZodOptional<z.ZodString>;
+}, z.core.$strip>;
+export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>;
 export type UserRegisterDto = z.infer<typeof UserRegisterSchema>;
 export type ManagerRegisterDto = z.infer<typeof ManagerRegisterSchema>;
 export type ValetRegisterDto = z.infer<typeof ValetRegisterSchema>;

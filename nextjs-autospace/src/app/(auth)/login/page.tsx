@@ -36,10 +36,10 @@ export default function LoginPage() {
       setLoading(true);
       setError(null);
 
-      const payload: LoginDto =
-        loginType === "email"
-          ? { email: identifier, password }
-          : { phone: identifier, password };
+      const payload: LoginDto = {
+        email: identifier, // always use email key (even for phone UI)
+        password,
+      };
 
       await loginUser(payload);
       console.log("LOGIN OK");
@@ -47,7 +47,7 @@ export default function LoginPage() {
       const meRes = await getMe();
       console.log("ME RESPONSE", meRes.data);
 
-      redirectByRole(meRes.data.data.role);
+      await redirectByRole(meRes.data.data.role);
     } catch (err) {
       const axiosError = err as AxiosError<{
         success: false;
@@ -59,6 +59,8 @@ export default function LoginPage() {
       } else {
         setError("Login failed. Please try again.");
       }
+    } finally {
+      setLoading(false);
     }
   };
 

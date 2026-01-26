@@ -3,8 +3,10 @@ import { getCompanyByOwnerId } from "../services/company.service";
 import { createCompany } from "../services/company.service";
 import { getCompanyById } from "../services/company.service";
 import { getAllCompanies } from "../services/company.service";
+import { updateCompanyProfile } from "../services/company2.service";
 
 export const registerCompany = async (req: Request, res: Response) => {
+  console.log("Incoming body:", req.body);
   try {
     const ownerUserId = req.headers["x-user-id"] as string;
     console.log("owner", ownerUserId);
@@ -111,6 +113,40 @@ export const getAllCompaniesController = async (
     return res.status(500).json({
       success: false,
       message: "Failed to fetch companies",
+    });
+  }
+};
+
+export const updateCompanyProfileController = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const companyId = req.params.id as string;
+    const { companyName, contactEmail, contactPhone } = req.body;
+
+    if (!companyName && !contactEmail && !contactPhone) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one field is required to update",
+      });
+    }
+
+    const company = await updateCompanyProfile(companyId, {
+      companyName,
+      contactEmail,
+      contactPhone,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Company profile updated successfully",
+      data: company,
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Failed to update company",
     });
   }
 };

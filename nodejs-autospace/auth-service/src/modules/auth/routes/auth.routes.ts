@@ -6,6 +6,11 @@ import { protectedRoute } from "../services/auth.service";
 import { refresh } from "../controllers/refresh.controller";
 import { Logout } from "../controllers/logout.controller";
 import { registerValet } from "../controllers/valet.controller";
+import { validateUpdateProfile } from "../validators/auth.validator";
+import {
+  getMyProfileController,
+  updateProfileController,
+} from "../controllers/user.controller";
 
 // import { authMiddleware } from "../../../../../api-gateway/src/middleware/auth.middleware.js"
 // import { rbac } from "../../../middlewares/rbac.middleware";
@@ -30,5 +35,7 @@ router.post("/register", validateRegister, register);
 router.post("/login", validateLogin, login);
 router.post("/logout", Logout);
 router.post("/valet/register", registerValet);
+router.get("/profile/my", getMyProfileController);
+router.patch("/profile/my", validateUpdateProfile, updateProfileController);
 
 export default router;

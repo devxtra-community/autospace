@@ -34,8 +34,16 @@ export const createGarage = async (
   const seqNumber = result[0].seq;
   const garageRegistrationNumber = `GR-${String(seqNumber).padStart(4, "0")}`;
 
+  console.log("CREATE GARAGE INPUT:", data);
+
   const garage = garageRepo.create({
-    ...data,
+    name: data.name,
+    locationName: data.locationName,
+    latitude: data.latitude,
+    longitude: data.longitude,
+    capacity: data.capacity,
+    contactEmail: data.contactEmail ?? null,
+    contactPhone: data.contactPhone ?? null,
     companyId: company.id,
     garageRegistrationNumber,
     createdBy: ownerUserId,
@@ -48,6 +56,8 @@ export const createGarage = async (
     id: saved.id,
     name: saved.name,
     locationName: saved.locationName,
+    contactEmail: saved.contactEmail,
+    contactPhone: saved.contactPhone,
     status: saved.status,
     garageRegistrationNumber,
     createdAt: saved.createdAt,
@@ -104,6 +114,31 @@ export const updateGarageStatus = async (
   console.log(
     `[AUDIT] Admin ${adminUserId} set company ${companyId} to ${status}`,
   );
+
+  return garage;
+};
+
+export const updateGarageProfile = async (
+  garageId: string,
+  data: {
+    name?: string;
+    contactEmail?: string;
+    contactPhone?: string;
+  },
+) => {
+  const repo = AppDataSource.getRepository(Garage);
+
+  const garage = await repo.findOne({ where: { id: garageId } });
+
+  if (!garage) {
+    throw new Error("Garage not found");
+  }
+
+  if (data.name !== undefined) garage.name = data.name;
+  if (data.contactEmail !== undefined) garage.contactEmail = data.contactEmail;
+  if (data.contactPhone !== undefined) garage.contactPhone = data.contactPhone;
+
+  await repo.save(garage);
 
   return garage;
 };

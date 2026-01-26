@@ -1,11 +1,12 @@
 import { Request, Response } from "express";
-import { createGarage } from "../services/garage.service";
+import { createGarage, updateGarageProfile } from "../services/garage.service";
 import {
   assignManagerToGarage,
   getGaragesByCompanyId,
 } from "../services/garage2.service";
 
 export const createGarageController = async (req: Request, res: Response) => {
+  console.log("RESOURCE BODY:", req.body);
   try {
     const ownerUserId = req.headers["x-user-id"] as string;
 
@@ -107,6 +108,40 @@ export const getGaragesByCompanyController = async (
     return res.status(500).json({
       success: false,
       message: "Failed to fetch garages",
+    });
+  }
+};
+
+export const updateGarageProfileController = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const garageId = req.params.id as string;
+    const { name, contactEmail, contactPhone } = req.body;
+
+    if (!name && !contactEmail && !contactPhone) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one field is required to update",
+      });
+    }
+
+    const garage = await updateGarageProfile(garageId, {
+      name,
+      contactEmail,
+      contactPhone,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Garage profile updated successfully",
+      data: garage,
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Failed to update garage",
     });
   }
 };

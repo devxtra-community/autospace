@@ -31,6 +31,22 @@ export class Garage {
   @Column({ type: "varchar", length: 150 })
   name!: string;
 
+  @Column({
+    type: "varchar",
+    name: "contact_email",
+    length: 150,
+    nullable: true,
+  })
+  contactEmail!: string | null;
+
+  @Column({
+    type: "varchar",
+    name: "contact_phone",
+    length: 20,
+    nullable: true,
+  })
+  contactPhone!: string | null;
+
   @Column({ type: "varchar", length: 255 })
   locationName!: string;
 

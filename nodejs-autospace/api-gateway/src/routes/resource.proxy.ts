@@ -3,20 +3,13 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { rbac } from "../middleware/rbac.middleware";
 import { UserRole } from "../constants/role.enum";
+import type { Request } from "express";
+import type { ClientRequest } from "http";
 
 const router = Router();
-
 const RESOURCE_SERVICE_URL =
   process.env.RESOURCE_SERVICE_URL || "http://localhost:4003";
 
-router.use("/companies", (req, _, next) => {
-  console.log("Companies route hit:", req.method, req.originalUrl);
-  next();
-});
-
-console.log("RESOURCE_SERVICE_URL =", process.env.RESOURCE_SERVICE_URL);
-
-// company routes
 router.use(
   "/companies",
   authMiddleware,
@@ -24,8 +17,19 @@ router.use(
   createProxyMiddleware({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
-
     pathRewrite: (path) => `/companies${path}`,
+
+    //  move onProxyReq under "on"
+    on: {
+      proxyReq: (proxyReq: ClientRequest, req: Request) => {
+        if (req.body) {
+          const bodyData = JSON.stringify(req.body);
+          proxyReq.setHeader("Content-Type", "application/json");
+          proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
+          proxyReq.write(bodyData);
+        }
+      },
+    },
   }),
 );
 
@@ -37,6 +41,10 @@ router.use(
     pathRewrite: () => "/garages",
   }),
 );
+router.use("/garages", (req, _res, next) => {
+  console.log("GATEWAY BODY:", req.body);
+  next();
+});
 
 // garage routes
 router.use(
@@ -47,6 +55,18 @@ router.use(
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
     pathRewrite: (path) => `/garages${path}`,
+    on: {
+      proxyReq: (proxyReq: ClientRequest, req: Request) => {
+        if (!req.body || !Object.keys(req.body).length) return;
+
+        const bodyData = JSON.stringify(req.body);
+
+        proxyReq.setHeader("Content-Type", "application/json");
+        proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
+
+        proxyReq.write(bodyData);
+      },
+    },
   }),
 );
 
