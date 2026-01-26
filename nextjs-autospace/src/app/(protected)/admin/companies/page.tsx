@@ -6,10 +6,10 @@ import {
   getPendingCompanies,
   approveCompany,
   rejectCompany,
+  // getCompanyAdmin,
 } from "@/services/admin.service";
 import { Loader2, Building2 } from "lucide-react";
 
-// Extracted Components
 import { DashboardHeader } from "@/components/admin/DashboardHeader";
 import { StatusMessage } from "@/components/admin/StatusMessage";
 import { CompanyCard } from "@/components/admin/CompanyCard";
@@ -22,8 +22,6 @@ type EmptyStateProps = {
   title: string;
   description: string;
 };
-
-// --- Types ---
 
 interface Company {
   id: number;
@@ -38,6 +36,7 @@ type EntityId = number | string;
 
 export default function AdminCompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
+  // const [allComapnies , setAllCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
@@ -64,6 +63,8 @@ export default function AdminCompaniesPage() {
       setLoading(true);
       const res = await getPendingCompanies();
       setCompanies(res.data || []);
+      // const response = await getCompanyAdmin();
+      // setAllCompanies(res.data || []);
     } catch (error) {
       console.error("Failed to fetch admin data", error);
     } finally {

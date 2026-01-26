@@ -98,15 +98,15 @@ apiClient.interceptors.response.use(
           console.log(" Calling refresh endpoint...");
 
           // Call refresh endpoint
-          // const response = await axios.post(
-          //   `${BASE_URL}/api/auth/refresh`,
-          //   {},
-          //   {
-          //     withCredentials: true, // Send refresh token cookie
-          //   }
-          // );
+          const response = await axios.post(
+            `${BASE_URL}/api/auth/refresh`,
+            {},
+            {
+              withCredentials: true, // Send refresh token cookie
+            },
+          );
 
-          console.log("Token refreshed successfully");
+          console.log(response.status, "Token refreshed successfully");
 
           isRefreshing = false;
           processQueue(null);

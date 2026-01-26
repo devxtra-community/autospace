@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { logoutUser } from "@/lib/auth.api";
 import {
   LayoutDashboard,
   Building2,
@@ -28,6 +29,10 @@ const navItems = [
 export function AdminSidebar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+
+  const handleLogout = async () => {
+    await logoutUser();
+  };
 
   return (
     <>
@@ -97,7 +102,10 @@ export function AdminSidebar() {
 
         {/* Logout */}
         <div className="p-4 border-t border-sidebar-border/20">
-          <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-sidebar-primary-foreground/70 hover:bg-destructive/10 hover:text-destructive w-full transition-all group">
+          <button
+            onClick={() => handleLogout()}
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-sidebar-primary-foreground/70 hover:bg-destructive/10 hover:text-destructive w-full transition-all group"
+          >
             <LogOut
               size={20}
               className="text-sidebar-primary-foreground/50 group-hover:text-destructive"

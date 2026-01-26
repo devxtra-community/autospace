@@ -28,20 +28,17 @@ export const loginUser = async (
   const userRepo = AppDataSource.getRepository(User);
   const refreshRepo = AppDataSource.getRepository(RefreshToken);
 
-  //  Fetch user (already migrated)
   const user = await userRepo.findOne({ where: { email } });
 
   if (!user) {
     throw new Error("Invalid credentials");
   }
 
-  //  Password check
   const isPassword = await bcrypt.compare(password, user.password_hash);
   if (!isPassword) {
     throw new Error("Invalid credentials");
   }
 
-  //  Role approval check
   if (
     (user.role === UserRole.OWNER ||
       user.role === UserRole.MANAGER ||
@@ -51,7 +48,6 @@ export const loginUser = async (
     throw new Error("User not approved");
   }
 
-  //  Generate tokens
   const tokens = generateTokenPair({
     id: user.id,
     email: user.email,
@@ -59,14 +55,12 @@ export const loginUser = async (
     status: user.status as UserStatus,
   });
 
-  //  SAVE refresh token using TypeORM (NEW)
   await refreshRepo.save({
     token_hash: hashToken(tokens.refreshToken),
     expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     user,
   });
 
-  //  Return same contract as before
   return {
     user: {
       id: user.id,

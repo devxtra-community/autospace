@@ -4,7 +4,6 @@ import { env } from "../../../config/env.config";
 
 export const login = async (req: Request, res: Response) => {
   try {
-    //  Service handles validation, token creation & DB
     const { user, tokens } = await loginUser(req.body);
 
     console.log("RAW BODY:", env.COOKIE_SAMESITE, env.COOKIE_SECURE);
@@ -14,13 +13,11 @@ export const login = async (req: Request, res: Response) => {
       secure: env.COOKIE_SECURE,
       sameSite: env.COOKIE_SAMESITE,
       path: "/",
-      // domain:  "localhost",
     };
 
-    //  Set refresh token in HTTP-only cookie
     res.cookie("refreshToken", tokens.refreshToken, {
       ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.cookie("accessToken", tokens.accessToken, {
@@ -28,13 +25,9 @@ export const login = async (req: Request, res: Response) => {
       maxAge: 15 * 60 * 1000,
     });
 
-    //  Return ONLY access token in body
     return res.status(200).json({
       success: true,
       message: "Login successful",
-      data: {
-        accessToken: tokens.accessToken,
-      },
       user,
     });
   } catch (error: unknown) {
