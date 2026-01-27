@@ -10,8 +10,10 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
+
   "baseUrl": ".",
   "paths": {
     "@autospace/shared": ["../../packages/shared"]
-  }
+  },
+  "include": ["src"]
 }

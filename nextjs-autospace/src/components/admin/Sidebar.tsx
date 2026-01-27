@@ -11,7 +11,7 @@ import {
   Users,
   UserRound,
   BarChart3,
-  LogOut,
+  // LogOut,
   Menu,
   X,
 } from "lucide-react";
@@ -54,23 +54,24 @@ export function AdminSidebar() {
         />
       )}
 
-      {/* ===== Sidebar ===== */}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full w-64 bg-sidebar-primary border-r z-50 transform transition-transform duration-300 flex flex-col",
+          "fixed top-0 left-0 h-full w-64 bg-[#111111] z-50 transform transition-transform duration-300 flex flex-col",
           open ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         )}
       >
         {/* Header */}
-        <div className="p-4 text-xl font-bold text-sidebar-primary-foreground flex justify-between items-center border-b border-sidebar-border/20">
-          AUTOSPACE
+        <div className="p-6 pb-2 text-xl font-black text-white flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <span className="tracking-widest uppercase">AUTOSPACE</span>
+          </div>
           <button className="md:hidden" onClick={() => setOpen(false)}>
-            <X size={22} className="text-sidebar-primary-foreground" />
+            <X size={22} className="text-white/70" />
           </button>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-2 space-y-1 mt-4">
+        <nav className="flex-1 px-2 space-y-1 mt-8">
           {navItems.map(({ label, href, icon: Icon }) => {
             const isActive = pathname === href;
             return (
@@ -79,20 +80,15 @@ export function AdminSidebar() {
                 href={href}
                 onClick={() => setOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all group",
+                  "flex items-center gap-3 px-4 py-2.5 rounded-lg text-[14px] font-semibold transition-all duration-200",
                   isActive
-                    ? "bg-primary text-secondary-foreground"
-                    : "text-sidebar-primary-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    ? "bg-[#F4DA71] text-black"
+                    : "text-white/60 hover:text-white hover:bg-white/5",
                 )}
               >
                 <Icon
-                  size={20}
-                  className={cn(
-                    "transition-colors",
-                    isActive
-                      ? "text-secondary-foreground"
-                      : "text-sidebar-primary-foreground/50 group-hover:text-sidebar-accent-foreground",
-                  )}
+                  size={18}
+                  className={isActive ? "text-black" : "text-white/40"}
                 />
                 {label}
               </Link>
@@ -101,15 +97,14 @@ export function AdminSidebar() {
         </nav>
 
         {/* Logout */}
-        <div className="p-4 border-t border-sidebar-border/20">
+        <div className="p-4">
           <button
             onClick={() => handleLogout()}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-sidebar-primary-foreground/70 hover:bg-destructive/10 hover:text-destructive w-full transition-all group"
+            className="flex items-center gap-3 px-4 py-2 rounded-lg text-[14px] font-semibold text-white/50 hover:text-white w-full transition-all group"
           >
-            <LogOut
-              size={20}
-              className="text-sidebar-primary-foreground/50 group-hover:text-destructive"
-            />{" "}
+            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-white/70">
+              N
+            </div>
             Logout
           </button>
         </div>

@@ -46,3 +46,8 @@ export interface IRefreshToken {
   deviceInfo?: string;
   ipAddress?: string;
 }
+
+export interface RequestContext<TQuery = unknown, TBody = unknown> {
+  query?: TQuery;
+  body?: TBody;
+}
