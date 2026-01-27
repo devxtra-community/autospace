@@ -8,9 +8,11 @@ import { Logout } from "../controllers/logout.controller";
 import { registerValet } from "../controllers/valet.controller";
 import { validateUpdateProfile } from "../validators/auth.validator";
 import {
+  getAllUsers,
   getMyProfileController,
   updateProfileController,
 } from "../controllers/user.controller";
+import { validateGetAllUsersQuery } from "../validators/user.validator";
 
 // import { authMiddleware } from "../../../../../api-gateway/src/middleware/auth.middleware.js"
 // import { rbac } from "../../../middlewares/rbac.middleware";
@@ -20,16 +22,6 @@ const router = Router();
 
 router.get("/protected", protectedRoute);
 
-// Temp test route
-// // router.get(
-// //   "/admin-only",
-// //   authMiddleware,
-// //   rbac(UserRole.ADMIN),
-// //   (req, res) => {
-// //     res.json({ message: "Admin access granted" });
-// //   }
-// // );
-
 router.post("/refresh", refresh);
 router.post("/register", validateRegister, register);
 router.post("/login", validateLogin, login);
@@ -37,5 +29,6 @@ router.post("/logout", Logout);
 router.post("/valet/register", registerValet);
 router.get("/profile/my", getMyProfileController);
 router.patch("/profile/my", validateUpdateProfile, updateProfileController);
+router.get("/admin/allusers", validateGetAllUsersQuery, getAllUsers);
 
 export default router;
