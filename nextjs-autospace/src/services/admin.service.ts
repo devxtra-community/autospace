@@ -43,3 +43,14 @@ export const getGarageAdmin = async () => {
   console.log("all garages", res.data);
   return res.data;
 };
+
+export const getAllUsersService = async (params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: string;
+  status?: string;
+}) => {
+  const res = await apiClient.get("api/auth/admin/allusers", { params });
+  return res.data;
+};
