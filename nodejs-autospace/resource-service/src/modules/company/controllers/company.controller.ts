@@ -9,12 +9,15 @@ export const registerCompany = async (req: Request, res: Response) => {
   console.log("Incoming body:", req.body);
   try {
     const ownerUserId = req.headers["x-user-id"] as string;
+    console.log("owner", ownerUserId);
 
     if (!ownerUserId) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
     const company = await createCompany(ownerUserId, req.body);
+
+    console.log("company", company);
 
     return res.status(201).json({
       success: true,

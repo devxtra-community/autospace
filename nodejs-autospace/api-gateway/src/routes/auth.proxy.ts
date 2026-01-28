@@ -3,6 +3,8 @@ import axios from "axios";
 import express from "express";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { authRateLimiter } from "../middleware/rateLimiter.middleware";
+import { rbac } from "../middleware/rbac.middleware";
+import { UserRole } from "../constants/role.enum";
 
 const router = Router();
 
@@ -21,7 +23,6 @@ router.get("/me", authMiddleware, (req, res) => {
   });
 });
 
-// Proxy helper with proper typing
 const createAuthProxy = (targetPath: string) => {
   return async (req: Request, res: Response) => {
     try {
@@ -34,8 +35,12 @@ const createAuthProxy = (targetPath: string) => {
         headers: {
           "Content-Type": "application/json",
           Cookie: req.headers.cookie || "",
-          "x-user-id": req.user?.id,
-          "x-user-role": req.user?.role,
+
+          ...(req.user && {
+            "x-user-id": req.user.id,
+            "x-user-role": req.user.role,
+            "x-user-email": req.user.email,
+          }),
         },
 
         timeout: 10000,
@@ -71,7 +76,6 @@ const createAuthProxy = (targetPath: string) => {
   };
 };
 
-// Auth routes with rate limiting
 router.post("/login", authRateLimiter, createAuthProxy("/api/login"));
 router.post("/register", authRateLimiter, createAuthProxy("/api/register"));
 router.post("/logout", authRateLimiter, createAuthProxy("/api/logout"));
@@ -81,5 +85,11 @@ router.post("/manager/register", createAuthProxy("/api/manager/register"));
 router.post("/valet/register", createAuthProxy("/api/valet/register"));
 router.get("/profile/my", authMiddleware, createAuthProxy("/api/profile/my"));
 router.patch("/profile/my", authMiddleware, createAuthProxy("/api/profile/my"));
+router.get(
+  "/admin/allusers",
+  authMiddleware,
+  rbac(UserRole.ADMIN),
+  createAuthProxy("/api/admin/allusers"),
+);
 
 export default router;

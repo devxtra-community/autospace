@@ -5,3 +5,16 @@
 **/.env.*
 
 .next/
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Framework output
+.next/
+
+# Logs
+npm-debug.log*
+pnpm-debug.log*

@@ -6,10 +6,18 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 
-export enum ValetStatus {
+export enum ValetEmployementStatus {
   PENDING = "PENDING",
   ACTIVE = "ACTIVE",
   REJECTED = "REJECTED",
+  SUSPENDED = "SUSPENDED",
+}
+
+export enum ValetAvailabilityStatus {
+  AVAILABLE = "AVAILABLE", // Ready to take jobs
+  BUSY = "BUSY", // Currently assigned to a booking/job
+  OFF_DUTY = "OFF_DUTY", // Not working (break, end of shift)
+  OFFLINE = "OFFLINE", // Not logged in
 }
 
 @Entity("valets")
@@ -17,25 +25,37 @@ export class Valet {
   @PrimaryColumn("uuid")
   id!: string;
 
-  @Column({ type: "uuid" })
+  @Column({ name: "company_id", type: "uuid" })
   companyId!: string;
 
-  @Column({ type: "uuid" })
+  @Column({ name: "garage_id", type: "uuid" })
   garageId!: string;
 
   @Column({
+    name: "employment_status",
     type: "enum",
-    enum: ValetStatus,
-    default: ValetStatus.PENDING,
+    enum: ValetEmployementStatus,
+    default: ValetEmployementStatus.PENDING,
   })
-  status!: ValetStatus;
+  employmentStatus!: ValetEmployementStatus;
 
-  @Column({ type: "boolean", default: true })
-  availabilityStatus!: boolean;
+  @Column({
+    name: "availability_status",
+    type: "enum",
+    enum: ValetAvailabilityStatus,
+    default: ValetAvailabilityStatus.OFFLINE,
+  })
+  availabilityStatus!: ValetAvailabilityStatus;
 
-  @CreateDateColumn()
+  @Column({ name: "current_booking_id", type: "uuid", nullable: true })
+  currentBookingId!: string | null;
+
+  @Column({ name: "approved_by", type: "uuid", nullable: true })
+  approvedBy!: string | null;
+
+  @CreateDateColumn({ name: "created_at" })
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: "updated_at" })
   updatedAt!: Date;
 }

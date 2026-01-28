@@ -1,8 +1,8 @@
-import { apiClient } from "@/lib/api";
-import { api } from "@/lib/auth.api";
+import apiClient from "@/lib/apiClient";
+// import { api } from "@/lib/auth.api";
 
 export const getMyCompany = async () => {
-  const res = await api.get("/api/companies/my");
+  const res = await apiClient.get("/api/companies/my");
   console.log("data", res.data.data);
 
   return res.data.data;

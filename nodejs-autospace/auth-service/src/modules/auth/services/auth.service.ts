@@ -1,9 +1,7 @@
-// Placeholder for auth service layer
-// Business logic will be implemented later
 export {};
 
 import { Response, Request } from "express";
-
+// import { FindOptionsWhere } from "typeorm";
 // test route of protected router //
 
 export const protectedRoute = (req: Request, res: Response): void => {
@@ -17,6 +15,7 @@ export const protectedRoute = (req: Request, res: Response): void => {
 import { AppDataSource } from "../../../db/data-source";
 import { User } from "../entities/user.entity";
 import { UpdateProfileInput } from "@autospace/shared";
+import { UserRole, UserStatus } from "../constants";
 
 export const getUserProfile = async (userId: string) => {
   const repo = AppDataSource.getRepository(User);
@@ -68,5 +67,70 @@ export const updateUserProfile = async (
     email: user.email,
     phone: user.phone,
     role: user.role,
+  };
+};
+
+export const getAllUsersService = async (filters: {
+  status?: UserStatus;
+  role?: UserRole;
+  search?: string;
+  page: number;
+  limit: number;
+}) => {
+  const repo = AppDataSource.getRepository(User);
+
+  const page = Math.max(filters.page, 1);
+  const limit = Math.min(filters.limit, 50);
+  const skip = (page - 1) * limit;
+
+  const qb = repo.createQueryBuilder("user");
+
+  qb.select([
+    "user.id",
+    "user.fullname",
+    "user.email",
+    "user.phone",
+    "user.status",
+    "user.role",
+    "user.created_at",
+  ]);
+
+  if (filters.search) {
+    qb.where(
+      `(user.fullname ILIKE :search 
+        OR user.email ILIKE :search 
+        OR user.phone ILIKE :search)`,
+      { search: `%${filters.search}%` },
+    );
+  }
+
+  if (filters.status) {
+    qb.andWhere("user.status = :status", { status: filters.status });
+  }
+
+  if (filters.role) {
+    qb.andWhere("user.role = :role", { role: filters.role });
+  }
+
+  qb.orderBy("user.created_at", "DESC").skip(skip).take(limit);
+
+  const [users, total] = await qb.getManyAndCount();
+
+  return {
+    data: users.map((u) => ({
+      userId: u.id,
+      fullname: u.fullname,
+      email: u.email,
+      phone: u.phone,
+      dateJoined: u.created_at,
+      status: u.status,
+      role: u.role,
+    })),
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
   };
 };

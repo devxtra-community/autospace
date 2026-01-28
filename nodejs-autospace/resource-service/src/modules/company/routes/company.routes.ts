@@ -17,17 +17,18 @@ import { validateCompany } from "../controllers/internal.company.controller";
 const router = Router();
 
 router.post("/create", validateCreateCompany, registerCompany);
-
 router.get("/my", getMyCompany);
 
+router.get("/admin/all", getAllCompaniesController);
 router.put("/admin/:id/active", approveCompany);
 router.put("/admin/:id/reject", rejectCompany);
 router.get("/admin/pending", getPendingCompanies);
 // router.get("/:id", getCompanyDetails);
-router.get("/admin/all", getAllCompaniesController);
+// router.get("/:id", getCompanyDetails);
 router.put("/:id", updateCompanyProfileController);
 
 // internal (resource service-to- auth service) check is company approved while manager registers
+
 router.get(
   "/internal/brn/:brn/validate",
   (req, res, next) => {

@@ -1,6 +1,10 @@
 import { Request, Response } from "express";
-import { updateUserProfile } from "../services/auth.service";
+import {
+  getAllUsersService,
+  updateUserProfile,
+} from "../services/auth.service";
 import { getUserProfile } from "../services/auth.service";
+import { UserRole, UserStatus } from "../constants";
 
 export const getMyProfileController = async (req: Request, res: Response) => {
   try {
@@ -48,6 +52,50 @@ export const updateProfileController = async (req: Request, res: Response) => {
     return res.status(400).json({
       success: false,
       message: error.message || "Failed to update profile",
+    });
+  }
+};
+
+export const getAllUsers = async (req: Request, res: Response) => {
+  try {
+    const adminUserId = req.headers["x-user-id"] as string;
+
+    console.log("admin", adminUserId);
+
+    if (!adminUserId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const query = res.locals.query as {
+      status?: UserStatus;
+      role?: UserRole;
+      search?: string;
+      page: number;
+      limit: number;
+    };
+
+    const result = await getAllUsersService(query);
+
+    return res.status(200).json({
+      success: true,
+      message: "Users fetched successfully",
+      data: result.data,
+      meta: result.meta,
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to get users",
     });
   }
 };
