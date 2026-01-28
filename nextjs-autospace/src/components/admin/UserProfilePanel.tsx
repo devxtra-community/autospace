@@ -51,6 +51,8 @@ const statusStyles: Record<string, string> = {
 export function UserProfilePanel({ user, onClose }: UserProfilePanelProps) {
   if (!user) return null;
 
+  console.log("user", user);
+
   return (
     <aside className="fixed top-4 right-4 h-[calc(100vh-2rem)] w-96 bg-white rounded-3xl shadow-2xl border border-black/5 z-50 flex flex-col overflow-hidden animate-in slide-in-from-right duration-300">
       {/* Header */}
@@ -122,9 +124,7 @@ export function UserProfilePanel({ user, onClose }: UserProfilePanelProps) {
               <span className="text-xs text-gray-400 uppercase font-bold tracking-wider">
                 Phone Number
               </span>
-              <span className="text-gray-900 font-medium">
-                +1 (555) 000-0000
-              </span>
+              <span className="text-gray-900 font-medium">{user.phone}</span>
             </div>
           </div>
         </div>

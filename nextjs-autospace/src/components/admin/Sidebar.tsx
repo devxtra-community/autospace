@@ -8,10 +8,9 @@ import {
   LayoutDashboard,
   Building2,
   Warehouse,
-  Users,
   UserRound,
   BarChart3,
-  // LogOut,
+  LogOut,
   Menu,
   X,
 } from "lucide-react";
@@ -21,7 +20,7 @@ const navItems = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Companies", href: "/admin/companies", icon: Building2 },
   { label: "Garages", href: "/admin/garages", icon: Warehouse },
-  { label: "Valets", href: "/admin/valets", icon: Users },
+  // { label: "Valets", href: "/admin/valets", icon: Users },
   { label: "Users", href: "/admin/users", icon: UserRound },
   { label: "Overview", href: "/admin/overview", icon: BarChart3 },
 ];
@@ -102,8 +101,8 @@ export function AdminSidebar() {
             onClick={() => handleLogout()}
             className="flex items-center gap-3 px-4 py-2 rounded-lg text-[14px] font-semibold text-white/50 hover:text-white w-full transition-all group"
           >
-            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-white/70">
-              N
+            <div className="w-8 h-8 rounded-full bg-white/10 hover:bg-red-500 flex items-center justify-center text-xs font-bold text-white/70">
+              <LogOut size={18} />
             </div>
             Logout
           </button>
