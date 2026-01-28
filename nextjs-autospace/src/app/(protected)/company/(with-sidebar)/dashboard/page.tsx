@@ -7,6 +7,7 @@ import { getMyCompany } from "@/services/company.service";
 import { Header } from "@/components/company/Header";
 import { StatCard } from "@/components/company/StatCard";
 import { CompanyInfo } from "@/components/company/CompanyInfo";
+import { UserProfile } from "@/components/profile/UserProfile";
 
 export default function CompanyDashboardPage() {
   const router = useRouter();
@@ -48,6 +49,7 @@ export default function CompanyDashboardPage() {
         />
       </div>
 
+      <UserProfile />
       <CompanyInfo />
     </>
   );

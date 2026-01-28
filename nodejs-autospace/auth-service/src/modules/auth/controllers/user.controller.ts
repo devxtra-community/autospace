@@ -4,7 +4,8 @@ import { getUserProfile } from "../services/auth.service";
 
 export const getMyProfileController = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.id;
+    console.log("HEADERS:", req.headers);
+    const userId = req.headers["x-user-id"] as string;
 
     if (!userId) {
       return res.status(401).json({

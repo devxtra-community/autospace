@@ -34,7 +34,10 @@ const createAuthProxy = (targetPath: string) => {
         headers: {
           "Content-Type": "application/json",
           Cookie: req.headers.cookie || "",
+          "x-user-id": req.user?.id,
+          "x-user-role": req.user?.role,
         },
+
         timeout: 10000,
         validateStatus: () => true,
       });
@@ -76,6 +79,7 @@ router.post("/refresh", createAuthProxy("/api/refresh"));
 router.post("/owner/register", createAuthProxy("/api/owner/register"));
 router.post("/manager/register", createAuthProxy("/api/manager/register"));
 router.post("/valet/register", createAuthProxy("/api/valet/register"));
-router.patch("/profile/my", createAuthProxy("api/profile/my"));
+router.get("/profile/my", authMiddleware, createAuthProxy("/api/profile/my"));
+router.patch("/profile/my", authMiddleware, createAuthProxy("/api/profile/my"));
 
 export default router;

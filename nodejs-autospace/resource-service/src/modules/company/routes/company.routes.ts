@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
   getMyCompany,
   getAllCompaniesController,
-  getCompanyDetails,
+  // getCompanyDetails,
   registerCompany,
   updateCompanyProfileController,
 } from "../controllers/company.controller";
@@ -23,7 +23,7 @@ router.get("/my", getMyCompany);
 router.put("/admin/:id/active", approveCompany);
 router.put("/admin/:id/reject", rejectCompany);
 router.get("/admin/pending", getPendingCompanies);
-router.get("/:id", getCompanyDetails);
+// router.get("/:id", getCompanyDetails);
 router.get("/admin/all", getAllCompaniesController);
 router.put("/:id", updateCompanyProfileController);
 

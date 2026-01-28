@@ -22,3 +22,22 @@ export const createCompany = async (payload: {
   });
   return res.data.data;
 };
+
+export const updateCompany = async (
+  companyId: string,
+  payload: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    location?: string;
+  },
+) => {
+  const res = await apiClient.put(`/api/companies/${companyId}`, {
+    companyName: payload.name,
+    contactEmail: payload.email,
+    contactPhone: payload.phone,
+    businessLocation: payload.location,
+  });
+
+  return res.data.data;
+};
