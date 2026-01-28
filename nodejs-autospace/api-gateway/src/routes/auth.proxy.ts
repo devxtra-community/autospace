@@ -35,13 +35,19 @@ const createAuthProxy = (targetPath: string) => {
         headers: {
           "Content-Type": "application/json",
           Cookie: req.headers.cookie || "",
+<<<<<<< HEAD
 
           ...(req.user && {
             "x-user-id": req.user.id,
             "x-user-role": req.user.role,
             "x-user-email": req.user.email,
           }),
+=======
+          "x-user-id": req.user?.id,
+          "x-user-role": req.user?.role,
+>>>>>>> d7f9995 (feat(frontend): company edit api integrated)
         },
+
         timeout: 10000,
         validateStatus: () => true,
       });
@@ -82,12 +88,13 @@ router.post("/refresh", createAuthProxy("/api/refresh"));
 router.post("/owner/register", createAuthProxy("/api/owner/register"));
 router.post("/manager/register", createAuthProxy("/api/manager/register"));
 router.post("/valet/register", createAuthProxy("/api/valet/register"));
-router.patch("/profile/my", createAuthProxy("/api/profile/my"));
 router.get(
   "/admin/allusers",
   authMiddleware,
   rbac(UserRole.ADMIN),
   createAuthProxy("/api/admin/allusers"),
 );
+router.get("/profile/my", authMiddleware, createAuthProxy("/api/profile/my"));
+router.patch("/profile/my", authMiddleware, createAuthProxy("/api/profile/my"));
 
 export default router;
