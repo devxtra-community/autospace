@@ -8,12 +8,12 @@ import { env } from "../../../config/env.config";
 
 export const refresh = async (req: Request, res: Response) => {
   try {
-    console.log(" Refresh request received");
-    console.log("Cookies:", req.cookies);
+    // console.log(" Refresh request received");
+    // console.log("Cookies:", req.cookies);
     const refreshToken = req.cookies?.refreshToken;
 
     if (!refreshToken) {
-      console.log(" No refresh token in cookies");
+      // console.log(" No refresh token in cookies");
       return res.status(401).json({
         success: false,
         code: "REFRESH_TOKEN_MISSING",
@@ -27,7 +27,7 @@ export const refresh = async (req: Request, res: Response) => {
     const tokenHash = hashToken(refreshToken);
 
     //  Find token in DB
-    console.log(" Looking up token hash in database");
+    // console.log(" Looking up token hash in database");
     const storedToken = await refreshRepo.findOne({
       where: { token_hash: tokenHash },
       relations: ["user"],
@@ -43,7 +43,7 @@ export const refresh = async (req: Request, res: Response) => {
 
     //  Check expiry
     if (storedToken.expires_at < new Date()) {
-      console.log(" Token expired at:", storedToken.expires_at);
+      // console.log(" Token expired at:", storedToken.expires_at);
       await refreshRepo.delete({ id: storedToken.id });
       return res.status(401).json({
         success: false,
@@ -90,7 +90,7 @@ export const refresh = async (req: Request, res: Response) => {
       maxAge: 15 * 60 * 1000,
     });
 
-    console.log(" Token refreshed successfully for user:", user.id);
+    // console.log(" Token refreshed successfully for user:", user.id);
 
     // Return new access token
     return res.status(200).json({

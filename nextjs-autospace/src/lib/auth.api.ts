@@ -57,10 +57,8 @@ export const getMe = () => {
 
 export const logoutUser = async (): Promise<void> => {
   try {
-    // Backend should clear refresh token cookie
     await apiClient.post("/api/auth/logout");
   } finally {
-    // Remove ONLY access token
-    localStorage.removeItem("accessToken");
+    window.location.href = "/login";
   }
 };
