@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { MapPin, Search } from "lucide-react";
+import Link from "next/link";
 
 export default function Hero() {
   return (
@@ -24,7 +25,9 @@ export default function Hero() {
             className="w-full py-4 pl-12 pr-12 rounded-full border border-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#F4DA71] text-gray-600"
           />
           <div className="absolute inset-y-0 right-4 flex items-center border-l pl-3 border-gray-700">
-            <Search className="text-gray-700 w-6 h-6" />
+            <Link href="/garageDetail">
+              <Search className="text-gray-700 w-6 h-6 cursor-pointer hover:text-black transition-colors" />
+            </Link>
           </div>
         </div>
       </div>

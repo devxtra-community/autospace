@@ -41,6 +41,7 @@ router.use(
     pathRewrite: () => "/garages",
   }),
 );
+
 router.use("/garages", (req, _res, next) => {
   console.log("GATEWAY BODY:", req.body);
   next();

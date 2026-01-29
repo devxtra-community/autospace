@@ -16,11 +16,11 @@ import {
   getAllGaragesController,
   getGarageByIdController,
 } from "../controllers/admin.garage.controller";
-import { getPUblicGarageController } from "../controllers/public.garage.controller";
+import { getPublicGarageController } from "../controllers/public.garage.controller";
 
 const router = Router();
 
-router.get("/admin/all", validatePublicGarageQuery, getPUblicGarageController);
+router.get("/", validatePublicGarageQuery, getPublicGarageController);
 router.get("/:id", getGarageByIdController);
 
 router.post("/register", validateCreateGarage, createGarageController);
