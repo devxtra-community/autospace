@@ -2,9 +2,12 @@ import apiClient from "@/lib/apiClient";
 
 export const createGarage = async (payload: {
   name: string;
-  description: string;
-  location: string;
+  locationName: string;
+  latitude: number;
+  longitude: number;
+  capacity: number;
   images?: string[];
+  description?: string;
 }) => {
   const res = await apiClient.post("/api/garages/create", payload);
   return res.data.data;
