@@ -19,6 +19,9 @@ export const createGarage = async (
   if (!company) {
     throw new Error("Company not found or not approved");
   }
+  if (typeof data.latitude !== "number" || typeof data.longitude !== "number") {
+    throw new Error("Latitude and longitude are required");
+  }
 
   const exists = await garageRepo.findOne({
     where: { companyId: company.id, name: data.name },
@@ -56,6 +59,8 @@ export const createGarage = async (
     id: saved.id,
     name: saved.name,
     locationName: saved.locationName,
+    latitude: saved.latitude,
+    longitude: saved.longitude,
     contactEmail: saved.contactEmail,
     contactPhone: saved.contactPhone,
     status: saved.status,
