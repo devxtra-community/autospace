@@ -17,30 +17,41 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { UserData, UserRole, UserStatus } from "./UserTable";
+import { UserData } from "./UserTable";
 
 interface UserProfilePanelProps {
   user: UserData | null;
   onClose: () => void;
 }
 
-const roleStyles: Record<UserRole, string> = {
-  Admin: "bg-purple-100 text-purple-700 hover:bg-purple-100/80 border-none",
-  Owner: "bg-blue-100 text-blue-700 hover:bg-blue-100/80 border-none",
-  Manager: "bg-orange-100 text-orange-700 hover:bg-orange-100/80 border-none",
-  Customer:
+const roleStyles: Record<string, string> = {
+  ADMIN: "bg-purple-100 text-purple-700 hover:bg-purple-100/80 border-none",
+  OWNER: "bg-blue-100 text-blue-700 hover:bg-blue-100/80 border-none",
+  MANAGER: "bg-orange-100 text-orange-700 hover:bg-orange-100/80 border-none",
+  CUSTOMER:
     "bg-emerald-100 text-emerald-700 hover:bg-emerald-100/80 border-none",
-  Valet: "bg-pink-100 text-pink-700 hover:bg-pink-100/80 border-none",
+  VALET: "bg-pink-100 text-pink-700 hover:bg-pink-100/80 border-none",
+  admin: "bg-purple-100 text-purple-700 hover:bg-purple-100/80 border-none",
+  owner: "bg-blue-100 text-blue-700 hover:bg-blue-100/80 border-none",
+  manager: "bg-orange-100 text-orange-700 hover:bg-orange-100/80 border-none",
+  customer:
+    "bg-emerald-100 text-emerald-700 hover:bg-emerald-100/80 border-none",
+  valet: "bg-pink-100 text-pink-700 hover:bg-pink-100/80 border-none",
 };
 
-const statusStyles: Record<UserStatus, string> = {
-  Active: "bg-[#E7F7EF] text-[#0D9488]",
-  Suspended: "bg-[#FEE2E2] text-[#EF4444]",
-  Pending: "bg-[#FEF3C7] text-[#D97706]",
+const statusStyles: Record<string, string> = {
+  ACTIVE: "bg-[#E7F7EF] text-[#0D9488]",
+  SUSPENDED: "bg-[#FEE2E2] text-[#EF4444]",
+  PENDING: "bg-[#FEF3C7] text-[#D97706]",
+  active: "bg-[#E7F7EF] text-[#0D9488]",
+  suspended: "bg-[#FEE2E2] text-[#EF4444]",
+  pending: "bg-[#FEF3C7] text-[#D97706]",
 };
 
 export function UserProfilePanel({ user, onClose }: UserProfilePanelProps) {
   if (!user) return null;
+
+  console.log("user", user);
 
   return (
     <aside className="fixed top-4 right-4 h-[calc(100vh-2rem)] w-96 bg-white rounded-3xl shadow-2xl border border-black/5 z-50 flex flex-col overflow-hidden animate-in slide-in-from-right duration-300">
@@ -62,14 +73,14 @@ export function UserProfilePanel({ user, onClose }: UserProfilePanelProps) {
             {user.avatar ? (
               <img
                 src={user.avatar}
-                alt={user.name}
+                alt={user.fullname}
                 className="w-full h-full object-cover"
               />
             ) : (
               <User size={48} className="text-gray-300" />
             )}
           </div>
-          <h4 className="text-xl font-bold text-gray-900">{user.name}</h4>
+          <h4 className="text-xl font-bold text-gray-900">{user.fullname}</h4>
           <p className="text-gray-500 text-sm mb-4">{user.email}</p>
 
           <div className="flex gap-2">
@@ -113,9 +124,7 @@ export function UserProfilePanel({ user, onClose }: UserProfilePanelProps) {
               <span className="text-xs text-gray-400 uppercase font-bold tracking-wider">
                 Phone Number
               </span>
-              <span className="text-gray-900 font-medium">
-                +1 (555) 000-0000
-              </span>
+              <span className="text-gray-900 font-medium">{user.phone}</span>
             </div>
           </div>
         </div>
@@ -126,7 +135,7 @@ export function UserProfilePanel({ user, onClose }: UserProfilePanelProps) {
             Specific Details
           </h5>
 
-          {user.role === "Owner" && (
+          {user.role?.toLowerCase() === "owner" && (
             <div className="space-y-4">
               <DetailItem
                 icon={<Building2 size={16} />}
@@ -146,7 +155,7 @@ export function UserProfilePanel({ user, onClose }: UserProfilePanelProps) {
             </div>
           )}
 
-          {user.role === "Manager" && (
+          {user.role?.toLowerCase() === "manager" && (
             <div className="space-y-4">
               <DetailItem
                 icon={<Warehouse size={16} />}
@@ -166,7 +175,7 @@ export function UserProfilePanel({ user, onClose }: UserProfilePanelProps) {
             </div>
           )}
 
-          {user.role === "Customer" && (
+          {user.role?.toLowerCase() === "customer" && (
             <div className="space-y-4">
               <DetailItem
                 icon={<ShoppingBag size={16} />}
@@ -181,7 +190,7 @@ export function UserProfilePanel({ user, onClose }: UserProfilePanelProps) {
             </div>
           )}
 
-          {user.role === "Valet" && (
+          {user.role?.toLowerCase() === "valet" && (
             <div className="space-y-4">
               <DetailItem
                 icon={<Briefcase size={16} />}
@@ -201,7 +210,7 @@ export function UserProfilePanel({ user, onClose }: UserProfilePanelProps) {
             </div>
           )}
 
-          {user.role === "Admin" && (
+          {user.role?.toLowerCase() === "admin" && (
             <div className="p-4 bg-purple-50 rounded-2xl border border-purple-100">
               <p className="text-xs text-purple-600 font-medium text-center">
                 This user has full administrative access to the platform

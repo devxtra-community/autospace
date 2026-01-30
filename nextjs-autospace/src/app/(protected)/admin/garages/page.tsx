@@ -102,7 +102,8 @@ export default function AdminGaragesPage() {
 
     try {
       await approveGarage(id as string);
-      setGarages((prev) => prev.filter((g) => g.id !== id));
+      await fetchData();
+      // setGarages((prev) => prev.filter((g) => g.id !== id));
       setMessage({ text: "Garage approved successfully", type: "success" });
     } catch {
       setMessage({ text: `Failed to approve garage`, type: "error" });
@@ -117,7 +118,8 @@ export default function AdminGaragesPage() {
 
     try {
       await rejectGarage(id as string);
-      setGarages((prev) => prev.filter((g) => g.id !== id));
+      await fetchData();
+      // setGarages((prev) => prev.filter((g) => g.id !== id));
       setMessage({ text: "Garage rejected", type: "success" });
     } catch {
       setMessage({ text: `Failed to reject garage`, type: "error" });

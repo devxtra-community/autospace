@@ -92,7 +92,8 @@ export default function AdminCompaniesPage() {
 
     try {
       await approveCompany(id as number);
-      setCompanies((prev) => prev.filter((c) => c.id !== id));
+      await fetchData();
+      // setCompanies((prev) => prev.filter((c) => c.id !== id));
       setMessage({ text: "Company approved successfully", type: "success" });
     } catch {
       setMessage({ text: `Failed to approve company`, type: "error" });
@@ -107,7 +108,8 @@ export default function AdminCompaniesPage() {
 
     try {
       await rejectCompany(id as number);
-      setCompanies((prev) => prev.filter((c) => c.id !== id));
+      await fetchData();
+      // setCompanies((prev) => prev.filter((c) => c.id !== id));
       setMessage({ text: "Company rejected", type: "success" });
     } catch {
       setMessage({ text: `Failed to reject company`, type: "error" });

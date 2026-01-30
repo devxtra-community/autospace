@@ -1,14 +1,17 @@
 import { Request, Response } from "express";
 import { getPublicGarages } from "../services/public-garage.service";
-// import { PublicGarageQuery } from "../validators/garage.validator";
 
-export const getPUblicGarageController = async (
+export const getPublicGarageController = async (
   req: Request,
   res: Response,
 ): Promise<Response> => {
   try {
-    const { lat, lng, radius, valetAvailable, limit, page } =
-      req.validateQuery!;
+    const query = req.validateQuery;
+    if (!query) {
+      return res.status(400).json({ success: false, message: "Invalid query" });
+    }
+
+    const { lat, lng, radius, valetAvailable, limit, page } = query;
 
     const result = await getPublicGarages({
       latitude: lat,

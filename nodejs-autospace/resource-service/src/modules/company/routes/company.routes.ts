@@ -23,8 +23,6 @@ router.get("/admin/all", getAllCompaniesController);
 router.put("/admin/:id/active", approveCompany);
 router.put("/admin/:id/reject", rejectCompany);
 router.get("/admin/pending", getPendingCompanies);
-// router.get("/:id", getCompanyDetails);
-// router.get("/:id", getCompanyDetails);
 router.put("/:id", updateCompanyProfileController);
 
 // internal (resource service-to- auth service) check is company approved while manager registers

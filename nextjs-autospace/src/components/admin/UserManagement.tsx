@@ -19,7 +19,7 @@ export function UserManagement() {
     <main className="relative">
       <UserTable
         onSelectUser={handleSelectUser}
-        selectedUserId={selectedUser?.id}
+        selectedUserId={selectedUser?.userId}
       />
 
       <UserProfilePanel user={selectedUser} onClose={handleClosePanel} />
