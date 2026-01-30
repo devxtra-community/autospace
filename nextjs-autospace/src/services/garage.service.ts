@@ -14,3 +14,8 @@ export const getMyGarages = async (companyId: string) => {
   const res = await apiClient.get(`/api/garages/byCompany/${companyId}`);
   return res.data.data;
 };
+
+export const getGarageById = async (garageId: string) => {
+  const res = await apiClient.get(`/api/garages/${garageId}`);
+  return res.data.data;
+};

@@ -18,3 +18,19 @@ export const updateMyProfile = async (payload: {
 
   return res.data.data;
 };
+
+export interface AssignableManager {
+  id: string;
+  fullname: string;
+  email: string;
+}
+
+export const getAssignableManagers = async (
+  companyId: string,
+): Promise<AssignableManager[]> => {
+  const res = await apiClient.get(
+    `/api/internal/companies/${companyId}/managers/assignable`,
+  );
+
+  return res.data.data;
+};

@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "autospace-r2-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-01-01",
+
+  "r2_buckets": [
+    {
+      "binding": "R2_BUCKET",
+      "bucket_name": "autospace-assets"
+    }
+  ]
+}
