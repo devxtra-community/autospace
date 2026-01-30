@@ -35,17 +35,12 @@ const createAuthProxy = (targetPath: string) => {
         headers: {
           "Content-Type": "application/json",
           Cookie: req.headers.cookie || "",
-<<<<<<< HEAD
 
           ...(req.user && {
             "x-user-id": req.user.id,
             "x-user-role": req.user.role,
             "x-user-email": req.user.email,
           }),
-=======
-          "x-user-id": req.user?.id,
-          "x-user-role": req.user?.role,
->>>>>>> d7f9995 (feat(frontend): company edit api integrated)
         },
 
         timeout: 10000,
