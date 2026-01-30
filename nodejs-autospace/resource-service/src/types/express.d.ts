@@ -12,6 +12,10 @@ declare global {
     }
 
     interface Request {
+      file?: Multer.File;
+    }
+
+    interface Request {
       user: User;
       validateQuery?: PublicGarageQuery;
     }

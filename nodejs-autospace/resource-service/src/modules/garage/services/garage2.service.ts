@@ -45,6 +45,10 @@ export const assignManagerToGarage = async (
     `${AUTH_SERVICE_URL}/internal/${managerId}`,
   );
 
+  if (manager.status !== "active") {
+    throw new Error("Manager is not active");
+  }
+
   if (manager.role !== "manager") {
     throw new Error("User is not a manager");
   }
