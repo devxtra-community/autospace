@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 
 export function GaragesHeader() {
   return (
@@ -13,9 +14,11 @@ export function GaragesHeader() {
 
       <div className="flex gap-3 w-full md:w-auto">
         <Input placeholder="Search garages..." className="md:w-64" />
-        <Button className="bg-black text-white hover:bg-secondary hover:text-black">
-          + Add Garage
-        </Button>
+        <Link href="/garage/create">
+          <Button className="bg-black text-white hover:bg-secondary hover:text-black">
+            + Add Garage
+          </Button>
+        </Link>
       </div>
     </div>
   );
