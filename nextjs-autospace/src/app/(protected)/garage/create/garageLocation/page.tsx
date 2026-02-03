@@ -1,7 +1,11 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+import maplibregl, { Map, Marker } from "maplibre-gl";
 import { MapPin, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UseFormSetValue } from "react-hook-form";
+import { GarageFormValues } from "../page";
 
 interface GarageLocationProps {
   formData: {
@@ -13,6 +17,7 @@ interface GarageLocationProps {
   };
   currentStep: number;
   onBack: () => void;
+  setValue: UseFormSetValue<GarageFormValues>;
   onSubmit: () => void;
   isSubmitting?: boolean;
 }
@@ -21,57 +26,107 @@ export default function GarageLocation({
   formData,
   currentStep,
   onBack,
+  setValue,
+  onSubmit,
   isSubmitting = false,
 }: GarageLocationProps) {
-  /* ---------------- STEP 2 ---------------- */
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<Map | null>(null);
+  const markerRef = useRef<Marker | null>(null);
+  const [locationConfirmed, setLocationConfirmed] = useState(false);
+
+  const hasSelectedLocation =
+    formData.latitude != null && formData.longitude != null;
+
+  useEffect(() => {
+    if (currentStep != 2 || mapRef.current) return;
+    const map = new maplibregl.Map({
+      container: mapContainerRef.current!,
+      style: {
+        version: 8,
+        sources: {
+          osm: {
+            type: "raster",
+            tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+            tileSize: 256,
+          },
+        },
+        layers: [
+          {
+            id: "osm",
+            type: "raster",
+            source: "osm",
+          },
+        ],
+      },
+      center: [76.2673, 9.9312],
+      zoom: 12,
+    });
+
+    map.on("click", (e) => {
+      if (locationConfirmed) return;
+      const { lng, lat } = e.lngLat;
+
+      setValue("latitude", lat);
+      setValue("longitude", lng);
+      setLocationConfirmed(false);
+
+      if (markerRef.current) {
+        markerRef.current.setLngLat([lng, lat]);
+      } else {
+        markerRef.current = new maplibregl.Marker()
+          .setLngLat([lng, lat])
+          .addTo(map);
+      }
+
+      map.flyTo({ center: [lng, lat], zoom: 16 });
+    });
+
+    mapRef.current = map;
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, [currentStep, setValue]);
+
   if (currentStep === 2) {
     return (
-      <div className="space-y-8 animate-fadeIn">
+      <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-black mb-2">
             Set Garage Location
           </h1>
           <p className="text-gray-600">
-            Location selection will be enabled later. For now, review details.
+            Click on the map to pin your garage location.
           </p>
         </div>
 
-        {/* PLACEHOLDER (NO MAP) */}
         <div className="space-y-2">
           <label className="flex items-center gap-2 text-sm font-semibold text-black">
             <MapPin className="w-4 h-4 text-yellow-500" />
             Garage Location
           </label>
 
-          <div className="w-full h-40 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
-            <p className="text-sm text-gray-500 text-center px-6">
-              Map integration will be added next.
-              <br />
-              This step is intentionally disabled for now.
-            </p>
-          </div>
+          <div
+            ref={mapContainerRef}
+            className="w-full h-96 rounded-xl border border-gray-300"
+          />
+        </div>
 
-          <p className="text-xs text-gray-600">
-            Exact coordinates will be selected once map integration is enabled.
+        {formData.latitude && formData.longitude && (
+          <p className="text-sm text-gray-600">
+            Selected: {formData.latitude.toFixed(5)},{" "}
+            {formData.longitude.toFixed(5)}
           </p>
-        </div>
+        )}
 
-        {/* PREVIEW */}
-        <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-          <h3 className="font-semibold text-black mb-4">Location Preview</h3>
-          <div className="space-y-2 text-sm">
-            <p>
-              <span className="font-medium">Garage Name:</span>{" "}
-              {formData.name || "—"}
-            </p>
-            <p>
-              <span className="font-medium">Location Name:</span>{" "}
-              {formData.locationName || "—"}
-            </p>
-          </div>
-        </div>
+        {locationConfirmed && (
+          <p className="text-sm text-green-600 font-medium">
+            Location confirmed. You can go back to change it.
+          </p>
+        )}
 
-        {/* ACTIONS */}
         <div className="flex gap-3 pt-6">
           <Button
             type="button"
@@ -83,28 +138,39 @@ export default function GarageLocation({
             Back
           </Button>
 
-          <Button
-            type="button"
-            className="flex-1 h-11 bg-black hover:bg-gray-900 text-yellow-400 font-semibold"
-            disabled
-          >
-            Location Required (Next Step)
-          </Button>
+          {locationConfirmed ? (
+            <Button
+              type="button"
+              className="flex-1 h-11 bg-black text-yellow-400"
+              onClick={onSubmit}
+              disabled={isSubmitting}
+            >
+              Create Garage
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              className="flex-1 h-11 bg-black text-yellow-400"
+              disabled={!hasSelectedLocation}
+              onClick={() => setLocationConfirmed(true)}
+            >
+              Confirm Location
+            </Button>
+          )}
         </div>
       </div>
     );
   }
 
-  /* ---------------- STEP 3 ---------------- */
   if (currentStep === 3) {
     return (
-      <div className="space-y-6 animate-fadeIn">
-        <div className="flex flex-col items-center justify-center py-12">
+      <div className="space-y-6">
+        <div className="flex flex-col items-center py-12">
           <CheckCircle2 className="w-16 h-16 text-green-500 mb-4" />
           <h1 className="text-3xl font-bold text-black mb-2">
             Garage Created Successfully
           </h1>
-          <p className="text-gray-600 text-center max-w-sm">
+          <p className="text-gray-600">
             Your garage <strong>{formData.name}</strong> has been created.
           </p>
         </div>

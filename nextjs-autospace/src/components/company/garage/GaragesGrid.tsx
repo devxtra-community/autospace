@@ -43,7 +43,6 @@ export function GaragesGrid() {
             status={garage.status}
             capacity={garage.capacity}
             managerName={garage.manager?.fullname ?? null}
-            // ✅ THIS WAS MISSING
             onOpenDetails={(id: string) => setSelectedGarageId(id)}
             onAssignManager={(id: string) => console.log("Assign manager:", id)}
             onEdit={(id: string) => console.log("Edit garage:", id)}

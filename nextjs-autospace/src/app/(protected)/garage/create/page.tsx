@@ -20,7 +20,7 @@ const garageSchema = z.object({
   capacity: z.coerce.number().int().positive(),
 });
 
-type GarageFormValues = z.infer<typeof garageSchema>;
+export type GarageFormValues = z.infer<typeof garageSchema>;
 
 const steps = [
   { number: 1, title: "Garage Details", description: "Basic information" },
@@ -38,6 +38,7 @@ export default function CreateGaragePage() {
     handleSubmit,
     formState: { errors, isSubmitting },
     watch,
+    setValue,
   } = useForm<GarageFormValues>({
     resolver: zodResolver(garageSchema),
   });
@@ -47,14 +48,16 @@ export default function CreateGaragePage() {
   const onSubmit = async (data: GarageFormValues) => {
     setError("");
 
-    const latitude = data.latitude ?? 9.9312; // Kochi default
-    const longitude = data.longitude ?? 76.2673;
+    if (data.latitude == null || data.longitude == null) {
+      setError("Please select garage location on map");
+      return;
+    }
 
     const payload = {
       name: data.name,
       locationName: data.locationName,
-      latitude,
-      longitude,
+      latitude: data.latitude,
+      longitude: data.longitude,
       capacity: data.capacity,
     };
 
@@ -62,7 +65,7 @@ export default function CreateGaragePage() {
       await createGarage(payload);
       setCurrentStep(3);
       setTimeout(() => {
-        router.push("/garage/dashboard");
+        router.push("/company/dashboard");
       }, 1500);
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
@@ -114,6 +117,7 @@ export default function CreateGaragePage() {
                   formData={formData}
                   currentStep={currentStep}
                   onBack={() => setCurrentStep(1)}
+                  setValue={setValue}
                   onSubmit={() => handleSubmit(onSubmit)()}
                   isSubmitting={isSubmitting}
                 />

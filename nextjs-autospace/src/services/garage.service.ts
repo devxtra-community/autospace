@@ -9,7 +9,7 @@ export const createGarage = async (payload: {
   images?: string[];
   description?: string;
 }) => {
-  const res = await apiClient.post("/api/garages/create", payload);
+  const res = await apiClient.post("/api/garages/register", payload);
   return res.data.data;
 };
 
