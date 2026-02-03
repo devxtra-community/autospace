@@ -14,7 +14,7 @@ export function GaragesHeader() {
 
       <div className="flex gap-3 w-full md:w-auto">
         <Input placeholder="Search garages..." className="md:w-64" />
-        <Link href="/garage/create">
+        <Link href="/company/garages/create">
           <Button className="bg-black text-white hover:bg-secondary hover:text-black">
             + Add Garage
           </Button>
