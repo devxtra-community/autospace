@@ -1,59 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MapPin, Star, ChevronDown, ChevronUp, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-const garages = [
-  {
-    id: 1,
-    name: "Garage name",
-    rating: 4,
-    location: "Garage Location",
-    distance: "1.72 km",
-    price: 999,
-    status: "available",
-  },
-  {
-    id: 2,
-    name: "Garage name",
-    rating: 4,
-    location: "Garage Location",
-    distance: "2.5 km",
-    price: 999,
-    status: "rented-out",
-  },
-  {
-    id: 3,
-    name: "Garage name",
-    rating: 4,
-    location: "Garage Location",
-    distance: "1.72 km",
-    price: 999,
-    status: "available",
-  },
-  {
-    id: 4,
-    name: "Garage name",
-    rating: 4,
-    location: "Garage Location",
-    distance: "2.5 km",
-    price: 999,
-    status: "rented-out",
-  },
-  {
-    id: 5,
-    name: "Garage name",
-    rating: 4,
-    location: "Garage Location",
-    distance: "2.5 km",
-    price: 999,
-    status: "rented-out",
-  },
-];
+import { useSearchParams } from "next/navigation";
+import apiClient from "@/lib/apiClient";
+
+interface PublicGarage {
+  id: string;
+  name: string;
+  locationName: string;
+  latitude: number;
+  longitude: number;
+  distanceKm?: number;
+  pricePerHour?: number;
+  rating?: number;
+  status?: "available" | "rented-out";
+}
 
 export default function SearchPage() {
+  const searchParams = useSearchParams();
+  const lat = searchParams.get("lat");
+  const lng = searchParams.get("lng");
+  const q = searchParams.get("q");
+
   const [isFilterOpen, setIsFilterOpen] = useState(true);
+  const [garages, setGarages] = useState<PublicGarage[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      if (!lat || !lng) return;
+      const res = await apiClient.get(
+        `/api/public/garages?lat=${lat}&lng=${lng}`,
+      );
+      setGarages(res.data.data);
+      console.log("garages", res.data);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [lat, lng]);
 
   return (
     <div className="flex flex-col h-screen md:flex-row bg-white overflow-hidden font-sans">
@@ -71,7 +65,7 @@ export default function SearchPage() {
               placeholder="search address , place ......"
               className="w-full py-3.5 pl-12 pr-4 rounded-md border border-[#FADEDE] bg-[#FFF5F5]/30 shadow-none focus:outline-none focus:ring-1 focus:ring-pink-200 text-gray-400 font-normal text-sm"
               readOnly
-              value="search address , place ......"
+              value={q ?? ""}
             />
           </div>
 
@@ -111,7 +105,7 @@ export default function SearchPage() {
           {/* Stats and Sort */}
           <div className="flex items-center justify-between pt-2">
             <span className="text-xs font-bold text-gray-900">
-              Spot found: 05
+              Spot found: {garages.length}
             </span>
             <div className="flex items-center gap-2">
               <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">
@@ -126,6 +120,12 @@ export default function SearchPage() {
 
         {/* Scrollable Garage List */}
         <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-4 custom-scrollbar">
+          {loading && (
+            <div className="text-sm text-gray-500 py-6 text-center">
+              Searching nearby garages…
+            </div>
+          )}
+
           {garages.map((garage) => (
             <div
               key={garage.id}
@@ -142,18 +142,22 @@ export default function SearchPage() {
                   </div>
                 </div>
                 <div className="bg-gray-200/50 px-2 py-1 rounded text-[10px] font-bold text-gray-800 min-w-[60px] text-center">
-                  {garage.distance}
+                  <span className="text-[10px] font-bold text-gray-800">
+                    {garage.distanceKm != null
+                      ? `${garage.distanceKm.toFixed(2)} km`
+                      : "— km"}
+                  </span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 text-gray-900">
                 <MapPin className="w-3.5 h-3.5" />
-                <span className="text-xs font-bold">{garage.location}</span>
+                <span className="text-xs font-bold">{garage.locationName}</span>
               </div>
 
               <div className="flex items-center justify-between mt-1">
                 <div className="text-sm font-bold text-gray-900">
-                  $ {garage.price} / Hour
+                  $ {garage.pricePerHour} / Hour
                 </div>
 
                 {garage.status === "available" ? (
