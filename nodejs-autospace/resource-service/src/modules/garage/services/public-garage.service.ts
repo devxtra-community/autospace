@@ -1,7 +1,6 @@
 import { FindOptionsWhere } from "typeorm";
 import { AppDataSource } from "../../../db/data-source";
 import { Garage, GarageStatus } from "../entities/garage.entity";
-import { getAllGarages } from "./garage2.service";
 
 interface GetPublicGaragesFilters {
   latitude?: number;
