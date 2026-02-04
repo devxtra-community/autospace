@@ -43,7 +43,7 @@ export function GarageCard({
 
   return (
     <div
-      onClick={() => onOpenDetails(id)} // ✅ RESTORED
+      onClick={() => onOpenDetails(id)} //  RESTORED
       className={`relative rounded-2xl border bg-white p-5 shadow-sm cursor-pointer transition
       ${isRejected ? "opacity-50" : "hover:shadow-md"}`}
     >
@@ -58,7 +58,7 @@ export function GarageCard({
       {(isPending || isActive) && (
         <button
           onClick={(e) => {
-            e.stopPropagation(); // ✅ important
+            e.stopPropagation(); // important
             onEdit(id);
           }}
           className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
@@ -92,7 +92,7 @@ export function GarageCard({
             size="sm"
             className="w-full"
             onClick={(e) => {
-              e.stopPropagation(); // ✅ prevents detail open
+              e.stopPropagation(); //  prevents detail open
               onAssignManager(id);
             }}
           >

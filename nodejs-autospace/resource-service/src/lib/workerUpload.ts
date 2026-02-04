@@ -16,6 +16,9 @@ export async function uploadToWorker(
 
   const res = await fetch(`${process.env.R2_WORKER_UPLOAD_URL}/upload`, {
     method: "POST",
+    headers: {
+      "x-internal-auth": "autospace-internal-secret",
+    },
     body: form,
   });
 

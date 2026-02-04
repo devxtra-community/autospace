@@ -95,4 +95,24 @@ router.use(
   }),
 );
 
+router.use(
+  "/files/upload",
+  authMiddleware,
+  rbac(UserRole.OWNER),
+  createProxyMiddleware({
+    target: RESOURCE_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: () => "/files/upload",
+  }),
+);
+
+router.use(
+  "/files",
+  createProxyMiddleware({
+    target: RESOURCE_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/files${path}`,
+  }),
+);
+
 export default router;

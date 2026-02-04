@@ -33,7 +33,7 @@ app.use("/companies", companyRoutes);
 app.use("/garages", garageRoutes);
 app.use("/slots", slotsRoutes);
 app.use("/valet", valetRoutes);
-app.use("/api/files", filesRoutes);
+app.use("/files", filesRoutes);
 
 // auth service only
 app.use(internalValetRoutes);
