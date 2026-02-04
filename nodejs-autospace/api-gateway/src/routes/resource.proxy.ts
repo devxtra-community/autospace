@@ -19,7 +19,6 @@ router.use(
     changeOrigin: true,
     pathRewrite: (path) => `/companies${path}`,
 
-    //  move onProxyReq under "on"
     on: {
       proxyReq: (proxyReq: ClientRequest, req: Request) => {
         if (req.body) {
@@ -47,7 +46,6 @@ router.use("/garages", (req, _res, next) => {
   next();
 });
 
-// garage routes
 router.use(
   "/garages",
   authMiddleware,
