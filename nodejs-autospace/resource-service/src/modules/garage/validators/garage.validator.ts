@@ -9,6 +9,7 @@ export const validateCreateGarage = (
 ) => {
   console.log("RAW BODY:", req.body);
   console.log("SCHEMA SHAPE:", CreateGarageSchema.shape);
+  console.log("🧪 VALIDATOR RAW QUERY:", req.query);
 
   const result = CreateGarageSchema.safeParse(req.body);
 

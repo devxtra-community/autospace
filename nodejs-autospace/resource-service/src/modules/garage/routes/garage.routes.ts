@@ -25,6 +25,11 @@ import { internalAuth } from "../../../middlewares/internalAuth.middleware";
 
 const router = Router();
 
+router.use((req, _res, next) => {
+  console.log("📥 RESOURCE ROUTE HIT:", req.method, req.originalUrl);
+  next();
+});
+
 router.get("/", validatePublicGarageQuery, getPublicGarageController);
 router.get("/:id", getGarageByIdController);
 router.post(

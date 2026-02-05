@@ -11,3 +11,7 @@ export const AppDataSource = new DataSource({
   logging: true,
   entities: [__dirname + "/../modules/**/*.entity.{ts,js}"],
 });
+
+setInterval(async () => {
+  await AppDataSource.query("SELECT 1");
+}, 300000);
