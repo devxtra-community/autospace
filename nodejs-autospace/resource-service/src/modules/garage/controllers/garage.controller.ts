@@ -44,7 +44,7 @@ export const createGarageController = async (req: Request, res: Response) => {
 
 export const assignManagerController = async (req: Request, res: Response) => {
   try {
-    const ownerUserId = req.headers["x-user-id"] as string;
+    const ownerUserId = req.user.id;
     const { garageCode, managerId } = req.body;
 
     if (!ownerUserId) {

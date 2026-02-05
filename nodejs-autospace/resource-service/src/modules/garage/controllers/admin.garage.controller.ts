@@ -42,7 +42,7 @@ export const getPendingGarages = async (
 export const approveGarage = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    const adminUserId = req.headers["x-user-id"] as string;
+    const adminUserId = req.user.id;
 
     const garage = await updateGarageStatus(
       id,
@@ -66,7 +66,7 @@ export const approveGarage = async (req: Request, res: Response) => {
 export const rejectGarage = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    const adminUserId = req.headers["x-user-id"] as string;
+    const adminUserId = req.user.id;
 
     const garage = await updateGarageStatus(
       id,
