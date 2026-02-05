@@ -39,10 +39,8 @@ export const authMiddleware = (
       return;
     }
 
-    // Verify token and attach to request
     const decoded = verifyAccessToken(token);
 
-    // Attach full payload to request
     req.user = {
       id: decoded.id,
       email: decoded.email,

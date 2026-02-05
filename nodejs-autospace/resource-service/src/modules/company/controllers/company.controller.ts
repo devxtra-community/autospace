@@ -8,7 +8,7 @@ import { updateCompanyProfile } from "../services/company2.service";
 export const registerCompany = async (req: Request, res: Response) => {
   console.log("Incoming body:", req.body);
   try {
-    const ownerUserId = req.headers["x-user-id"] as string;
+    const ownerUserId = req.user.id;
     console.log("owner", ownerUserId);
 
     if (!ownerUserId) {
@@ -40,7 +40,7 @@ export const registerCompany = async (req: Request, res: Response) => {
 
 export const getMyCompany = async (req: Request, res: Response) => {
   try {
-    const ownerUserId = req.headers["x-user-id"] as string;
+    const ownerUserId = req.user.id;
 
     if (!ownerUserId) {
       return res.status(401).json({
