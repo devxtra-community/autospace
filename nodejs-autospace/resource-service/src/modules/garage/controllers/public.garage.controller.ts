@@ -6,6 +6,10 @@ export const getPublicGarageController = async (
   res: Response,
 ): Promise<Response> => {
   try {
+    console.log("🎯 CONTROLLER HIT");
+    console.log("RAW QUERY:", req.query);
+    console.log("VALIDATED QUERY:", req.validateQuery);
+
     const query = req.validateQuery;
     if (!query) {
       return res.status(400).json({ success: false, message: "Invalid query" });

@@ -12,9 +12,21 @@ interface GetPublicGaragesFilters {
 }
 
 export const getPublicGarages = async (filters: GetPublicGaragesFilters) => {
+  console.log("🚀 SERVICE START");
+  console.log("INPUT:", filters);
+
   const { latitude, longitude, valetAvailable, limit, page } = filters;
-  const radius = filters.radius ?? 10;
+  const radius = filters.radius ?? 20;
   const skip = (page - 1) * limit;
+
+  console.log(" Search params:", {
+    latitude,
+    longitude,
+    radius,
+    valetAvailable,
+    page,
+    limit,
+  });
 
   if (latitude !== undefined && longitude !== undefined) {
     return await getGaragesWithProximity(
@@ -38,45 +50,86 @@ async function getGaragesWithProximity(
   limit: number,
   skip: number,
 ) {
-  const params: any[] = [lat, lng, GarageStatus.ACTIVE, radius, limit, skip];
-
   let valetFilter = "";
+  let params: any[];
+  let limitIndex: number;
+  let offsetIndex: number;
+
   if (valetAvailable !== undefined) {
-    params.push(valetAvailable);
-    valetFilter = `AND valet_available = $${params.length}`;
+    // With valet filter
+    params = [
+      lat,
+      lng,
+      GarageStatus.ACTIVE,
+      valetAvailable,
+      radius,
+      limit,
+      skip,
+    ];
+    //        $1   $2   $3                    $4              $5      $6     $7
+    valetFilter = 'AND "valetAvailable" = $4';
+    limitIndex = 6;
+    offsetIndex = 7;
+  } else {
+    // Without valet filter
+    params = [lat, lng, GarageStatus.ACTIVE, radius, limit, skip];
+    //        $1   $2   $3                    $4      $5     $6
+    limitIndex = 5;
+    offsetIndex = 6;
   }
+
+  console.log("Query params:", params);
+  console.log(
+    " Param types:",
+    params.map((p) => typeof p),
+  );
 
   const query = `
     SELECT *
     FROM (
       SELECT
         id,
-        company_id AS "companyId",
+        "companyId",
         name,
-        location_name AS "locationName",
+        "locationName",
         latitude,
         longitude,
         capacity,
-        valet_available AS "valetAvailable",
+        "valetAvailable",
         status,
-        created_at AS "createdAt",
+        "createdAt",
         (
           6371 * acos(
-            cos(radians($1)) * cos(radians(latitude::double precision)) *
+            cos(radians($1)) * cos(radians(latitude)) *
             cos(radians(longitude::double precision) - radians($2)) +
-            sin(radians($1)) * sin(radians(latitude::double precision))
+            sin(radians($1)) * sin(radians(latitude))
           )
         ) AS distance
       FROM garages
       WHERE status = $3
       ${valetFilter}
     ) g
-    WHERE g.distance <= $4
+    WHERE g.distance <= $${valetAvailable !== undefined ? 5 : 4}
     ORDER BY g.distance ASC
-    LIMIT $5 OFFSET $6
+    LIMIT $${limitIndex} OFFSET $${offsetIndex}
   `;
 
+  console.log("Executing query with params:", params);
   const data = await AppDataSource.query(query, params);
+
+  console.log(`Found ${data.length} garages`);
+  if (data.length > 0) {
+    console.log("First result:", {
+      name: data[0].name,
+      distance: parseFloat(data[0].distance).toFixed(2) + " km",
+      location: `${data[0].latitude}, ${data[0].longitude}`,
+    });
+  }
+
+  const countParams =
+    valetAvailable !== undefined
+      ? [lat, lng, GarageStatus.ACTIVE, valetAvailable, radius]
+      : [lat, lng, GarageStatus.ACTIVE, radius];
 
   const countQuery = `
     SELECT COUNT(*) AS total
@@ -84,24 +137,24 @@ async function getGaragesWithProximity(
       SELECT
         (
           6371 * acos(
-            cos(radians($1)) * cos(radians(latitude::double precision)) *
-            cos(radians(longitude::double precision) - radians($2)) +
-            sin(radians($1)) * sin(radians(latitude::double precision))
+            LEAST(1.0, GREATEST(-1.0,
+              cos(radians($1::double precision)) * cos(radians(latitude)) *
+              cos(radians(longitude) - radians($2::double precision)) +
+              sin(radians($1::double precision)) * sin(radians(latitude))
+            ))
           )
         ) AS distance
       FROM garages
       WHERE status = $3
       ${valetFilter}
     ) sub
-    WHERE distance <= $4
+    WHERE distance <= $${valetAvailable !== undefined ? 5 : 4}
   `;
 
-  const countResult = await AppDataSource.query(
-    countQuery,
-    params.slice(0, valetAvailable !== undefined ? 5 : 4),
-  );
+  const countResult = await AppDataSource.query(countQuery, countParams);
+  const total = parseInt(countResult[0].total);
 
-  const total = Number(countResult[0].total);
+  console.log(`Total garages within ${radius}km: ${total}`);
 
   return {
     data,
