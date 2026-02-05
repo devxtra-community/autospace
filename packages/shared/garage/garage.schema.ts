@@ -15,4 +15,17 @@ export const CreateGarageSchema = z.object({
     .optional(),
 });
 
+export const CreateFloorSchema = z.object({
+  garageCode: z.string().min(1), // garage registration number
+  floorNumber: z.number().int().nonnegative(),
+});
+
+export const CreateSlotSchema = z.object({
+  floorNumber: z.number().int().nonnegative(),
+  slotNumber: z.string().min(1).max(10),
+  pricePerHour: z.number().positive(),
+});
+
+export type CreateSlotInput = z.infer<typeof CreateSlotSchema>;
 export type CreateGarageInput = z.infer<typeof CreateGarageSchema>;
+export type CreateFloorInput = z.infer<typeof CreateFloorSchema>;

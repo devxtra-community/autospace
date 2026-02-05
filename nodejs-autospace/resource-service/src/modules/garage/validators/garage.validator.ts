@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { CreateGarageSchema } from "@autospace/shared";
+import { CreateGarageSchema, CreateSlotSchema } from "@autospace/shared";
+import { CreateFloorSchema } from "@autospace/shared";
 import { z } from "zod";
 
 export const validateCreateGarage = (
@@ -7,19 +8,12 @@ export const validateCreateGarage = (
   res: Response,
   next: NextFunction,
 ) => {
-  console.log("RAW BODY:", req.body);
-  console.log("SCHEMA SHAPE:", CreateGarageSchema.shape);
-
   const result = CreateGarageSchema.safeParse(req.body);
 
-  console.log("VALIDATION RESULT:", JSON.stringify(result, null, 2));
-
   if (!result.success) {
-    console.log("VALIDATION ERRORS:", result.error.format());
     return res.status(400).json({ errors: result.error.format() });
   }
 
-  console.log("PARSED BODY:", result.data);
   req.body = result.data;
   next();
 };
@@ -70,5 +64,43 @@ export const validatePublicGarageQuery = (
   // req.query = result.data as any;
   req.validateQuery = result.data;
 
+  next();
+};
+
+export const validateCreateFloor = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const result = CreateFloorSchema.safeParse(req.body);
+
+  if (!result.success) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid floor data",
+      errors: result.error.format(),
+    });
+  }
+
+  req.body = result.data;
+  next();
+};
+
+export const validateCreateSlot = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const result = CreateSlotSchema.safeParse(req.body);
+
+  if (!result.success) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid slot data",
+      errors: result.error.format(),
+    });
+  }
+
+  req.body = result.data;
   next();
 };

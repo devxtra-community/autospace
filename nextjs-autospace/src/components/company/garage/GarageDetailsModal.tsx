@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { getGarageById } from "@/services/garage.service";
 import {
+  attachGarageImage,
+  getGarageImages,
+  uploadFile,
+} from "@/services/garageImages.service";
+import {
   MapPin,
   Phone,
   Mail,
@@ -12,6 +17,11 @@ import {
   Hash,
   CheckCircle,
 } from "lucide-react";
+
+interface GarageImage {
+  id: string;
+  fileId: string;
+}
 
 interface Garage {
   id: string;
@@ -39,6 +49,8 @@ export function GarageDetailsModal({
 }) {
   const [garage, setGarage] = useState<Garage | null>(null);
   const [loading, setLoading] = useState(false);
+  const [images, setImages] = useState<GarageImage[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (!open || !garageId) return;
@@ -48,6 +60,31 @@ export function GarageDetailsModal({
       .then((data) => setGarage(data))
       .finally(() => setLoading(false));
   }, [open, garageId]);
+
+  useEffect(() => {
+    if (!open || !garageId) return;
+
+    getGarageImages(garageId)
+      .then((data) => setImages(data))
+      .catch(() => setImages([]));
+  }, [open, garageId]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !garageId) return;
+
+    const file = e.target.files[0];
+    setUploading(true);
+
+    try {
+      const uploaded = await uploadFile(file);
+      await attachGarageImage(garageId, uploaded.id);
+
+      const updatedImages = await getGarageImages(garageId);
+      setImages(updatedImages);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <Modal open={open} onClose={onClose} title="Garage Details">
@@ -64,6 +101,34 @@ export function GarageDetailsModal({
                 <Hash size={14} />
                 Garage Code: {garage.garageRegistrationNumber}
               </p>
+            )}
+          </div>
+
+          {/* GARAGE IMAGES */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium">Garage Images</h3>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {images.map((img) => (
+                <img
+                  key={img.id}
+                  src={`${process.env.NEXT_PUBLIC_API_URL}/api/files/${img.fileId}`}
+                  className="h-32 w-full object-cover rounded-md border"
+                  alt="Garage"
+                />
+              ))}
+            </div>
+
+            {/* Upload only if ACTIVE */}
+            {garage.status === "active" && (
+              <div className="pt-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={uploading}
+                  onChange={handleImageUpload}
+                />
+              </div>
             )}
           </div>
 

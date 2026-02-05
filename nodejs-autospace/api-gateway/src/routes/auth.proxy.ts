@@ -91,5 +91,29 @@ router.get(
 );
 router.get("/profile/my", authMiddleware, createAuthProxy("/api/profile/my"));
 router.patch("/profile/my", authMiddleware, createAuthProxy("/api/profile/my"));
+// router.use("/internal", authMiddleware, async (req, res) => {
+//   try {
+//     const url = `http://localhost:4001${req.originalUrl.replace("/api", "")}`;
+
+//     const response = await axios({
+//       method: req.method,
+//       url,
+//       data: req.body,
+//       headers: {
+//         Cookie: req.headers.cookie || "",
+//         ...(req.user && {
+//           "x-user-id": req.user.id,
+//           "x-user-role": req.user.role,
+//           "x-user-email": req.user.email,
+//         }),
+//       },
+//       validateStatus: () => true,
+//     });
+
+//     res.status(response.status).json(response.data);
+//   } catch (e) {
+//     res.status(500).json({ success: false, message: "Gateway error" });
+//   }
+// });
 
 export default router;

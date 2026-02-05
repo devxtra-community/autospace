@@ -129,6 +129,8 @@ export const updateGarageProfile = async (
     name?: string;
     contactEmail?: string;
     contactPhone?: string;
+    valetAvailable?: boolean;
+    capacity?: number;
   },
 ) => {
   const repo = AppDataSource.getRepository(Garage);
@@ -142,6 +144,9 @@ export const updateGarageProfile = async (
   if (data.name !== undefined) garage.name = data.name;
   if (data.contactEmail !== undefined) garage.contactEmail = data.contactEmail;
   if (data.contactPhone !== undefined) garage.contactPhone = data.contactPhone;
+  if (data.valetAvailable !== undefined)
+    garage.valetAvailable = data.valetAvailable;
+  if (data.capacity !== undefined) garage.capacity = data.capacity;
 
   await repo.save(garage);
 

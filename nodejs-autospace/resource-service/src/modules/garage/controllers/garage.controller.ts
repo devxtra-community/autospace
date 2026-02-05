@@ -118,9 +118,16 @@ export const updateGarageProfileController = async (
 ) => {
   try {
     const garageId = req.params.id as string;
-    const { name, contactEmail, contactPhone } = req.body;
+    const { name, contactEmail, contactPhone, valetAvailable, capacity } =
+      req.body;
 
-    if (!name && !contactEmail && !contactPhone) {
+    if (
+      !name &&
+      !contactEmail &&
+      !contactPhone &&
+      valetAvailable === undefined &&
+      !capacity
+    ) {
       return res.status(400).json({
         success: false,
         message: "At least one field is required to update",
@@ -131,6 +138,8 @@ export const updateGarageProfileController = async (
       name,
       contactEmail,
       contactPhone,
+      valetAvailable,
+      capacity,
     });
 
     return res.status(200).json({

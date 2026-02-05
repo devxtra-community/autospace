@@ -13,7 +13,6 @@ interface GarageCardProps {
   capacity: number;
   managerName?: string | null;
 
-  // functionality callbacks (UNCHANGED)
   onOpenDetails: (garageId: string) => void;
   onAssignManager: (garageId: string) => void;
   onEdit: (garageId: string) => void;
@@ -38,15 +37,10 @@ export function GarageCard({
 }: GarageCardProps) {
   const isActive = status === "active";
   const isPending = status === "pending";
-  const isRejected = status === "rejected";
   const isUnassigned = !managerName;
 
   return (
-    <div
-      onClick={() => onOpenDetails(id)} //  RESTORED
-      className={`relative rounded-2xl border bg-white p-5 shadow-sm cursor-pointer transition
-      ${isRejected ? "opacity-50" : "hover:shadow-md"}`}
-    >
+    <div className="relative rounded-2xl border bg-white p-5 shadow-sm transition hover:shadow-md">
       {/* STATUS */}
       <span
         className={`absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-medium ${statusStyles[status]}`}
@@ -54,11 +48,11 @@ export function GarageCard({
         {status.toUpperCase()}
       </span>
 
-      {/* EDIT (only pending / active) */}
+      {/* EDIT */}
       {(isPending || isActive) && (
         <button
           onClick={(e) => {
-            e.stopPropagation(); // important
+            e.stopPropagation();
             onEdit(id);
           }}
           className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
@@ -67,21 +61,24 @@ export function GarageCard({
         </button>
       )}
 
-      <h3 className="mt-6 text-lg font-semibold">{name}</h3>
+      {/* CLICKABLE CONTENT ONLY */}
+      <div className="cursor-pointer" onClick={() => onOpenDetails(id)}>
+        <h3 className="mt-6 text-lg font-semibold">{name}</h3>
 
-      <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-        <MapPin size={14} /> {location}
-      </p>
+        <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+          <MapPin size={14} /> {location}
+        </p>
 
-      <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-        <div className="flex items-center gap-2">
-          <Layers size={14} />
-          Capacity: <strong>{capacity}</strong>
-        </div>
+        <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <Layers size={14} />
+            Capacity: <strong>{capacity}</strong>
+          </div>
 
-        <div className="flex items-center gap-2">
-          <User size={14} />
-          Manager: <strong>{managerName ?? "Unassigned"}</strong>
+          <div className="flex items-center gap-2">
+            <User size={14} />
+            Manager: <strong>{managerName ?? "Unassigned"}</strong>
+          </div>
         </div>
       </div>
 
@@ -92,7 +89,7 @@ export function GarageCard({
             size="sm"
             className="w-full"
             onClick={(e) => {
-              e.stopPropagation(); //  prevents detail open
+              e.stopPropagation();
               onAssignManager(id);
             }}
           >

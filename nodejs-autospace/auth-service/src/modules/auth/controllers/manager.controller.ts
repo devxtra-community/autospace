@@ -62,7 +62,7 @@ export const assignManagerInternal = async (req: Request, res: Response) => {
 
 export const getAssignableManagers = async (req: Request, res: Response) => {
   try {
-    const companyId = req.params.id as string;
+    const companyId = req.params.companyId as string;
 
     const userRepo = AppDataSource.getRepository(User);
 

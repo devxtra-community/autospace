@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { uploadToWorker } from "../../lib/workerUpload";
 import { AppDataSource } from "../../db/data-source";
 import { FileEntity } from "./files.entity";
+import axios from "axios";
 
 export const uploadFileController = async (req: Request, res: Response) => {
   const file = req.file;
@@ -45,5 +46,13 @@ export const downloadFileController = async (req: Request, res: Response) => {
 
   const fileUrl = `${process.env.R2_WORKER_UPLOAD_URL}/files/${file.key}`;
 
-  return res.redirect(fileUrl);
+  const response = await axios.get(fileUrl, {
+    responseType: "stream",
+  });
+
+  res.setHeader("Content-Type", file.mimeType);
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+
+  response.data.pipe(res);
 };

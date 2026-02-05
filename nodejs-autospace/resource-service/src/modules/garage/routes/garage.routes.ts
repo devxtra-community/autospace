@@ -6,7 +6,9 @@ import {
   updateGarageProfileController,
 } from "../controllers/garage.controller";
 import {
+  validateCreateFloor,
   validateCreateGarage,
+  validateCreateSlot,
   validatePublicGarageQuery,
 } from "../validators/garage.validator";
 import {
@@ -21,6 +23,8 @@ import {
   addGarageImageController,
   getGarageImagesController,
 } from "../controllers/garage-image.controller";
+import { createGarageSlotController } from "../controllers/garage-slot.controller";
+import { createGarageFloorController } from "../controllers/garage-floor.controller";
 
 const router = Router();
 
@@ -36,5 +40,7 @@ router.get("/byCompany/:companyId", getGaragesByCompanyController);
 router.put("/:id", updateGarageProfileController);
 router.post("/:garageId/images", addGarageImageController);
 router.get("/:garageId/images", getGarageImagesController);
+router.post("/slots", validateCreateSlot, createGarageSlotController);
+router.post("/floors", validateCreateFloor, createGarageFloorController);
 
 export default router;

@@ -1,11 +1,13 @@
 import { Request, Response } from "express";
-import { createSlot } from "../services/slot.service";
+import { createGarageSlot } from "../services/garage-slot.service";
 
-export const createSlotController = async (req: Request, res: Response) => {
+export const createGarageSlotController = async (
+  req: Request,
+  res: Response,
+) => {
   try {
     const managerId = req.headers["x-user-id"] as string;
     const role = req.headers["x-user-role"] as string;
-    console.log("HEADERS:", req.headers);
 
     if (!managerId || role !== "manager") {
       return res.status(403).json({
@@ -14,16 +16,21 @@ export const createSlotController = async (req: Request, res: Response) => {
       });
     }
 
-    const { date, startTime, endTime, price } = req.body;
+    const { floorNumber, slotNumber, pricePerHour } = req.body;
 
-    if (!date || !startTime || !endTime || !price) {
+    if (floorNumber == null || !slotNumber || pricePerHour == null) {
       return res.status(400).json({
         success: false,
-        message: "date, startTime, endTime and price are required",
+        message: "floorNumber, slotNumber and pricePerHour are required",
       });
     }
 
-    const slot = await createSlot(managerId, date, startTime, endTime, price);
+    const slot = await createGarageSlot(
+      managerId,
+      floorNumber,
+      slotNumber,
+      pricePerHour,
+    );
 
     return res.status(201).json({
       success: true,
