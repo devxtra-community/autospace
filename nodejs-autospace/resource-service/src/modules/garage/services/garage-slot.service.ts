@@ -2,6 +2,7 @@ import { AppDataSource } from "../../../db/data-source";
 import { GarageSlot } from "../entities/garage-slot.entity";
 import { GarageFloor } from "../entities/garage-floor.entity";
 import { Garage } from "../entities/garage.entity";
+import { In } from "typeorm";
 
 export const createGarageSlot = async (
   managerId: string,
@@ -41,4 +42,48 @@ export const createGarageSlot = async (
 
   await slotRepo.save(slot);
   return slot;
+};
+
+export const getGarageSlots = async (
+  managerId: string,
+): Promise<GarageSlot[]> => {
+  try {
+    const garageRepo = AppDataSource.getRepository(Garage);
+    const floorRepo = AppDataSource.getRepository(GarageFloor);
+    const slotRepo = AppDataSource.getRepository(GarageSlot);
+
+    const garage = await garageRepo.findOne({
+      where: { managerId },
+    });
+
+    if (!garage) {
+      throw new Error("garage not found");
+    }
+
+    const floor = await floorRepo.find({
+      where: { garageId: garage.id },
+      select: ["id", "floorNumber"],
+      order: { floorNumber: "ASC" },
+    });
+
+    if (!floor.length) {
+      throw new Error("No floors found in this garage");
+    }
+
+    const floorId = floor.map((f) => f.id);
+
+    const slots = await slotRepo.find({
+      where: {
+        floorId: In(floorId),
+      },
+      order: {
+        slotNumber: "ASC",
+      },
+    });
+
+    return slots;
+  } catch (error) {
+    console.log("slot setup error", error);
+    throw error;
+  }
 };
