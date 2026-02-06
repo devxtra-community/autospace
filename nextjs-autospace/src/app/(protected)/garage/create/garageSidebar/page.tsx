@@ -11,6 +11,9 @@ export default function GarageSidebar({
   currentStep,
   steps,
 }: GarageSidebarProps) {
+  if (typeof window === "undefined") {
+    return null;
+  }
   return (
     <div className="lg:col-span-3">
       <div className="sticky top-24">

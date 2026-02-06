@@ -13,7 +13,7 @@ router.use("/companies", auth_middleware_1.authMiddleware, (0, rbac_middleware_1
     pathRewrite: (path) => `/companies${path}`,
     //  move onProxyReq under "on"
     on: {
-        proxyReq: (proxyReq, req, _res) => {
+        proxyReq: (proxyReq, req) => {
             if (req.body) {
                 const bodyData = JSON.stringify(req.body);
                 proxyReq.setHeader("Content-Type", "application/json");
@@ -22,6 +22,11 @@ router.use("/companies", auth_middleware_1.authMiddleware, (0, rbac_middleware_1
             }
         },
     },
+}));
+router.use("/public/garages", (0, http_proxy_middleware_1.createProxyMiddleware)({
+    target: RESOURCE_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: () => "/garages",
 }));
 router.use("/garages", (req, _res, next) => {
     console.log("GATEWAY BODY:", req.body);
@@ -33,7 +38,7 @@ router.use("/garages", auth_middleware_1.authMiddleware, (0, rbac_middleware_1.r
     changeOrigin: true,
     pathRewrite: (path) => `/garages${path}`,
     on: {
-        proxyReq: (proxyReq, req, _res) => {
+        proxyReq: (proxyReq, req) => {
             if (!req.body || !Object.keys(req.body).length)
                 return;
             const bodyData = JSON.stringify(req.body);
@@ -48,5 +53,21 @@ router.use("/slots", auth_middleware_1.authMiddleware, (0, rbac_middleware_1.rba
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
     pathRewrite: (path) => `/slots${path}`,
+}));
+// valet routes
+router.use("/valet", auth_middleware_1.authMiddleware, (0, rbac_middleware_1.rbac)(role_enum_1.UserRole.MANAGER, role_enum_1.UserRole.VALET), (0, http_proxy_middleware_1.createProxyMiddleware)({
+    target: RESOURCE_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/valet${path}`,
+}));
+router.use("/files/upload", auth_middleware_1.authMiddleware, (0, rbac_middleware_1.rbac)(role_enum_1.UserRole.OWNER), (0, http_proxy_middleware_1.createProxyMiddleware)({
+    target: RESOURCE_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: () => "/files/upload",
+}));
+router.use("/files", (0, http_proxy_middleware_1.createProxyMiddleware)({
+    target: RESOURCE_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/files${path}`,
 }));
 exports.default = router;

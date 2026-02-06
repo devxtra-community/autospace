@@ -26,12 +26,7 @@ app.use((0, cors_1.default)({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: [
-        "Content-Type",
-        "Authorization",
-        "x-user-id",
-        "x-role",
-    ],
+    allowedHeaders: ["Content-Type", "Authorization", "x-user-id", "x-role"],
 }));
 console.log("AUTH_SERVICE_URL =", process.env.AUTH_SERVICE_URL);
 app.use(express_1.default.json());

@@ -8,6 +8,8 @@ const axios_1 = __importDefault(require("axios"));
 const express_2 = __importDefault(require("express"));
 const auth_middleware_1 = require("../middleware/auth.middleware");
 const rateLimiter_middleware_1 = require("../middleware/rateLimiter.middleware");
+const rbac_middleware_1 = require("../middleware/rbac.middleware");
+const role_enum_1 = require("../constants/role.enum");
 const router = (0, express_1.Router)();
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || "http://localhost:4001";
 // Parse JSON
@@ -20,7 +22,6 @@ router.get("/me", auth_middleware_1.authMiddleware, (req, res) => {
         data: req.user,
     });
 });
-// Proxy helper with proper typing
 const createAuthProxy = (targetPath) => {
     return async (req, res) => {
         try {
@@ -32,6 +33,11 @@ const createAuthProxy = (targetPath) => {
                 headers: {
                     "Content-Type": "application/json",
                     Cookie: req.headers.cookie || "",
+                    ...(req.user && {
+                        "x-user-id": req.user.id,
+                        "x-user-role": req.user.role,
+                        "x-user-email": req.user.email,
+                    }),
                 },
                 timeout: 10000,
                 validateStatus: () => true,
@@ -61,7 +67,6 @@ const createAuthProxy = (targetPath) => {
         }
     };
 };
-// Auth routes with rate limiting
 router.post("/login", rateLimiter_middleware_1.authRateLimiter, createAuthProxy("/api/login"));
 router.post("/register", rateLimiter_middleware_1.authRateLimiter, createAuthProxy("/api/register"));
 router.post("/logout", rateLimiter_middleware_1.authRateLimiter, createAuthProxy("/api/logout"));
@@ -69,4 +74,29 @@ router.post("/refresh", createAuthProxy("/api/refresh"));
 router.post("/owner/register", createAuthProxy("/api/owner/register"));
 router.post("/manager/register", createAuthProxy("/api/manager/register"));
 router.post("/valet/register", createAuthProxy("/api/valet/register"));
+router.get("/admin/allusers", auth_middleware_1.authMiddleware, (0, rbac_middleware_1.rbac)(role_enum_1.UserRole.ADMIN), createAuthProxy("/api/admin/allusers"));
+router.get("/profile/my", auth_middleware_1.authMiddleware, createAuthProxy("/api/profile/my"));
+router.patch("/profile/my", auth_middleware_1.authMiddleware, createAuthProxy("/api/profile/my"));
+// router.use("/internal", authMiddleware, async (req, res) => {
+//   try {
+//     const url = `http://localhost:4001${req.originalUrl.replace("/api", "")}`;
+//     const response = await axios({
+//       method: req.method,
+//       url,
+//       data: req.body,
+//       headers: {
+//         Cookie: req.headers.cookie || "",
+//         ...(req.user && {
+//           "x-user-id": req.user.id,
+//           "x-user-role": req.user.role,
+//           "x-user-email": req.user.email,
+//         }),
+//       },
+//       validateStatus: () => true,
+//     });
+//     res.status(response.status).json(response.data);
+//   } catch (e) {
+//     res.status(500).json({ success: false, message: "Gateway error" });
+//   }
+// });
 exports.default = router;

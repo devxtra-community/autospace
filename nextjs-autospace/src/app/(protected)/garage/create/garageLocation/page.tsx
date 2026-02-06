@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useEffect, useRef, useState } from "react";
 import maplibregl, { Map, Marker } from "maplibre-gl";
 import { MapPin, CheckCircle2 } from "lucide-react";
@@ -30,6 +32,9 @@ export default function GarageLocation({
   onSubmit,
   isSubmitting = false,
 }: GarageLocationProps) {
+  if (typeof window === "undefined") {
+    return null;
+  }
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
   const markerRef = useRef<Marker | null>(null);
@@ -39,7 +44,9 @@ export default function GarageLocation({
     formData.latitude != null && formData.longitude != null;
 
   useEffect(() => {
-    if (currentStep != 2 || mapRef.current) return;
+    if (typeof window === "undefined") return; // ← server guard
+    if (currentStep !== 2 || mapRef.current) return;
+
     const map = new maplibregl.Map({
       container: mapContainerRef.current!,
       style: {
@@ -85,8 +92,10 @@ export default function GarageLocation({
     mapRef.current = map;
 
     return () => {
-      map.remove();
-      mapRef.current = null;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
     };
   }, [currentStep, setValue]);
 

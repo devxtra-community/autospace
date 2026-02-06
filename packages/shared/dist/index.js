@@ -17,4 +17,3 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./auth"), exports);
 __exportStar(require("./company"), exports);
 __exportStar(require("./garage"), exports);
-__exportStar(require("./slots"), exports);

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AuthErrorCode = void 0;
+exports.sendAuthError = exports.AuthErrorCode = void 0;
 var AuthErrorCode;
 (function (AuthErrorCode) {
     AuthErrorCode["INVALID_CREDENTIALS"] = "AUTH_INVALID_CREDENTIALS";
@@ -14,3 +14,11 @@ var AuthErrorCode;
     AuthErrorCode["VALIDATION_FAILED"] = "AUTH_VALIDATION_FAILED";
     AuthErrorCode["RATE_LIMITED"] = "AUTH_RATE_LIMITED";
 })(AuthErrorCode || (exports.AuthErrorCode = AuthErrorCode = {}));
+const sendAuthError = (res, code, message, statusCode = 401) => {
+    return res.status(statusCode).json({
+        success: false,
+        code: code,
+        message: message,
+    });
+};
+exports.sendAuthError = sendAuthError;

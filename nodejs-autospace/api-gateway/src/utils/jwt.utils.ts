@@ -1,8 +1,7 @@
-// api-gateway/src/utils/jwt.utils.ts
 import jwt from "jsonwebtoken";
 import { UserRole, UserStatus } from "../constants/role.enum";
 
-// 🔹 Type for JWT payload (copy from auth-service)
+// Type for JWT payload (copy from auth-service)
 export interface JwtPayload {
   id: string;
   email: string;

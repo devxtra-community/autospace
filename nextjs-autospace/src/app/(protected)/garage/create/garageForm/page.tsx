@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = "force-dynamic";
 
 import { FileText, MapPin, Type, Loader2, Warehouse } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,9 @@ export default function GarageForm({
   onCancel,
   isLoading = false,
 }: GarageFormProps) {
+  if (typeof window === "undefined") {
+    return null;
+  }
   return (
     <div className="space-y-8 animate-fadeIn">
       <div>

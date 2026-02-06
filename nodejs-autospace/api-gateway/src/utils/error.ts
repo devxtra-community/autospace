@@ -1,4 +1,3 @@
-// api-gateway/src/utils/error.ts
 import { Response } from "express";
 
 export enum AuthErrorCode {
