@@ -41,7 +41,7 @@ export const getPendingCompanies = async (
 export const approveCompany = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    const adminUserId = req.headers["x-user-id"] as string;
+    const adminUserId = req.user.id;
 
     const company = await updateCompanyStatus(
       id,
@@ -65,7 +65,7 @@ export const approveCompany = async (req: Request, res: Response) => {
 export const rejectCompany = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    const adminUserId = req.headers["x-user-id"] as string;
+    const adminUserId = req.user.id;
 
     const company = await updateCompanyStatus(
       id,

@@ -6,20 +6,39 @@ export const getPublicGarageController = async (
   res: Response,
 ): Promise<Response> => {
   try {
+    console.log("🎯 CONTROLLER HIT");
+    console.log("RAW QUERY:", req.query);
+    console.log("VALIDATED QUERY:", req.validateQuery);
+
     const query = req.validateQuery;
     if (!query) {
       return res.status(400).json({ success: false, message: "Invalid query" });
     }
 
-    const { lat, lng, radius, valetAvailable, limit, page } = query;
+    const latitude = query.lat ? Number(query.lat) : undefined;
+    const longitude = query.lng ? Number(query.lng) : undefined;
+
+    if (
+      (latitude !== undefined && isNaN(latitude)) ||
+      (longitude !== undefined && isNaN(longitude))
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid latitude or longitude",
+      });
+    }
+
+    const radius = query.radius ? Number(query.radius) : 25;
+    const limit = query.limit ? Number(query.limit) : 10;
+    const page = query.page ? Number(query.page) : 1;
 
     const result = await getPublicGarages({
-      latitude: lat,
-      longitude: lng,
+      latitude,
+      longitude,
       radius,
-      valetAvailable,
-      page,
+      valetAvailable: query.valetAvailable,
       limit,
+      page,
     });
 
     return res.status(200).json({

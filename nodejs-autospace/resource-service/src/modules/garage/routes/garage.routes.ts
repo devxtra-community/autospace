@@ -25,22 +25,45 @@ import {
 } from "../controllers/garage-image.controller";
 import { createGarageSlotController } from "../controllers/garage-slot.controller";
 import { createGarageFloorController } from "../controllers/garage-floor.controller";
+import { internalAuth } from "../../../middlewares/internalAuth.middleware";
 
 const router = Router();
 
-router.get("/", validatePublicGarageQuery, getPublicGarageController);
-router.get("/:id", getGarageByIdController);
-router.post("/register", validateCreateGarage, createGarageController);
-router.put("/admin/:id/active", approveGarage);
-router.put("/admin/:id/reject", rejectGarage);
-router.get("/admin/pending", getPendingGarages);
-router.post("/assign-manager", assignManagerController);
-router.get("/admin/all", getAllGaragesController);
-router.get("/byCompany/:companyId", getGaragesByCompanyController);
-router.put("/:id", updateGarageProfileController);
-router.post("/:garageId/images", addGarageImageController);
-router.get("/:garageId/images", getGarageImagesController);
-router.post("/slots", validateCreateSlot, createGarageSlotController);
-router.post("/floors", validateCreateFloor, createGarageFloorController);
+router.use((req, _res, next) => {
+  console.log("📥 RESOURCE ROUTE HIT:", req.method, req.originalUrl);
+  next();
+});
+
+router.post(
+  "/register",
+  internalAuth,
+  validateCreateGarage,
+  createGarageController,
+);
+router.put("/admin/:id/active", internalAuth, approveGarage);
+router.put("/admin/:id/reject", internalAuth, rejectGarage);
+router.get("/admin/pending", internalAuth, getPendingGarages);
+router.post("/assign-manager", internalAuth, assignManagerController);
+router.get("/admin/all", internalAuth, getAllGaragesController);
+router.get(
+  "/byCompany/:companyId",
+  internalAuth,
+  getGaragesByCompanyController,
+);
+router.put("/:id", internalAuth, updateGarageProfileController);
+router.post("/:garageId/images", internalAuth, addGarageImageController);
+router.get("/:garageId/images", internalAuth, getGarageImagesController);
+router.post(
+  "/slots",
+  validateCreateSlot,
+  internalAuth,
+  createGarageSlotController,
+);
+router.post(
+  "/floors",
+  validateCreateFloor,
+  internalAuth,
+  createGarageFloorController,
+);
 
 export default router;

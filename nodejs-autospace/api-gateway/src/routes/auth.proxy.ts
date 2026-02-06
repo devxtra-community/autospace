@@ -11,11 +11,9 @@ const router = Router();
 const AUTH_SERVICE_URL =
   process.env.AUTH_SERVICE_URL || "http://localhost:4001";
 
-// Parse JSON
 router.use(express.json());
 router.use(express.urlencoded({ extended: true }));
 
-// /me endpoint - handled by gateway
 router.get("/me", authMiddleware, (req, res) => {
   res.status(200).json({
     success: true,
@@ -83,12 +81,14 @@ router.post("/refresh", createAuthProxy("/api/refresh"));
 router.post("/owner/register", createAuthProxy("/api/owner/register"));
 router.post("/manager/register", createAuthProxy("/api/manager/register"));
 router.post("/valet/register", createAuthProxy("/api/valet/register"));
+
 router.get(
   "/admin/allusers",
   authMiddleware,
   rbac(UserRole.ADMIN),
   createAuthProxy("/api/admin/allusers"),
 );
+
 router.get("/profile/my", authMiddleware, createAuthProxy("/api/profile/my"));
 router.patch("/profile/my", authMiddleware, createAuthProxy("/api/profile/my"));
 // router.use("/internal", authMiddleware, async (req, res) => {
