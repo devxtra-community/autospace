@@ -6,7 +6,6 @@ import { ValetsFilters } from "@/components/garage/valets/ValetsFilters";
 export default function GarageValetsPage() {
   return (
     <>
-      {/* Page Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Garage Valets</h1>
         <p className="text-muted-foreground">
@@ -14,12 +13,10 @@ export default function GarageValetsPage() {
         </p>
       </div>
 
-      {/* Filters */}
       <div className="mb-6">
         <ValetsFilters />
       </div>
 
-      {/* Valets Grid */}
       <ValetsGrid />
     </>
   );
