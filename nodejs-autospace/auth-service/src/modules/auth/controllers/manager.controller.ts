@@ -34,6 +34,8 @@ export const getManagerInternal = async (req: Request, res: Response) => {
 
   return res.json({
     id: manager.id,
+    fullname: manager.fullname,
+    email: manager.email,
     role: manager.role,
     companyId: manager.companyId,
     managerState: manager.managerState,

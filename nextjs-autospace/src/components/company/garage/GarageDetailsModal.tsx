@@ -31,7 +31,9 @@ interface Garage {
   contactEmail?: string;
   contactPhone?: string;
   capacity: number;
-  managerId?: string | null;
+  manager?: {
+    fullname?: string;
+  } | null;
   status: string;
   valetAvailable: boolean;
   latitude: number;
@@ -57,7 +59,10 @@ export function GarageDetailsModal({
 
     setLoading(true);
     getGarageById(garageId)
-      .then((data) => setGarage(data))
+      .then((data) => {
+        console.log("GARAGE DETAILS RESPONSE:", data);
+        setGarage(data);
+      })
       .finally(() => setLoading(false));
   }, [open, garageId]);
 
@@ -161,11 +166,10 @@ export function GarageDetailsModal({
               label="Capacity"
               value={`${garage.capacity}`}
             />
-
             <InfoItem
               icon={<User size={16} />}
               label="Manager"
-              value={garage.managerId ? "Assigned" : "Unassigned"}
+              value={garage.manager?.fullname ?? "Unassigned"}
             />
 
             <InfoItem

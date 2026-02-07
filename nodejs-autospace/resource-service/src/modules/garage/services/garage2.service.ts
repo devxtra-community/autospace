@@ -80,7 +80,26 @@ export const getGarageById = async (id: string) => {
     throw new Error("Garage not found");
   }
 
-  return garage;
+  let manager = null;
+
+  if (garage.managerId) {
+    try {
+      const { data } = await axios.get(
+        `${AUTH_SERVICE_URL}/internal/${garage.managerId}`,
+      );
+
+      manager = {
+        fullname: data.fullname ?? data.email ?? "Manager",
+      };
+    } catch {
+      manager = null;
+    }
+  }
+
+  return {
+    ...garage,
+    manager,
+  };
 };
 
 export const getAllGarages = async (page = 1, limit = 10) => {
@@ -111,15 +130,38 @@ export const getGaragesByCompanyId = async (
 ) => {
   const repo = AppDataSource.getRepository(Garage);
 
-  const [data, total] = await repo.findAndCount({
+  const [garages, total] = await repo.findAndCount({
     where: { companyId },
     skip: (page - 1) * limit,
     take: limit,
     order: { createdAt: "DESC" },
   });
 
+  const enriched = await Promise.all(
+    garages.map(async (garage) => {
+      if (!garage.managerId) {
+        return { ...garage, manager: null };
+      }
+
+      try {
+        const { data } = await axios.get(
+          `${AUTH_SERVICE_URL}/internal/${garage.managerId}`,
+        );
+
+        return {
+          ...garage,
+          manager: {
+            fullname: data.fullname ?? data.email ?? "Manager",
+          },
+        };
+      } catch {
+        return { ...garage, manager: null };
+      }
+    }),
+  );
+
   return {
-    data,
+    data: enriched,
     meta: {
       total,
       page,

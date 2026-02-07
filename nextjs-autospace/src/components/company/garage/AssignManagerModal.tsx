@@ -9,25 +9,26 @@ import {
 } from "@/services/user.service";
 import { assignManagerToGarage } from "@/services/garage.service";
 
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  companyId: string;
+  garageCode: string; // THIS IS garageRegistrationNumber
+  onAssigned: () => void;
+}
+
 export function AssignManagerModal({
   open,
   onClose,
   companyId,
-  garageId,
+  garageCode,
   onAssigned,
-}: {
-  open: boolean;
-  onClose: () => void;
-  companyId: string;
-  garageId: string;
-  onAssigned: () => void;
-}) {
+}: Props) {
   const [managers, setManagers] = useState<AssignableManager[]>([]);
-  const [selectedManager, setSelectedManager] = useState<string>("");
+  const [selectedManager, setSelectedManager] = useState("");
 
   useEffect(() => {
     if (!open) return;
-
     getAssignableManagers(companyId).then(setManagers);
   }, [open, companyId]);
 
@@ -35,7 +36,7 @@ export function AssignManagerModal({
     if (!selectedManager) return;
 
     await assignManagerToGarage({
-      garageCode: garageId,
+      garageCode, //  CORRECT VALUE
       managerId: selectedManager,
     });
 

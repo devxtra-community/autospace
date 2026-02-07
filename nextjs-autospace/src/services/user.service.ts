@@ -29,7 +29,7 @@ export const getAssignableManagers = async (
   companyId: string,
 ): Promise<AssignableManager[]> => {
   const res = await apiClient.get(
-    `/api/internal/companies/${companyId}/managers/assignable`,
+    `/api/auth/manager/internal/companies/${companyId}/managers/assignable`,
   );
 
   return res.data.data;
