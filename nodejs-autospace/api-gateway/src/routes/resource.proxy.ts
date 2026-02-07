@@ -55,7 +55,7 @@ router.use(
   "/public/garages",
   (req, _res, next) => {
     console.log(" GATEWAY URL:", req.originalUrl);
-    console.log("🌐 GATEWAY PATH:", req.url);
+    console.log(" GATEWAY PATH:", req.url);
     next();
   },
   createProxyMiddleware({

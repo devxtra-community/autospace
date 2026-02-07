@@ -6,27 +6,27 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 
-@Entity()
+@Entity({ name: "booking" })
 export class Booking {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
 
-  @Column()
+  @Column("uuid")
   userId!: string;
 
-  @Column()
+  @Column("uuid")
   garageId!: string;
 
-  @Column()
+  @Column("uuid")
   slotId!: string;
 
-  @Column()
+  @Column("timestamp")
   startTime!: Date;
 
-  @Column()
+  @Column("timestamp")
   endTime!: Date;
 
-  @Column({ default: "pending" })
+  @Column("varchar", { default: "pending", length: 50 })
   status!: string;
 
   @CreateDateColumn()

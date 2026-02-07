@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon --exec ts-node src/server.ts",
+    "dev": "tsx watch src/server.ts",
+    "dev:watch": "nodemon --exec tsx src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "lint": "pnpm eslint src/**/*.ts",
@@ -26,6 +27,7 @@
     "morgan": "^1.10.1",
     "pg": "^8.16.3",
     "redis": "^5.10.0",
+    "reflect-metadata": "^0.2.2",
     "typeorm": "^0.3.28"
   },
   "devDependencies": {
@@ -34,7 +36,7 @@
     "@types/morgan": "^1.9.10",
     "@types/node": "^25.2.1",
     "nodemon": "^3.1.11",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }
