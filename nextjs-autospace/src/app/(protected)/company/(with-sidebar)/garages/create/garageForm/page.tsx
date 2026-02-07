@@ -1,19 +1,21 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { FileText, MapPin, Type, Loader2, Warehouse } from "lucide-react";
+import {
+  Phone,
+  Mail,
+  MapPin,
+  Type,
+  Loader2,
+  Warehouse,
+  ImageIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FieldErrors, UseFormRegister } from "react-hook-form";
+import { useState } from "react";
 
-interface GarageFormValues {
-  name: string;
-  description: string;
-  locationName: string;
-  capacity: number;
-  latitude?: number;
-  longitude?: number;
-}
+import type { GarageFormValues } from "../page";
 
 interface GarageFormProps {
   register: UseFormRegister<GarageFormValues>;
@@ -30,89 +32,174 @@ export default function GarageForm({
   onCancel,
   isLoading = false,
 }: GarageFormProps) {
-  if (typeof window === "undefined") {
-    return null;
-  }
+  const [garagePhoto, setGaragePhoto] = useState<File | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoKey, setPhotoKey] = useState<string | null>(null);
+
+  const [filled, setFilled] = useState({
+    name: false,
+    phone: false,
+    email: false,
+    locationName: false,
+    capacity: false,
+  });
+
+  const allFilled = Object.values(filled).every(Boolean);
+
+  const handlePhotoUpload = async (file: File) => {
+    setPhotoUploading(true);
+    try {
+      const res = await fetch("http://localhost:4000/api/files/upload", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to get upload URL");
+
+      const { uploadUrl, key } = await res.json();
+
+      await fetch(uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+
+      setPhotoKey(key);
+    } catch (err) {
+      console.error("Photo upload failed", err);
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-black mb-2">
-          Create New Garage
-        </h1>
+        <h1 className="text-3xl font-bold">Create New Garage</h1>
         <p className="text-gray-600">
           Add a new garage location to your Autospace fleet.
         </p>
       </div>
 
       <form
-        onSubmit={(e) => {
+        className="space-y-6"
+        onSubmit={async (e) => {
           e.preventDefault();
+
+          if (garagePhoto && !photoKey) {
+            await handlePhotoUpload(garagePhoto);
+          }
+
           onNext();
         }}
-        className="space-y-6"
       >
-        {/* Garage Name */}
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-semibold text-black">
-            <Type className="w-4 h-4 text-yellow-500" />
-            Garage Name
-          </label>
+        {/* Name */}
+        <Field
+          label="Garage Name"
+          icon={<Type className="w-4 h-4 text-yellow-500" />}
+          error={errors.name?.message}
+        >
           <Input
-            placeholder="e.g., Downtown Service Center"
             {...register("name")}
+            onChange={(e) =>
+              setFilled((s) => ({ ...s, name: e.target.value.trim() !== "" }))
+            }
           />
-          {errors.name && (
-            <p className="text-sm text-red-500">{errors.name.message}</p>
-          )}
-        </div>
+        </Field>
 
-        {/* Description (UI only) */}
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-semibold text-black">
-            <FileText className="w-4 h-4 text-yellow-500" />
-            Description
-          </label>
-          <textarea
-            className="w-full h-32 px-4 py-3 border rounded-lg"
-            {...register("description")}
+        {/* Phone */}
+        <Field
+          label="Phone"
+          icon={<Phone className="w-4 h-4 text-yellow-500" />}
+          error={errors.phone?.message}
+        >
+          <Input
+            type="tel"
+            {...register("phone")}
+            onChange={(e) =>
+              setFilled((s) => ({ ...s, phone: e.target.value.trim() !== "" }))
+            }
           />
-          {errors.description && (
-            <p className="text-sm text-red-500">{errors.description.message}</p>
-          )}
-        </div>
+        </Field>
+
+        {/* Email */}
+        <Field
+          label="Email"
+          icon={<Mail className="w-4 h-4 text-yellow-500" />}
+          error={errors.email?.message}
+        >
+          <Input
+            type="email"
+            {...register("email")}
+            onChange={(e) =>
+              setFilled((s) => ({ ...s, email: e.target.value.trim() !== "" }))
+            }
+          />
+        </Field>
 
         {/* Location Name */}
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-semibold text-black">
-            <MapPin className="w-4 h-4 text-yellow-500" />
-            Location Name
-          </label>
+        <Field
+          label="Location Name"
+          icon={<MapPin className="w-4 h-4 text-yellow-500" />}
+          error={errors.locationName?.message}
+        >
           <Input
-            placeholder="e.g., MG Road, Kochi"
             {...register("locationName")}
+            onChange={(e) =>
+              setFilled((s) => ({
+                ...s,
+                locationName: e.target.value.trim() !== "",
+              }))
+            }
           />
-          {errors.locationName && (
-            <p className="text-sm text-red-500">
-              {errors.locationName.message}
-            </p>
-          )}
-        </div>
+        </Field>
 
         {/* Capacity */}
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-semibold text-black">
-            <Warehouse className="w-4 h-4 text-yellow-500" />
-            Parking Capacity
-          </label>
+        <Field
+          label="Capacity"
+          icon={<Warehouse className="w-4 h-4 text-yellow-500" />}
+          error={errors.capacity?.message}
+        >
           <Input
             type="number"
             min={1}
-            placeholder="e.g., 50"
             {...register("capacity", { valueAsNumber: true })}
+            onChange={(e) =>
+              setFilled((s) => ({ ...s, capacity: e.target.value !== "" }))
+            }
           />
-          {errors.capacity && (
-            <p className="text-sm text-red-500">{errors.capacity.message}</p>
+        </Field>
+
+        {/* Photo */}
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 font-semibold">
+            <ImageIcon className="w-4 h-4 text-yellow-500" />
+            Garage Photo (optional)
+          </label>
+
+          <input
+            type="file"
+            accept="image/*"
+            disabled={photoUploading}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) setGaragePhoto(file);
+            }}
+          />
+
+          {photoUploading && (
+            <p className="text-sm text-blue-600 flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Uploading photo...
+            </p>
           )}
+
+          {photoKey && <p className="text-sm text-green-600">Photo ready</p>}
         </div>
 
         {/* Actions */}
@@ -120,29 +207,58 @@ export default function GarageForm({
           <Button
             type="button"
             variant="outline"
-            className="flex-1"
             onClick={onCancel}
-            disabled={isLoading}
+            disabled={isLoading || photoUploading}
           >
             Cancel
           </Button>
 
           <Button
             type="submit"
-            className="flex-1 bg-black text-yellow-400"
-            disabled={isLoading}
+            className="bg-black text-yellow-400"
+            disabled={!allFilled || isLoading || photoUploading}
           >
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Loading...
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                Loading
               </>
             ) : (
               "Next: Set Location"
             )}
           </Button>
         </div>
+
+        {!allFilled && (
+          <p className="text-sm text-orange-600 text-center">
+            Fill all required fields to continue
+          </p>
+        )}
       </form>
+    </div>
+  );
+}
+
+/* Helper */
+function Field({
+  label,
+  icon,
+  error,
+  children,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-2">
+      <label className="flex items-center gap-2 font-semibold">
+        {icon}
+        {label}
+      </label>
+      {children}
+      {error && <p className="text-sm text-red-500">{error}</p>}
     </div>
   );
 }
