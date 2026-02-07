@@ -65,7 +65,7 @@ export const createGarageFloorController = async (
   });
 };
 
-export const getMyFloorsController = async (req: Request, res: Response) => {
+export const getMyFloorsController = async (res: Response, req: Request) => {
   try {
     const managerId = req.user.id;
 
