@@ -52,6 +52,7 @@ export const createGarageSlotController = async (
 export const getSlotController = async (req: Request, res: Response) => {
   try {
     const managerId = req.user.id;
+    console.log("manager", managerId);
 
     if (!managerId) {
       return res.status(401).json({

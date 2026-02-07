@@ -1,7 +1,5 @@
 import rateLimit from "express-rate-limit";
-import { Response, Request } from "express";
-import { sendAuthError } from "../utils/error";
-import { AuthErrorCode } from "../utils/error";
+
 import axios from "axios";
 import { servicesConfig } from "../config/service.config";
 
@@ -56,13 +54,11 @@ export const authRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 
-  handler: (_req: Request, res: Response) => {
-    return sendAuthError(
-      res,
-      AuthErrorCode.RATE_LIMITED,
-      "Too many authentication requests , please try again later.",
-      429,
-    );
+  handler: (_req, res) => {
+    res.status(429).json({
+      success: false,
+      message: "Too many requests, please try again later",
+    });
   },
 });
 

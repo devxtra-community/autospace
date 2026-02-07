@@ -32,6 +32,14 @@ import {
   getMyFloorsController,
 } from "../controllers/garage-floor.controller";
 import { internalAuth } from "../../../middlewares/internalAuth.middleware";
+import {
+  freeSlot,
+  getAvailableSlots,
+  listSlotsByGarage,
+  lockSlot,
+  occupySlot,
+  releaseSlot,
+} from "../controllers/booking-slot.controller";
 
 const router = Router();
 
@@ -77,6 +85,23 @@ router.post(
 );
 
 router.get("/slots/my", internalAuth, getSlotController);
+
+// internal routes
+
+router.get(
+  "/internal/slots/available/:garageId/:floorNumber",
+  internalAuth,
+  getAvailableSlots,
+);
+router.post("/internal/slots/:slotId/lock", internalAuth, lockSlot);
+router.post("/internal/slots/:slotId/release", internalAuth, releaseSlot);
+router.post("/internal/slots/:slotId/occupy", internalAuth, occupySlot);
+router.post("/internal/slots/:slotId/free", internalAuth, freeSlot);
+router.get(
+  "/internal/garages/:garageId/slots",
+  internalAuth,
+  listSlotsByGarage,
+);
 
 //floor
 router.post(

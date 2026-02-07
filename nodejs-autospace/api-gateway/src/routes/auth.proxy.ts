@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, RequestHandler } from "express";
 import axios from "axios";
 import express from "express";
 import { authMiddleware } from "../middleware/auth.middleware";
@@ -74,9 +74,21 @@ const createAuthProxy = (targetPath: string) => {
   };
 };
 
-router.post("/login", authRateLimiter, createAuthProxy("/api/login"));
-router.post("/register", authRateLimiter, createAuthProxy("/api/register"));
-router.post("/logout", authRateLimiter, createAuthProxy("/api/logout"));
+router.post(
+  "/login",
+  authRateLimiter as unknown as RequestHandler,
+  createAuthProxy("/api/login"),
+);
+router.post(
+  "/register",
+  authRateLimiter as unknown as RequestHandler,
+  createAuthProxy("/api/register"),
+);
+router.post(
+  "/logout",
+  authRateLimiter as unknown as RequestHandler,
+  createAuthProxy("/api/logout"),
+);
 router.post("/refresh", createAuthProxy("/api/refresh"));
 router.post("/owner/register", createAuthProxy("/api/owner/register"));
 router.post("/manager/register", createAuthProxy("/api/manager/register"));
