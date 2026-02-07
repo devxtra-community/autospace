@@ -1,58 +1,28 @@
 import { Request, Response } from "express";
-import { uploadToWorker } from "../../lib/workerUpload";
-import { AppDataSource } from "../../db/data-source";
-import { FileEntity } from "./files.entity";
-import axios from "axios";
+import { R2 } from "../../lib/r2";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-export const uploadFileController = async (req: Request, res: Response) => {
-  const file = req.file;
+export async function generateUploadUrl(req: Request, res: Response) {
+  const { filename, contentType } = req.body;
 
-  if (!file) {
-    return res.status(400).json({ message: "No file uploaded" });
+  if (!filename || !contentType) {
+    return res.status(400).json({ error: "Missing filename or contentType" });
   }
 
-  //  basic image-only validation
-  if (!file.mimetype.startsWith("image/")) {
-    return res.status(400).json({ message: "Only image uploads allowed" });
-  }
+  const key = `garages/${Date.now()}-${filename}`;
 
-  const key = `uploads/${Date.now()}-${file.originalname}`;
-
-  // Upload to worker / R2
-  await uploadToWorker(file.buffer, file.originalname, key, file.mimetype);
-
-  // Save metadata in DB
-  const fileRepo = AppDataSource.getRepository(FileEntity);
-
-  const savedFile = await fileRepo.save({
-    key,
-    mimeType: file.mimetype,
-    size: file.size,
+  const command = new PutObjectCommand({
+    Bucket: process.env.R2_BUCKET_NAME,
+    Key: key,
+    ContentType: contentType,
   });
 
-  //  Return DB record
-  return res.status(201).json(savedFile);
-};
-
-export const downloadFileController = async (req: Request, res: Response) => {
-  const id = req.params.id as string;
-
-  const fileRepo = AppDataSource.getRepository(FileEntity);
-  const file = await fileRepo.findOneBy({ id });
-
-  if (!file) {
-    return res.status(404).json({ message: "File not found" });
+  try {
+    const uploadUrl = await getSignedUrl(R2, command, { expiresIn: 300 });
+    res.json({ uploadUrl, key });
+  } catch (error) {
+    console.error("Error generating upload URL:", error);
+    res.status(500).json({ error: "Failed to generate upload URL" });
   }
-
-  const fileUrl = `${process.env.R2_WORKER_UPLOAD_URL}/files/${file.key}`;
-
-  const response = await axios.get(fileUrl, {
-    responseType: "stream",
-  });
-
-  res.setHeader("Content-Type", file.mimeType);
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-
-  response.data.pipe(res);
-};
+}

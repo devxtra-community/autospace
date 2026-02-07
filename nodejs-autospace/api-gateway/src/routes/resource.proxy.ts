@@ -128,27 +128,11 @@ router.use(
 );
 
 router.use(
-  "/files/upload",
-  authMiddleware,
-  rbac(UserRole.OWNER),
-  createProxyMiddleware({
-    target: RESOURCE_SERVICE_URL,
-    changeOrigin: true,
-    pathRewrite: () => "/files/upload",
-    on: {
-      proxyReq: (proxyReq, req) => {
-        attachUserHeaders(proxyReq, req);
-      },
-    },
-  }),
-);
-
-router.use(
   "/files",
   createProxyMiddleware({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
-    pathRewrite: (path) => `/files${path}`,
+    pathRewrite: (path) => path,
   }),
 );
 

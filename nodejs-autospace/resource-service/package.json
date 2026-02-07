@@ -18,6 +18,7 @@
   "dependencies": {
     "@autospace/shared": "workspace:*",
     "@aws-sdk/client-s3": "^3.978.0",
+    "@aws-sdk/s3-request-presigner": "^3.984.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",

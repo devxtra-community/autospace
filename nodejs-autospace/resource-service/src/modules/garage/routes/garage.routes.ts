@@ -16,6 +16,7 @@ import {
   approveGarage,
   rejectGarage,
   getAllGaragesController,
+  getGarageByIdController,
 } from "../controllers/admin.garage.controller";
 import { getPublicGarageController } from "../controllers/public.garage.controller";
 import {
@@ -33,6 +34,11 @@ import {
 import { internalAuth } from "../../../middlewares/internalAuth.middleware";
 
 const router = Router();
+
+router.use((req, _res, next) => {
+  console.log(" RESOURCE ROUTE HIT:", req.method, req.originalUrl);
+  next();
+});
 
 router.post(
   "/register",
@@ -57,6 +63,7 @@ router.get(
   internalAuth,
   getGaragesByCompanyController,
 );
+router.get("/:id", internalAuth, getGarageByIdController);
 router.put("/:id", internalAuth, updateGarageProfileController);
 router.post("/:garageId/images", internalAuth, addGarageImageController);
 router.get("/:garageId/images", internalAuth, getGarageImagesController);
