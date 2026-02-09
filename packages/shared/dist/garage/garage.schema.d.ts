@@ -9,13 +9,15 @@ export declare const CreateGarageSchema: z.ZodObject<{
     contactPhone: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>;
 export declare const CreateFloorSchema: z.ZodObject<{
-    garageCode: z.ZodString;
     floorNumber: z.ZodNumber;
 }, z.core.$strip>;
 export declare const CreateSlotSchema: z.ZodObject<{
     floorNumber: z.ZodNumber;
     slotNumber: z.ZodString;
-    pricePerHour: z.ZodNumber;
+    slotSize: z.ZodEnum<{
+        STANDARD: "STANDARD";
+        LARGE: "LARGE";
+    }>;
 }, z.core.$strip>;
 export type CreateSlotInput = z.infer<typeof CreateSlotSchema>;
 export type CreateGarageInput = z.infer<typeof CreateGarageSchema>;

@@ -15,11 +15,11 @@ exports.CreateGarageSchema = zod_1.z.object({
         .optional(),
 });
 exports.CreateFloorSchema = zod_1.z.object({
-    garageCode: zod_1.z.string().min(1), // garage registration number
     floorNumber: zod_1.z.number().int().nonnegative(),
 });
 exports.CreateSlotSchema = zod_1.z.object({
     floorNumber: zod_1.z.number().int().nonnegative(),
-    slotNumber: zod_1.z.string().min(1).max(10),
-    pricePerHour: zod_1.z.number().positive(),
+    // Only A1–A5, B1–B5, etc.
+    slotNumber: zod_1.z.string().regex(/^[A-Z][1-5]$/, "Slot must be A1–A5, B1–B5, etc."),
+    slotSize: zod_1.z.enum(["STANDARD", "LARGE"]),
 });

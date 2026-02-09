@@ -16,14 +16,18 @@ export const CreateGarageSchema = z.object({
 });
 
 export const CreateFloorSchema = z.object({
-  garageCode: z.string().min(1), // garage registration number
   floorNumber: z.number().int().nonnegative(),
 });
 
 export const CreateSlotSchema = z.object({
   floorNumber: z.number().int().nonnegative(),
-  slotNumber: z.string().min(1).max(10),
-  pricePerHour: z.number().positive(),
+
+  // Only A1–A5, B1–B5, etc.
+  slotNumber: z
+    .string()
+    .regex(/^[A-Z][1-5]$/, "Slot must be A1–A5, B1–B5, etc."),
+
+  slotSize: z.enum(["STANDARD", "LARGE"]),
 });
 
 export type CreateSlotInput = z.infer<typeof CreateSlotSchema>;

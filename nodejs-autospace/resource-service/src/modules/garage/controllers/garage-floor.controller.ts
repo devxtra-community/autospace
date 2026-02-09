@@ -21,12 +21,12 @@ export const createGarageFloorController = async (
     });
   }
 
-  const { garageCode, floorNumber } = req.body;
+  const { floorNumber } = req.body;
 
-  if (!garageCode || floorNumber == null) {
+  if (floorNumber == null) {
     return res.status(400).json({
       success: false,
-      message: "garageCode and floorNumber are required",
+      message: "floorNumber is required",
     });
   }
 
@@ -34,20 +34,27 @@ export const createGarageFloorController = async (
   const floorRepo = AppDataSource.getRepository(GarageFloor);
 
   const garage = await garageRepo.findOne({
-    where: { garageRegistrationNumber: garageCode },
+    where: { managerId },
   });
 
   if (!garage) {
     return res.status(404).json({
       success: false,
-      message: "Garage not found",
+      message: "Garage not found for this manager",
     });
   }
 
-  if (garage.managerId !== managerId) {
-    return res.status(403).json({
+  const existingFloor = await floorRepo.findOne({
+    where: {
+      garageId: garage.id,
+      floorNumber,
+    },
+  });
+
+  if (existingFloor) {
+    return res.status(400).json({
       success: false,
-      message: "You are not assigned to this garage",
+      message: `Floor ${floorNumber} already exists`,
     });
   }
 
