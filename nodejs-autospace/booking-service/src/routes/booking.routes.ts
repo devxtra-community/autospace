@@ -1,14 +1,23 @@
 import { Router } from "express";
 import type { Router as ExpressRouter } from "express";
-import {
-  createBooking,
-  getBooking,
-} from "../controllers/booking.controller.js";
-import { authMiddleware } from "../middleware/auth.middleware.js";
+// import { authMiddleware } from "../middleware/auth.middleware.js";
+import { bookingController } from "../controllers/booking.controller.js";
+import { internalAuth } from "../middleware/internal-authmiddleware.js";
 
 const router: ExpressRouter = Router();
 
-router.post("/", authMiddleware, createBooking);
-router.get("/:id", authMiddleware, getBooking);
+router.post("/", internalAuth, bookingController.createBookingController);
+router.get("/my", internalAuth, bookingController.getMyBookings);
+router.get("/:bookingId", internalAuth, bookingController.getBooking);
+router.patch(
+  "/update/:bookingId",
+  internalAuth,
+  bookingController.updateStatus,
+);
+router.delete(
+  "/delete/:bookingId",
+  internalAuth,
+  bookingController.deleteBooking,
+);
 
 export default router;

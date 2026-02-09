@@ -17,6 +17,7 @@ import cookieParser from "cookie-parser";
 import authRouter from "./routes/auth.proxy";
 import { checkAllServices } from "./utils/healthcheck";
 import resourceRouter from "./routes/resource.proxy";
+import bookingRouter from "./routes/booking.proxy";
 
 const app = express();
 const port = process.env.GATEWAY_PORT || 4000;
@@ -67,7 +68,7 @@ app.get("/health/services", async (req, res) => {
 
 app.use("/api/auth", authRouter);
 
-app.use("/api", resourceRouter);
+app.use("/api", resourceRouter, bookingRouter);
 
 app.use((req, res) => {
   res.status(404).json({

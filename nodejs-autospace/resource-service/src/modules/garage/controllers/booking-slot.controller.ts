@@ -44,6 +44,47 @@ export const getAvailableSlots = async (req: Request, res: Response) => {
   }
 };
 
+export const getSingleSlotStatus = async (req: Request, res: Response) => {
+  try {
+    const slotIdRaw = req.params.slotId;
+    const slotId = Array.isArray(slotIdRaw) ? slotIdRaw[0] : slotIdRaw;
+
+    // console.log("SLOT ID RECEIVED =>", slotId);
+
+    if (!slotId) {
+      return res.status(400).json({
+        success: false,
+        message: "slotId required",
+      });
+    }
+
+    const slot = await slotRepo.findOne({
+      where: { id: slotId },
+      select: ["id", "status"],
+    });
+
+    if (!slot) {
+      return res.status(404).json({
+        success: false,
+        message: "Slot not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: slot,
+    });
+  } catch (error) {
+    // console.error("Error fetching slot status:", error);
+    console.error("DB ERROR =>", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch slot status",
+    });
+  }
+};
+
 export const lockSlot = async (req: Request, res: Response) => {
   try {
     const slotId = String(req.params.slotId);
