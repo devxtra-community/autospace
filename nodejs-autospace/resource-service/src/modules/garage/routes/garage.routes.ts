@@ -35,6 +35,7 @@ import { internalAuth } from "../../../middlewares/internalAuth.middleware";
 import {
   freeSlot,
   getAvailableSlots,
+  getSingleSlotStatus,
   listSlotsByGarage,
   lockSlot,
   occupySlot,
@@ -93,6 +94,9 @@ router.get(
   internalAuth,
   getAvailableSlots,
 );
+
+router.get("/internal/slots/:slotId/status", internalAuth, getSingleSlotStatus);
+
 router.post("/internal/slots/:slotId/lock", internalAuth, lockSlot);
 router.post("/internal/slots/:slotId/release", internalAuth, releaseSlot);
 router.post("/internal/slots/:slotId/occupy", internalAuth, occupySlot);

@@ -3,7 +3,7 @@ import { DataSource } from "typeorm";
 import { Booking } from "./models/booking.model.js";
 import "dotenv/config";
 
-console.log("url", process.env.DATABASE_URL);
+// console.log("url", process.env.DATABASE_URL);
 
 export const AppDataSource = new DataSource({
   type: "postgres",
