@@ -116,6 +116,8 @@ export class BookingController {
         ? bookingIdRaw[0]
         : bookingIdRaw;
 
+      console.log("bookid", bookingId);
+
       if (!bookingId) {
         return res.status(400).json({
           success: false,
@@ -150,6 +152,7 @@ export class BookingController {
   async getMyBookings(req: Request, res: Response) {
     try {
       const userId = req.user?.id;
+      console.log("user", userId);
 
       if (!userId) {
         return res.status(401).json({

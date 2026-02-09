@@ -7,9 +7,17 @@ import { internalAuth } from "../middleware/internal-authmiddleware.js";
 const router: ExpressRouter = Router();
 
 router.post("/", internalAuth, bookingController.createBookingController);
-router.get("/:id", internalAuth, bookingController.getMyBookings);
-router.get("/my", internalAuth, bookingController.getBooking);
-router.patch("/update", internalAuth, bookingController.updateStatus);
-router.delete("/delete", internalAuth, bookingController.deleteBooking);
+router.get("/my", internalAuth, bookingController.getMyBookings);
+router.get("/:bookingId", internalAuth, bookingController.getBooking);
+router.patch(
+  "/update/:bookingId",
+  internalAuth,
+  bookingController.updateStatus,
+);
+router.delete(
+  "/delete/:bookingId",
+  internalAuth,
+  bookingController.deleteBooking,
+);
 
 export default router;
