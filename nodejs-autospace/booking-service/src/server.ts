@@ -5,6 +5,8 @@ import app from "./app.js";
 import dotenv from "dotenv";
 import { logger } from "./utils/logger.js";
 import { AppDataSource } from "./data-source.js";
+import { startPendingExpiryJob } from "./jobs/pendingExpiry.jobs.js";
+import { startBookingLifecycleJob } from "./jobs/bookingLifeCycle.job.js";
 
 dotenv.config();
 
@@ -18,6 +20,9 @@ const startServer = async () => {
     await AppDataSource.initialize();
     logger.info("database connected");
     // await connectRedis();
+
+    startPendingExpiryJob();
+    startBookingLifecycleJob();
 
     app.listen(PORT, () => {
       logger.info(`Booking service running on port ${PORT}`);
