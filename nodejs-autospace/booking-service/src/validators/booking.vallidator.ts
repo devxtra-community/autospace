@@ -72,3 +72,17 @@ export function validateBookingInput(data: {
     }
   }
 }
+
+export function validateStatusTransition(
+  current: string,
+  next: string,
+): boolean {
+  const transitions: Record<string, string[]> = {
+    pending: ["confirmed", "cancelled"],
+    confirmed: ["completed", "cancelled"],
+    completed: [],
+    cancelled: [],
+  };
+
+  return transitions[current]?.includes(next) ?? false;
+}

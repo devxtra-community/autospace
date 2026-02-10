@@ -4,7 +4,9 @@ import { logger } from "../utils/logger.js";
 import {
   ValidationError,
   validateBookingInput,
+  validateStatusTransition,
 } from "../validators/booking.vallidator.js";
+import type { Booking } from "../models/booking.model.js";
 
 const bookingService = new BookingService();
 
@@ -62,18 +64,34 @@ export class BookingController {
         });
       }
 
+      const overlap = await bookingService.checkOverlap(
+        slotId,
+        new Date(startTime),
+        new Date(endTime),
+      );
+
+      if (overlap) {
+        return res.status(409).json({
+          success: false,
+          message: "Slot already booked for this time range",
+        });
+      }
+
       await bookingService.lockSlot(slotId, authToken);
 
       locked = true;
 
-      const booking = await bookingService.createBooking({
-        userId,
-        garageId,
-        slotId,
-        startTime: new Date(startTime),
-        endTime: new Date(endTime),
-        status: "pending",
-      });
+      const booking = await bookingService.createBooking(
+        {
+          userId,
+          garageId,
+          slotId,
+          startTime: new Date(startTime),
+          endTime: new Date(endTime),
+          status: "pending",
+        },
+        authToken,
+      );
 
       logger.info("booking created", booking.id);
 
@@ -179,11 +197,15 @@ export class BookingController {
   // update Booknig status
 
   async updateStatus(req: Request, res: Response) {
+    let slotAction: "NONE" | "RELEASED" | "OCCUPIED" = "NONE";
+    let booking: Booking | null = null;
+
     try {
       const bookingIdRaw = req.params.bookingId; // this line because from params string[]  as come sto we want to convert
       const bookingId = Array.isArray(bookingIdRaw)
         ? bookingIdRaw[0]
         : bookingIdRaw;
+
       const { status } = req.body;
 
       if (!bookingId || !status) {
@@ -191,6 +213,46 @@ export class BookingController {
           success: false,
           message: "bookingId and status are required",
         });
+      }
+
+      booking = await bookingService.getBookingById(bookingId);
+
+      if (!booking) {
+        return res.status(404).json({
+          success: false,
+          message: "Booking not found",
+        });
+      }
+
+      if (!validateStatusTransition(booking.status, status)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid status transition: ${booking.status} → ${status}`,
+        });
+      }
+
+      const authToken = req.headers.authorization?.split(" ")[1];
+
+      if (!authToken) {
+        return res.status(401).json({
+          success: false,
+          message: "Auth token required for slot sync",
+        });
+      }
+
+      // if (status === "confirmed") { };
+
+      if (status === "completed") {
+        await bookingService.occupySlot(booking.slotId, authToken);
+        slotAction = "OCCUPIED";
+
+        await bookingService.releaseSlot(booking.slotId, authToken);
+        slotAction = "RELEASED";
+      }
+
+      if (status === "cancelled") {
+        await bookingService.releaseSlot(booking.slotId, authToken);
+        slotAction = "RELEASED";
       }
 
       const updated = await bookingService.updateBookingStatus(
@@ -204,6 +266,22 @@ export class BookingController {
         data: updated,
       });
     } catch (error) {
+      try {
+        const authToken = req.headers.authorization?.split(" ")[1];
+
+        if (authToken && booking) {
+          if (slotAction === "RELEASED") {
+            await bookingService.lockSlot(booking.slotId, authToken);
+          }
+
+          if (slotAction === "OCCUPIED") {
+            await bookingService.releaseSlot(booking.slotId, authToken);
+          }
+        }
+      } catch (rollbackError) {
+        logger.error("Rollback failed", rollbackError);
+      }
+
       logger.error("BookingController.updateStatus failed", error);
       return res.status(500).json({
         success: false,
