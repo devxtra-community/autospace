@@ -127,13 +127,4 @@ router.use(
   }),
 );
 
-router.use(
-  "/files",
-  createProxyMiddleware({
-    target: RESOURCE_SERVICE_URL,
-    changeOrigin: true,
-    pathRewrite: (path) => path,
-  }),
-);
-
 export default router;

@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FieldErrors, UseFormRegister } from "react-hook-form";
 import { useState } from "react";
-
 import type { GarageFormValues } from "../page";
 
 interface GarageFormProps {
@@ -32,9 +31,9 @@ export default function GarageForm({
   onCancel,
   isLoading = false,
 }: GarageFormProps) {
-  const [garagePhoto, setGaragePhoto] = useState<File | null>(null);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoKey, setPhotoKey] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   const [filled, setFilled] = useState({
     name: false,
@@ -46,36 +45,50 @@ export default function GarageForm({
 
   const allFilled = Object.values(filled).every(Boolean);
 
-  const handlePhotoUpload = async (file: File) => {
+  const uploadPhoto = async (file: File) => {
     setPhotoUploading(true);
+    setPhotoError(null);
+
     try {
-      const res = await fetch("http://localhost:4000/api/files/upload", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type,
-        }),
-      });
+      //  Get presigned URL
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/files/upload`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: file.name,
+            contentType: file.type,
+          }),
+        },
+      );
 
       if (!res.ok) throw new Error("Failed to get upload URL");
 
       const { uploadUrl, key } = await res.json();
 
-      await fetch(uploadUrl, {
+      //  Upload directly to R2
+      const uploadRes = await fetch(uploadUrl, {
         method: "PUT",
         body: file,
         headers: { "Content-Type": file.type },
       });
 
+      if (!uploadRes.ok) throw new Error("Upload to R2 failed");
+
+      //  Success
       setPhotoKey(key);
     } catch (err) {
-      console.error("Photo upload failed", err);
+      console.error(err);
+      setPhotoError("Photo upload failed. Please try again.");
+      setPhotoKey(null);
     } finally {
       setPhotoUploading(false);
     }
   };
+
+  /* ---------------- UI ---------------- */
 
   return (
     <div className="space-y-8">
@@ -88,13 +101,8 @@ export default function GarageForm({
 
       <form
         className="space-y-6"
-        onSubmit={async (e) => {
+        onSubmit={(e) => {
           e.preventDefault();
-
-          if (garagePhoto && !photoKey) {
-            await handlePhotoUpload(garagePhoto);
-          }
-
           onNext();
         }}
       >
@@ -142,7 +150,7 @@ export default function GarageForm({
           />
         </Field>
 
-        {/* Location Name */}
+        {/* Location */}
         <Field
           label="Location Name"
           icon={<MapPin className="w-4 h-4 text-yellow-500" />}
@@ -188,28 +196,29 @@ export default function GarageForm({
             disabled={photoUploading}
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) setGaragePhoto(file);
+              if (file) uploadPhoto(file);
             }}
           />
 
           {photoUploading && (
             <p className="text-sm text-blue-600 flex items-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin" />
-              Uploading photo...
+              Uploading photo…
             </p>
           )}
 
-          {photoKey && <p className="text-sm text-green-600">Photo ready</p>}
+          {photoKey && !photoUploading && (
+            <p className="text-sm text-green-600">
+              ✅ Photo uploaded successfully
+            </p>
+          )}
+
+          {photoError && <p className="text-sm text-red-600">{photoError}</p>}
         </div>
 
         {/* Actions */}
         <div className="flex gap-3 pt-6">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isLoading || photoUploading}
-          >
+          <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
 
@@ -228,18 +237,13 @@ export default function GarageForm({
             )}
           </Button>
         </div>
-
-        {!allFilled && (
-          <p className="text-sm text-orange-600 text-center">
-            Fill all required fields to continue
-          </p>
-        )}
       </form>
     </div>
   );
 }
 
-/* Helper */
+/* ---------------- FIELD ---------------- */
+
 function Field({
   label,
   icon,
