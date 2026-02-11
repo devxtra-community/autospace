@@ -12,8 +12,8 @@ interface GetPublicGaragesFilters {
 }
 
 export const getPublicGarages = async (filters: GetPublicGaragesFilters) => {
-  console.log(" SERVICE START");
-  console.log("INPUT:", filters);
+  // console.log(" SERVICE START");
+  // console.log("INPUT:", filters);
 
   const { latitude, longitude, valetAvailable, limit, page } = filters;
   const radius = filters.radius ?? 20;
@@ -40,6 +40,29 @@ export const getPublicGarages = async (filters: GetPublicGaragesFilters) => {
   }
 
   return await getAllActiveGarages(valetAvailable, limit, skip);
+};
+
+export const getGarageByIdService = async (garageId: string) => {
+  const garagesRepo = AppDataSource.getRepository(Garage);
+
+  const garage = await garagesRepo.findOne({
+    where: { id: garageId, status: GarageStatus.ACTIVE },
+    select: [
+      "id",
+      "name",
+      "locationName",
+      "latitude",
+      "longitude",
+      "standardSlotPrice",
+      "largeSlotPrice",
+      "valetAvailable",
+      "capacity",
+      "contactPhone",
+      "createdAt",
+    ],
+  });
+
+  return garage;
 };
 
 async function getGaragesWithProximity(
@@ -96,8 +119,8 @@ async function getGaragesWithProximity(
         longitude,
         capacity,
         standard_slot_price,
-        // large_slot_price,
-        // "valetAvailable",
+        large_slot_price,
+        "valetAvailable",
         status,
         "createdAt",
         (
@@ -197,8 +220,8 @@ async function getAllActiveGarages(
       "longitude",
       "capacity",
       "valetAvailable",
-      // "standard_slot_price",
-      // "large_slot_price",
+      "standardSlotPrice",
+      "largeSlotPrice",
       "status",
       "createdAt",
     ],

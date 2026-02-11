@@ -20,7 +20,7 @@ app.use(
 );
 
 app.use((req, _res, next) => {
-  console.log("🟢 RESOURCE RECEIVED:", req.method, req.originalUrl);
+  console.log("RESOURCE RECEIVED:", req.method, req.originalUrl);
   next();
 });
 

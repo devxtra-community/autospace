@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { validatePublicGarageQuery } from "../validators/garage.validator";
-import { getPublicGarageController } from "../controllers/public.garage.controller";
+import {
+  getPublicGarageById,
+  getPublicGarageController,
+} from "../controllers/public.garage.controller";
 
 const router = Router();
 
@@ -9,5 +12,7 @@ router.get(
   validatePublicGarageQuery,
   getPublicGarageController,
 );
+
+router.get("/user/garages/:garageId", getPublicGarageById);
 
 export default router;

@@ -40,7 +40,7 @@ export default function Hero() {
     const [lng, lat] = results[0].geometry.coordinates;
 
     router.push(
-      `/garageDetail?lat=${lat}&lng=${lng}&q=${encodeURIComponent(query)}`,
+      `/searchDetail?lat=${lat}&lng=${lng}&q=${encodeURIComponent(query)}`,
     );
   };
 
@@ -97,7 +97,7 @@ export default function Hero() {
                     key={idx}
                     onClick={() => {
                       router.push(
-                        `/garageDetail?lat=${lat}&lng=${lng}&q=${encodeURIComponent(label)}`,
+                        `/searchDetail?lat=${lat}&lng=${lng}&q=${encodeURIComponent(label)}`,
                       );
                     }}
                     className="w-full text-left px-4 py-3 hover:bg-gray-100 flex items-center gap-2"
