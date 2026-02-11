@@ -44,3 +44,32 @@ export const assignManagerToGarage = async (payload: {
   const res = await apiClient.post("/api/garages/assign-manager", payload);
   return res.data.data;
 };
+
+export const createGarageFloor = async (payload: { floorNumber: number }) => {
+  const res = await apiClient.post("/api/garages/floors", payload);
+  return res.data.data;
+};
+
+export const getMyGarageFloors = async () => {
+  const res = await apiClient.get("/api/garages/floors/my");
+  return res.data.data;
+};
+
+export const createGarageSlot = async (payload: {
+  floorNumber: number;
+  slotNumber: string;
+  slotSize: "STANDARD" | "LARGE";
+}) => {
+  const res = await apiClient.post("/api/garages/slots", payload);
+  return res.data.data;
+};
+
+export const getMyGarageSlots = async () => {
+  const res = await apiClient.get("/api/garages/slots/my");
+  return res.data.data;
+};
+
+export const getSlotsByFloor = async (floorId: string) => {
+  const res = await apiClient.get(`/api/garages/floors/${floorId}/slots`);
+  return res.data.data;
+};

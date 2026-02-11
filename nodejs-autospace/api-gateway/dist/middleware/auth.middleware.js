@@ -23,9 +23,7 @@ const authMiddleware = (req, res, next) => {
             (0, error_1.sendAuthError)(res, error_2.AuthErrorCode.TOKEN_INVALID, "Access token missing", 401);
             return;
         }
-        // Verify token and attach to request
         const decoded = (0, jwt_utils_1.verifyAccessToken)(token);
-        // Attach full payload to request
         req.user = {
             id: decoded.id,
             email: decoded.email,

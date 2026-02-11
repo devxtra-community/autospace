@@ -19,6 +19,11 @@ app.use(
   }),
 );
 
+app.use((req, _res, next) => {
+  console.log("🟢 RESOURCE RECEIVED:", req.method, req.originalUrl);
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded());
 

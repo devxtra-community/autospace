@@ -20,6 +20,9 @@ import resourceRouter from "./routes/resource.proxy";
 import bookingRouter from "./routes/booking.proxy";
 
 const app = express();
+
+import type { Options } from "http-proxy-middleware";
+
 const port = process.env.GATEWAY_PORT || 4000;
 
 app.use(helmet());

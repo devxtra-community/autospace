@@ -1,4 +1,3 @@
-// entities/garage-slot.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -9,6 +8,11 @@ import {
   Unique,
 } from "typeorm";
 import { GarageFloor } from "./garage-floor.entity";
+
+export enum SlotSize {
+  STANDARD = "STANDARD",
+  LARGE = "LARGE",
+}
 
 @Entity("garage_slots")
 @Unique(["floorId", "slotNumber"])
@@ -24,7 +28,15 @@ export class GarageSlot {
   floor!: GarageFloor;
 
   @Column({ type: "varchar", length: 10, name: "slot_number" })
-  slotNumber!: string; // "A1", "B2"
+  slotNumber!: string;
+
+  @Column({
+    type: "enum",
+    enum: SlotSize,
+    default: SlotSize.STANDARD,
+    name: "slot_size",
+  })
+  slotSize!: SlotSize;
 
   @Column({ type: "numeric", precision: 10, scale: 2, name: "price_per_hour" })
   pricePerHour!: number;

@@ -103,29 +103,33 @@ router.get(
 
 router.get("/profile/my", authMiddleware, createAuthProxy("/api/profile/my"));
 router.patch("/profile/my", authMiddleware, createAuthProxy("/api/profile/my"));
-// router.use("/internal", authMiddleware, async (req, res) => {
-//   try {
-//     const url = `http://localhost:4001${req.originalUrl.replace("/api", "")}`;
+router.use("/manager", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const targetUrl =
+      AUTH_SERVICE_URL + req.originalUrl.replace("/api/auth", "/api");
 
-//     const response = await axios({
-//       method: req.method,
-//       url,
-//       data: req.body,
-//       headers: {
-//         Cookie: req.headers.cookie || "",
-//         ...(req.user && {
-//           "x-user-id": req.user.id,
-//           "x-user-role": req.user.role,
-//           "x-user-email": req.user.email,
-//         }),
-//       },
-//       validateStatus: () => true,
-//     });
+    const response = await axios({
+      method: req.method,
+      url: targetUrl,
+      data: req.body,
+      headers: {
+        "Content-Type": "application/json",
+        ...(req.user && {
+          "x-user-id": req.user.id,
+          "x-user-role": req.user.role,
+          "x-user-email": req.user.email,
+        }),
+      },
+      validateStatus: () => true,
+    });
 
-//     res.status(response.status).json(response.data);
-//   } catch (e) {
-//     res.status(500).json({ success: false, message: "Gateway error" });
-//   }
-// });
-
+    return res.status(response.status).json(response.data);
+  } catch (err) {
+    console.error("Manager proxy error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Gateway manager proxy error",
+    });
+  }
+});
 export default router;

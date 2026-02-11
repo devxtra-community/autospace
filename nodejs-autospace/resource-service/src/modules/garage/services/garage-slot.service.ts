@@ -1,14 +1,14 @@
 import { AppDataSource } from "../../../db/data-source";
-import { GarageSlot } from "../entities/garage-slot.entity";
+import { GarageSlot, SlotSize } from "../entities/garage-slot.entity";
 import { GarageFloor } from "../entities/garage-floor.entity";
 import { Garage } from "../entities/garage.entity";
-import { In } from "typeorm";
+import { In, Like } from "typeorm";
 
 export const createGarageSlot = async (
   managerId: string,
   floorNumber: number,
   slotNumber: string,
-  pricePerHour: number,
+  slotSize: SlotSize,
 ): Promise<GarageSlot> => {
   const garageRepo = AppDataSource.getRepository(Garage);
   const floorRepo = AppDataSource.getRepository(GarageFloor);
@@ -26,6 +26,39 @@ export const createGarageSlot = async (
     throw new Error(`Floor ${floorNumber} not found in your garage`);
   }
 
+  const match = slotNumber.match(/^([A-Z])([1-5])$/);
+  if (!match) {
+    throw new Error("Invalid slot number. Use A1–A5, B1–B5, etc.");
+  }
+
+  const letter = match[1];
+
+  const sameLetterCount = await slotRepo.count({
+    where: {
+      floorId: floor.id,
+      slotNumber: Like(`${letter}%`),
+    },
+  });
+
+  if (sameLetterCount >= 5) {
+    throw new Error(`Slot group ${letter} already has 5 slots`);
+  }
+
+  const floors = await floorRepo.find({
+    where: { garageId: garage.id },
+    select: ["id"],
+  });
+
+  const totalSlotsInGarage = await slotRepo.count({
+    where: {
+      floorId: In(floors.map((f) => f.id)),
+    },
+  });
+
+  if (totalSlotsInGarage >= garage.capacity) {
+    throw new Error("Garage capacity exceeded");
+  }
+
   const existingSlot = await slotRepo.findOne({
     where: { floorId: floor.id, slotNumber },
   });
@@ -33,9 +66,15 @@ export const createGarageSlot = async (
     throw new Error(`Slot ${slotNumber} already exists on this floor`);
   }
 
+  const pricePerHour =
+    slotSize === SlotSize.STANDARD
+      ? garage.standardSlotPrice
+      : garage.largeSlotPrice;
+
   const slot = slotRepo.create({
     floorId: floor.id,
     slotNumber,
+    slotSize,
     pricePerHour,
     status: "AVAILABLE",
   });
@@ -43,47 +82,25 @@ export const createGarageSlot = async (
   await slotRepo.save(slot);
   return slot;
 };
-
 export const getGarageSlots = async (
   managerId: string,
 ): Promise<GarageSlot[]> => {
-  try {
-    const garageRepo = AppDataSource.getRepository(Garage);
-    const floorRepo = AppDataSource.getRepository(GarageFloor);
-    const slotRepo = AppDataSource.getRepository(GarageSlot);
+  const garageRepo = AppDataSource.getRepository(Garage);
+  const floorRepo = AppDataSource.getRepository(GarageFloor);
+  const slotRepo = AppDataSource.getRepository(GarageSlot);
 
-    const garage = await garageRepo.findOne({
-      where: { managerId },
-    });
-
-    if (!garage) {
-      throw new Error("garage not found");
-    }
-
-    const floor = await floorRepo.find({
-      where: { garageId: garage.id },
-      select: ["id", "floorNumber"],
-      order: { floorNumber: "ASC" },
-    });
-
-    if (!floor.length) {
-      throw new Error("No floors found in this garage");
-    }
-
-    const floorId = floor.map((f) => f.id);
-
-    const slots = await slotRepo.find({
-      where: {
-        floorId: In(floorId),
-      },
-      order: {
-        slotNumber: "ASC",
-      },
-    });
-
-    return slots;
-  } catch (error) {
-    console.log("slot setup error", error);
-    throw error;
+  const garage = await garageRepo.findOne({ where: { managerId } });
+  if (!garage) {
+    throw new Error("garage not found");
   }
+
+  const floors = await floorRepo.find({
+    where: { garageId: garage.id },
+    select: ["id"],
+  });
+
+  return slotRepo.find({
+    where: { floorId: In(floors.map((f) => f.id)) },
+    order: { slotNumber: "ASC" },
+  });
 };

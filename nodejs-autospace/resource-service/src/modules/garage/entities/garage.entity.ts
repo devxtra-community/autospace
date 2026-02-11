@@ -69,6 +69,24 @@ export class Garage {
   })
   status!: GarageStatus;
 
+  @Column({
+    type: "numeric",
+    precision: 10,
+    scale: 2,
+    name: "standard_slot_price",
+    default: 50,
+  })
+  standardSlotPrice!: number;
+
+  @Column({
+    type: "numeric",
+    precision: 10,
+    scale: 2,
+    name: "large_slot_price",
+    default: 80,
+  })
+  largeSlotPrice!: number;
+
   @Index()
   @Column("uuid")
   createdBy!: string;

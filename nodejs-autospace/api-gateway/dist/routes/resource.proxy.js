@@ -7,14 +7,26 @@ const rbac_middleware_1 = require("../middleware/rbac.middleware");
 const role_enum_1 = require("../constants/role.enum");
 const router = (0, express_1.Router)();
 const RESOURCE_SERVICE_URL = process.env.RESOURCE_SERVICE_URL || "http://localhost:4003";
+const attachUserHeaders = (proxyReq, req) => {
+    if (req.user) {
+        proxyReq.setHeader("x-user-id", req.user.id);
+        proxyReq.setHeader("x-user-role", req.user.role);
+        proxyReq.setHeader("x-user-email", req.user.email);
+    }
+    if (req.headers.authorization) {
+        proxyReq.setHeader("authorization", req.headers.authorization);
+    }
+};
 router.use("/companies", auth_middleware_1.authMiddleware, (0, rbac_middleware_1.rbac)(role_enum_1.UserRole.OWNER, role_enum_1.UserRole.ADMIN), (0, http_proxy_middleware_1.createProxyMiddleware)({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
     pathRewrite: (path) => `/companies${path}`,
-    //  move onProxyReq under "on"
     on: {
         proxyReq: (proxyReq, req) => {
-            if (req.body) {
+            attachUserHeaders(proxyReq, req);
+            if (req.body &&
+                Object.keys(req.body).length > 0 &&
+                ["POST", "PUT", "PATCH"].includes(req.method)) {
                 const bodyData = JSON.stringify(req.body);
                 proxyReq.setHeader("Content-Type", "application/json");
                 proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
@@ -23,28 +35,30 @@ router.use("/companies", auth_middleware_1.authMiddleware, (0, rbac_middleware_1
         },
     },
 }));
-router.use("/public/garages", (0, http_proxy_middleware_1.createProxyMiddleware)({
+router.use("/public/garages", (req, _res, next) => {
+    console.log(" GATEWAY URL:", req.originalUrl);
+    console.log(" GATEWAY PATH:", req.url);
+    next();
+}, (0, http_proxy_middleware_1.createProxyMiddleware)({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
-    pathRewrite: () => "/garages",
+    router: () => `${RESOURCE_SERVICE_URL}/garages`,
 }));
-router.use("/garages", (req, _res, next) => {
-    console.log("GATEWAY BODY:", req.body);
-    next();
-});
-// garage routes
 router.use("/garages", auth_middleware_1.authMiddleware, (0, rbac_middleware_1.rbac)(role_enum_1.UserRole.OWNER, role_enum_1.UserRole.ADMIN, role_enum_1.UserRole.MANAGER), (0, http_proxy_middleware_1.createProxyMiddleware)({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
     pathRewrite: (path) => `/garages${path}`,
     on: {
         proxyReq: (proxyReq, req) => {
-            if (!req.body || !Object.keys(req.body).length)
-                return;
-            const bodyData = JSON.stringify(req.body);
-            proxyReq.setHeader("Content-Type", "application/json");
-            proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
-            proxyReq.write(bodyData);
+            attachUserHeaders(proxyReq, req);
+            if (req.body &&
+                Object.keys(req.body).length > 0 &&
+                ["POST", "PUT", "PATCH"].includes(req.method)) {
+                const bodyData = JSON.stringify(req.body);
+                proxyReq.setHeader("Content-Type", "application/json");
+                proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
+                proxyReq.write(bodyData);
+            }
         },
     },
 }));
@@ -53,21 +67,26 @@ router.use("/slots", auth_middleware_1.authMiddleware, (0, rbac_middleware_1.rba
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
     pathRewrite: (path) => `/slots${path}`,
+    on: {
+        proxyReq: (proxyReq, req) => {
+            attachUserHeaders(proxyReq, req);
+        },
+    },
 }));
 // valet routes
 router.use("/valet", auth_middleware_1.authMiddleware, (0, rbac_middleware_1.rbac)(role_enum_1.UserRole.MANAGER, role_enum_1.UserRole.VALET), (0, http_proxy_middleware_1.createProxyMiddleware)({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
     pathRewrite: (path) => `/valet${path}`,
-}));
-router.use("/files/upload", auth_middleware_1.authMiddleware, (0, rbac_middleware_1.rbac)(role_enum_1.UserRole.OWNER), (0, http_proxy_middleware_1.createProxyMiddleware)({
-    target: RESOURCE_SERVICE_URL,
-    changeOrigin: true,
-    pathRewrite: () => "/files/upload",
+    on: {
+        proxyReq: (proxyReq, req) => {
+            attachUserHeaders(proxyReq, req);
+        },
+    },
 }));
 router.use("/files", (0, http_proxy_middleware_1.createProxyMiddleware)({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
-    pathRewrite: (path) => `/files${path}`,
+    pathRewrite: (path) => path,
 }));
 exports.default = router;
