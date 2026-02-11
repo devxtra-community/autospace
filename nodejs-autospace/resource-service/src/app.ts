@@ -6,6 +6,7 @@ import garageRoutes from "./modules/garage/routes/garage.routes";
 import internalValetRoutes from "./modules/valets/routes/internal-valet.routes";
 import valetRoutes from "./modules/valets/routes/valet.routes";
 import filesRoutes from "./modules/files/files.routes";
+import publicROutes from "./modules/garage/routes/public.garage.routes";
 
 const app = express();
 
@@ -19,7 +20,7 @@ app.use(
 );
 
 app.use((req, _res, next) => {
-  console.log("🟢 RESOURCE RECEIVED:", req.method, req.originalUrl);
+  console.log("RESOURCE RECEIVED:", req.method, req.originalUrl);
   next();
 });
 
@@ -40,6 +41,7 @@ app.get("/health", (_req, res) => {
 
 app.use("/companies", companyRoutes);
 app.use("/garages", garageRoutes);
+app.use("/public", publicROutes);
 app.use("/valet", valetRoutes);
 app.use("/files", filesRoutes);
 

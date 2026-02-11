@@ -52,7 +52,7 @@ router.use(
 );
 
 router.use(
-  "/public/garages",
+  "/public",
   (req, _res, next) => {
     console.log(" GATEWAY URL:", req.originalUrl);
     console.log(" GATEWAY PATH:", req.url);
@@ -61,7 +61,7 @@ router.use(
   createProxyMiddleware({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
-    router: () => `${RESOURCE_SERVICE_URL}/garages`,
+    pathRewrite: (path) => `/public${path}`,
   }),
 );
 
