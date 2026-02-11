@@ -1,17 +1,37 @@
+"use client";
+
 export type SlotStatus = "available" | "occupied" | "out";
+export type SlotSize = "STANDARD" | "LARGE";
 
 const statusStyles: Record<SlotStatus, string> = {
-  available: "bg-green-500 text-black",
-  occupied: "bg-red-500 text-white",
-  out: "bg-gray-300 text-black",
+  available: "bg-green-500",
+  occupied: "bg-red-500",
+  out: "bg-gray-300",
 };
 
-export function SlotCard({ id, status }: { id: string; status: SlotStatus }) {
+export function SlotCard({
+  id,
+  status,
+  slotSize,
+}: {
+  id: string;
+  status: SlotStatus;
+  slotSize: SlotSize;
+}) {
   return (
     <div
-      className={`rounded-lg h-24 flex items-center justify-center font-semibold shadow-sm transition hover:scale-105 cursor-pointer ${statusStyles[status]}`}
+      className={`
+        h-16 w-full rounded border
+        flex flex-col items-center justify-center
+        text-[11px] font-semibold
+        ${statusStyles[status]}
+        text-black
+      `}
     >
-      {id}
+      <span>{id}</span>
+      <span className="text-[9px] opacity-80">
+        {slotSize === "LARGE" ? "SUV" : "STD"}
+      </span>
     </div>
   );
 }

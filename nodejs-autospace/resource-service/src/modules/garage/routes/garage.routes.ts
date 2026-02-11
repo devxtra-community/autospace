@@ -115,5 +115,6 @@ router.post(
   createGarageFloorController,
 );
 router.get("/floors/my", internalAuth, getMyFloorsController);
+router.get("/floors/:floorId/slots", internalAuth, getSlotController);
 
 export default router;

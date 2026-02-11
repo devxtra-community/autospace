@@ -10,6 +10,7 @@ import { AssignManagerModal } from "./AssignManagerModal";
 
 interface GarageAPI {
   id: string;
+  garageRegistrationNumber: string;
   name: string;
   locationName: string;
   status: GarageStatus;
@@ -32,7 +33,7 @@ export function GaragesGrid() {
   const [selectedGarage, setSelectedGarage] = useState<GarageAPI | null>(null);
 
   const [assignOpen, setAssignOpen] = useState(false);
-  const [assignGarageId, setAssignGarageId] = useState<string | null>(null);
+  const [assignGarageCode, setAssignGarageCode] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -67,8 +68,8 @@ export function GaragesGrid() {
               setSelectedGarage(g);
               setEditOpen(true);
             }}
-            onAssignManager={(id) => {
-              setAssignGarageId(id);
+            onAssignManager={() => {
+              setAssignGarageCode(garage.garageRegistrationNumber);
               setAssignOpen(true);
             }}
           />
@@ -94,14 +95,14 @@ export function GaragesGrid() {
       />
 
       {/* ASSIGN MANAGER MODAL */}
-      {companyId && assignGarageId && (
+      {companyId && assignGarageCode && (
         <AssignManagerModal
           open={assignOpen}
-          garageId={assignGarageId}
+          garageCode={assignGarageCode}
           companyId={companyId}
           onClose={() => {
             setAssignOpen(false);
-            setAssignGarageId(null);
+            setAssignGarageCode(null);
           }}
           onAssigned={() => window.location.reload()}
         />
