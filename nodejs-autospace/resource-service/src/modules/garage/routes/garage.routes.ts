@@ -56,12 +56,8 @@ router.post(
   createGarageController,
 );
 
-router.get(
-  "/",
-  internalAuth,
-  validatePublicGarageQuery,
-  getPublicGarageController,
-);
+router.get("/", validatePublicGarageQuery, getPublicGarageController);
+
 router.put("/admin/:id/active", internalAuth, approveGarage);
 router.put("/admin/:id/reject", internalAuth, rejectGarage);
 router.get("/admin/pending", internalAuth, getPendingGarages);

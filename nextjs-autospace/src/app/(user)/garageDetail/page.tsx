@@ -14,10 +14,10 @@ interface PublicGarage {
   locationName: string;
   latitude: number;
   longitude: number;
-  distanceKm?: number;
+  distance?: number;
   pricePerHour?: number;
   rating?: number;
-  status?: "available" | "rented-out";
+  status?: "active" | "closed";
 }
 
 export default function SearchPage() {
@@ -35,7 +35,7 @@ export default function SearchPage() {
       setLoading(true);
       if (!lat || !lng) return;
       const res = await apiClient.get(
-        `/api/public/garages?lat=${lat}&lng=${lng}`,
+        `/api/public/user/garages?lat=${lat}&lng=${lng}`,
       );
       setGarages(res.data.data);
       console.log("garages", res.data);
@@ -52,11 +52,8 @@ export default function SearchPage() {
 
   return (
     <div className="flex flex-col h-screen md:flex-row bg-white overflow-hidden font-sans">
-      {/* Sidebar */}
       <div className="w-full md:w-[400px] lg:w-[450px] flex flex-col border-r border-gray-100 overflow-hidden">
-        {/* Fixed Header in Sidebar */}
         <div className="p-6 space-y-6 flex-shrink-0">
-          {/* Search Box */}
           <div className="relative group">
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
               <MapPin className="text-red-500 w-5 h-5" />
@@ -70,7 +67,6 @@ export default function SearchPage() {
             />
           </div>
 
-          {/* Filters Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-base font-medium text-gray-800 tracking-wide">
@@ -144,8 +140,8 @@ export default function SearchPage() {
                 </div>
                 <div className="bg-gray-200/50 px-2 py-1 rounded text-[10px] font-bold text-gray-800 min-w-[60px] text-center">
                   <span className="text-[10px] font-bold text-gray-800">
-                    {garage.distanceKm != null
-                      ? `${garage.distanceKm.toFixed(2)} km`
+                    {garage.distance != null
+                      ? `${garage.distance.toFixed(2)} km`
                       : "— km"}
                   </span>
                 </div>
@@ -161,7 +157,7 @@ export default function SearchPage() {
                   $ {garage.pricePerHour} / Hour
                 </div>
 
-                {garage.status === "available" ? (
+                {garage.status === "active" ? (
                   <button className="px-4 py-1.5 bg-[#B7F4D8] text-gray-900 text-xs font-bold rounded-sm border-none shadow-sm hover:brightness-95 transition-all">
                     Book now
                   </button>

@@ -6,7 +6,7 @@ export const getPublicGarageController = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    console.log(" CONTROLLER HIT");
+    // console.log(" CONTROLLER HIT");
     console.log("RAW QUERY:", req.query);
     console.log("VALIDATED QUERY:", req.validateQuery);
 
@@ -17,6 +17,8 @@ export const getPublicGarageController = async (
 
     const latitude = query.lat ? Number(query.lat) : undefined;
     const longitude = query.lng ? Number(query.lng) : undefined;
+
+    console.log("lat and long", latitude, longitude);
 
     if (
       (latitude !== undefined && isNaN(latitude)) ||

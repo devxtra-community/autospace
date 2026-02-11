@@ -12,21 +12,21 @@ interface GetPublicGaragesFilters {
 }
 
 export const getPublicGarages = async (filters: GetPublicGaragesFilters) => {
-  console.log("🚀 SERVICE START");
+  console.log(" SERVICE START");
   console.log("INPUT:", filters);
 
   const { latitude, longitude, valetAvailable, limit, page } = filters;
   const radius = filters.radius ?? 20;
   const skip = (page - 1) * limit;
 
-  console.log(" Search params:", {
-    latitude,
-    longitude,
-    radius,
-    valetAvailable,
-    page,
-    limit,
-  });
+  // console.log(" Search params:", {
+  //   latitude,
+  //   longitude,
+  //   radius,
+  //   valetAvailable,
+  //   page,
+  //   limit,
+  // });
 
   if (latitude !== undefined && longitude !== undefined) {
     return await getGaragesWithProximity(
@@ -95,7 +95,9 @@ async function getGaragesWithProximity(
         latitude,
         longitude,
         capacity,
-        "valetAvailable",
+        standard_slot_price,
+        // large_slot_price,
+        // "valetAvailable",
         status,
         "createdAt",
         (
@@ -195,6 +197,8 @@ async function getAllActiveGarages(
       "longitude",
       "capacity",
       "valetAvailable",
+      // "standard_slot_price",
+      // "large_slot_price",
       "status",
       "createdAt",
     ],
