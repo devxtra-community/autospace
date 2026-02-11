@@ -209,7 +209,7 @@ export default function GarageForm({
 
           {photoKey && !photoUploading && (
             <p className="text-sm text-green-600">
-              ✅ Photo uploaded successfully
+              Photo uploaded successfully
             </p>
           )}
 

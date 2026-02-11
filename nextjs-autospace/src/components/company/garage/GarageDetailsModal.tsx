@@ -6,8 +6,10 @@ import { getGarageById } from "@/services/garage.service";
 import {
   attachGarageImage,
   getGarageImages,
-  uploadFile,
+  getUploadUrl,
+  uploadToR2,
 } from "@/services/garageImages.service";
+import apiClient from "@/lib/apiClient";
 import {
   MapPin,
   Phone,
@@ -31,9 +33,7 @@ interface Garage {
   contactEmail?: string;
   contactPhone?: string;
   capacity: number;
-  manager?: {
-    fullname?: string;
-  } | null;
+  manager?: { fullname?: string } | null;
   status: string;
   valetAvailable: boolean;
   latitude: number;
@@ -50,8 +50,8 @@ export function GarageDetailsModal({
   garageId: string | null;
 }) {
   const [garage, setGarage] = useState<Garage | null>(null);
-  const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<GarageImage[]>([]);
+  const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -59,10 +59,7 @@ export function GarageDetailsModal({
 
     setLoading(true);
     getGarageById(garageId)
-      .then((data) => {
-        console.log("GARAGE DETAILS RESPONSE:", data);
-        setGarage(data);
-      })
+      .then(setGarage)
       .finally(() => setLoading(false));
   }, [open, garageId]);
 
@@ -70,7 +67,7 @@ export function GarageDetailsModal({
     if (!open || !garageId) return;
 
     getGarageImages(garageId)
-      .then((data) => setImages(data))
+      .then(setImages)
       .catch(() => setImages([]));
   }, [open, garageId]);
 
@@ -81,11 +78,21 @@ export function GarageDetailsModal({
     setUploading(true);
 
     try {
-      const uploaded = await uploadFile(file);
-      await attachGarageImage(garageId, uploaded.id);
+      const { uploadUrl, key } = await getUploadUrl(file);
 
-      const updatedImages = await getGarageImages(garageId);
-      setImages(updatedImages);
+      await uploadToR2(uploadUrl, file);
+
+      const fileRes = await apiClient.post("/api/files", {
+        key,
+        mimeType: file.type,
+        size: file.size,
+      });
+      const fileId = fileRes.data.id;
+
+      await attachGarageImage(garageId, fileId);
+
+      const updated = await getGarageImages(garageId);
+      setImages(updated);
     } finally {
       setUploading(false);
     }
@@ -109,7 +116,7 @@ export function GarageDetailsModal({
             )}
           </div>
 
-          {/* GARAGE IMAGES */}
+          {/* IMAGES */}
           <div className="space-y-2">
             <h3 className="text-sm font-medium">Garage Images</h3>
 
@@ -124,16 +131,13 @@ export function GarageDetailsModal({
               ))}
             </div>
 
-            {/* Upload only if ACTIVE */}
             {garage.status === "active" && (
-              <div className="pt-2">
-                <input
-                  type="file"
-                  accept="image/*"
-                  disabled={uploading}
-                  onChange={handleImageUpload}
-                />
-              </div>
+              <input
+                type="file"
+                accept="image/*"
+                disabled={uploading}
+                onChange={handleImageUpload}
+              />
             )}
           </div>
 
@@ -166,6 +170,7 @@ export function GarageDetailsModal({
               label="Capacity"
               value={`${garage.capacity}`}
             />
+
             <InfoItem
               icon={<User size={16} />}
               label="Manager"
@@ -180,19 +185,6 @@ export function GarageDetailsModal({
             />
           </div>
 
-          {/* VALET */}
-          <div className="rounded-lg bg-muted p-4 text-sm flex justify-between items-center">
-            <span className="font-medium">Valet Service</span>
-            <span
-              className={`font-semibold ${
-                garage.valetAvailable ? "text-green-600" : "text-red-600"
-              }`}
-            >
-              {garage.valetAvailable ? "Available" : "Not Available"}
-            </span>
-          </div>
-
-          {/* COORDINATES */}
           <p className="text-xs text-muted-foreground text-center">
             Lat: {garage.latitude}, Lng: {garage.longitude}
           </p>

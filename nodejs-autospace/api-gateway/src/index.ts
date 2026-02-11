@@ -17,23 +17,10 @@ import cookieParser from "cookie-parser";
 import authRouter from "./routes/auth.proxy";
 import { checkAllServices } from "./utils/healthcheck";
 import resourceRouter from "./routes/resource.proxy";
-import { createProxyMiddleware } from "http-proxy-middleware";
 
 const app = express();
 
-app.use(
-  "/api/files",
-  createProxyMiddleware({
-    target: "http://localhost:4003",
-    changeOrigin: true,
-    pathRewrite: (path) => `/files${path}`,
-    on: {
-      proxyReq: (_proxyReq, req) => {
-        console.log("➡️ PROXY PATH SENT:", `/files${req.url}`);
-      },
-    },
-  }),
-);
+import type { Options } from "http-proxy-middleware";
 
 const port = process.env.GATEWAY_PORT || 4000;
 
