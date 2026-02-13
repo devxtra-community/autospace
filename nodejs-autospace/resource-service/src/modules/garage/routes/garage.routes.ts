@@ -25,6 +25,7 @@ import {
 } from "../controllers/garage-image.controller";
 import {
   createGarageSlotController,
+  getPublicAvailableSlotsController,
   getSlotController,
   getSlotsByFloorController,
 } from "../controllers/garage-slot.controller";
@@ -113,5 +114,9 @@ router.post(
 );
 router.get("/floors/my", internalAuth, getMyFloorsController);
 router.get("/floors/:floorId/slots", internalAuth, getSlotsByFloorController);
+
+// user side
+
+router.get("/:garageId/slots", internalAuth, getPublicAvailableSlotsController);
 
 export default router;

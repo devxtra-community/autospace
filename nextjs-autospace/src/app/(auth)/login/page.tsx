@@ -9,12 +9,12 @@ import { CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-
 import { Mail, Phone, Lock, Eye, EyeOff } from "lucide-react";
 
 import { loginUser, getMe } from "@/lib/auth.api";
 import { redirectByRole } from "@/lib/roleredirect";
 import { LoginDto } from "@autospace/shared";
+// import { useSearchParams } from "next/navigation";
 
 // interface ApiErrorResponse {
 //   success: false;
@@ -23,6 +23,8 @@ import { LoginDto } from "@autospace/shared";
 // }
 
 export default function LoginPage() {
+  // const params = new useSearchParams(window.location.search);
+  // const redirect = params.get("redirect") || "/";
   const [showPassword, setShowPassword] = useState(false);
   const [loginType, setLoginType] = useState<"email" | "phone">("email");
 
@@ -30,6 +32,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // router.push(redirect);
 
   const handleLogin = async () => {
     try {

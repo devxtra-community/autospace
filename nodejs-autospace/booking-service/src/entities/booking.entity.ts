@@ -36,7 +36,7 @@ export class Booking {
   @Column("varchar", { default: "pending", length: 50 })
   status!: string;
 
-  @Column({ name: "valet_requested", default: false })
+  @Column({ name: "valet_requested", type: "boolean", default: false })
   valetRequested!: boolean;
 
   @Column({

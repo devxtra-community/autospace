@@ -7,11 +7,16 @@ import { errorHandler } from "./middleware/error.middleware.js";
 
 const app: Express = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  }),
+);
+
 app.use(express.json());
 app.use(morgan("dev"));
 
-// Health check
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "UP", service: "booking-service" });
 });

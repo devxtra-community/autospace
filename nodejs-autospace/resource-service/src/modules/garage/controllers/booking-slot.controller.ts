@@ -8,7 +8,7 @@ const slotRepo = AppDataSource.getRepository(GarageSlot);
 export const getAvailableSlots = async (req: Request, res: Response) => {
   try {
     const garageId = req.params.garageId;
-    const floorNumber = req.params.floorId;
+    const floorNumber = req.params.floorNumber;
 
     let query = `
        SELECT s.* 
@@ -126,7 +126,7 @@ export const releaseSlot = async (req: Request, res: Response) => {
     const result = await slotRepo.query(
       `UPDATE garage_slots
        SET status = 'AVAILABLE'
-       WHERE id = $1 AND status = 'RESERVED'
+       WHERE id = $1 AND status IN ('RESERVED', 'OCCUPIED')
        RETURNING *`,
       [slotId],
     );

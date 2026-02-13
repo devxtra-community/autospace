@@ -21,19 +21,17 @@ export class BookingService {
 
   async checkSlotAvailability({
     slotId,
-    authToken,
   }: {
     slotId: string;
-    authToken: string;
+    // authToken: string;
   }) {
     console.log("CHECK SLOT FUNCTION HIT", slotId);
-    console.log("CHECK authtoken FUNCTION HIT", authToken);
+    // console.log("CHECK authtoken FUNCTION HIT");
     try {
       const response = await axios.get(
         `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${slotId}/status`,
         {
           headers: {
-            Authorization: `Bearer ${authToken}`,
             "x-user-id": "booking-service",
             "x-user-role": "SERVICE",
             "x-user-email": "service@internal",
@@ -53,14 +51,13 @@ export class BookingService {
     }
   }
 
-  async lockSlot(slotId: string, authToken: string) {
+  async lockSlot(slotId: string) {
     try {
       const response = await axios.post(
         `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${slotId}/lock`,
         {},
         {
           headers: {
-            Authorization: `Bearer ${authToken}`,
             "x-user-id": "booking-service",
             "x-user-role": "SERVICE",
             "x-user-email": "service@internal",
@@ -80,14 +77,13 @@ export class BookingService {
     }
   }
 
-  async releaseSlot(slotId: string, authToken: string) {
+  async releaseSlot(slotId: string) {
     try {
       const response = await axios.post(
         `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${slotId}/free`,
         {},
         {
           headers: {
-            Authorization: `Bearer ${authToken}`,
             "x-user-id": "booking-service",
             "x-user-role": "SERVICE",
             "x-user-email": "service@internal",
@@ -101,11 +97,17 @@ export class BookingService {
     }
   }
 
-  async occupySlot(slotId: string, authToken: string) {
+  async occupySlot(slotId: string) {
     await axios.post(
       `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${slotId}/occupy`,
       {},
-      { headers: { Authorization: `Bearer ${authToken}` } },
+      {
+        headers: {
+          "x-user-id": "booking-service",
+          "x-user-role": "SERVICE",
+          "x-user-email": "service@internal",
+        },
+      },
     );
   }
 
@@ -118,7 +120,7 @@ export class BookingService {
       endTime: Date;
       status: string;
     },
-    authToken: string,
+    // authToken: string,
   ) {
     let slotLocked = false;
     return await AppDataSource.transaction(async (manager) => {
@@ -137,7 +139,7 @@ export class BookingService {
         throw new Error("Slot already booked for this time range");
       }
 
-      const locked = await this.lockSlot(bookingData.slotId, authToken);
+      const locked = await this.lockSlot(bookingData.slotId);
 
       if (!locked) {
         throw new Error("Slot already reserved by another user");
@@ -155,7 +157,7 @@ export class BookingService {
         return savedBooking;
       } catch (err) {
         if (slotLocked) {
-          await this.releaseSlot(bookingData.slotId, authToken);
+          await this.releaseSlot(bookingData.slotId);
         }
         throw err;
       }
@@ -203,12 +205,34 @@ export class BookingService {
   }
 
   async deleteBooking(bookingId: string) {
-    try {
-      const result = await bookingRepo.delete(bookingId);
-      return (result.affected ?? 0) > 0;
-    } catch {
-      throw new Error("Failed to delete booking");
-    }
+    return await AppDataSource.transaction(async (manager) => {
+      const repo = manager.getRepository(Booking);
+
+      const booking = await repo.findOne({ where: { id: bookingId } });
+      if (!booking) throw new Error("Booking not found");
+
+      // release slot first
+      await this.releaseSlot(booking.slotId);
+
+      const result = await repo.delete(bookingId);
+      if (!result.affected) {
+        // rollback slot
+        await this.lockSlot(booking.slotId);
+        throw new Error("Delete failed");
+      }
+
+      return true;
+    });
+  }
+
+  async verifyOwnership(bookingId: string, userId: string) {
+    const booking = await bookingRepo.findOne({ where: { id: bookingId } });
+
+    if (!booking) throw new Error("Booking not found");
+    if (booking.userId !== userId)
+      throw new Error("Forbidden - Not your booking");
+
+    return booking;
   }
 }
 

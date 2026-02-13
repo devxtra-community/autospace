@@ -12,12 +12,12 @@ const bookingService = new BookingService();
 
 export class BookingController {
   async createBookingController(req: Request, res: Response) {
-    let locked = false;
+    // let locked = false;
     const { slotId, garageId, startTime, endTime } = req.body;
     const userId = req.user?.id;
-    const authToken = req.headers.authorization?.split(" ")[1];
+    // const authToken = req.headers.authorization?.split(" ")[1];
 
-    // console.log("userdetails",userId);
+    // console.log("userdetails",authToken);
 
     try {
       if (!slotId || !garageId || !startTime || !endTime) {
@@ -34,12 +34,12 @@ export class BookingController {
         });
       }
 
-      if (!authToken) {
-        return res.status(401).json({
-          success: false,
-          message: "Access token missing",
-        });
-      }
+      // if (!authToken) {
+      //   return res.status(401).json({
+      //     success: false,
+      //     message: "Access token missing",
+      //   });
+      // }
 
       validateBookingInput({
         slotId,
@@ -54,7 +54,6 @@ export class BookingController {
       //     console.log("authToken =", authToken)
       const available = await bookingService.checkSlotAvailability({
         slotId,
-        authToken,
       });
 
       if (!available) {
@@ -77,21 +76,18 @@ export class BookingController {
         });
       }
 
-      await bookingService.lockSlot(slotId, authToken);
+      // await bookingService.lockSlot(slotId);
 
-      locked = true;
+      // locked = true;
 
-      const booking = await bookingService.createBooking(
-        {
-          userId,
-          garageId,
-          slotId,
-          startTime: new Date(startTime),
-          endTime: new Date(endTime),
-          status: "pending",
-        },
-        authToken,
-      );
+      const booking = await bookingService.createBooking({
+        userId,
+        garageId,
+        slotId,
+        startTime: new Date(startTime),
+        endTime: new Date(endTime),
+        status: "pending",
+      });
 
       logger.info("booking created", booking.id);
 
@@ -101,13 +97,13 @@ export class BookingController {
         data: booking,
       });
     } catch (error) {
-      if (locked && slotId && authToken) {
-        try {
-          await bookingService.releaseSlot(slotId, authToken);
-        } catch (rollbackError) {
-          logger.error("Slot rollback failed", rollbackError);
-        }
-      }
+      // if (locked && slotId ) {
+      //   try {
+      //     await bookingService.releaseSlot(slotId);
+      //   } catch (rollbackError) {
+      //     logger.error("Slot rollback failed", rollbackError);
+      //   }
+      // }
 
       if (error instanceof ValidationError) {
         return res.status(error.status).json({
@@ -215,6 +211,13 @@ export class BookingController {
         });
       }
 
+      const userId = req.user?.id;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const bookings = await bookingService.verifyOwnership(bookingId, userId);
+
+      console.log(bookings);
+
       booking = await bookingService.getBookingById(bookingId);
 
       if (!booking) {
@@ -231,27 +234,27 @@ export class BookingController {
         });
       }
 
-      const authToken = req.headers.authorization?.split(" ")[1];
+      // const authToken = req.headers.authorization?.split(" ")[1];
 
-      if (!authToken) {
-        return res.status(401).json({
-          success: false,
-          message: "Auth token required for slot sync",
-        });
-      }
+      // if (!authToken) {
+      //   return res.status(401).json({
+      //     success: false,
+      //     message: "Auth token required for slot sync",
+      //   });
+      // }
 
       // if (status === "confirmed") { };
 
       if (status === "completed") {
-        await bookingService.occupySlot(booking.slotId, authToken);
+        await bookingService.occupySlot(booking.slotId);
         slotAction = "OCCUPIED";
 
-        await bookingService.releaseSlot(booking.slotId, authToken);
+        await bookingService.releaseSlot(booking.slotId);
         slotAction = "RELEASED";
       }
 
       if (status === "cancelled") {
-        await bookingService.releaseSlot(booking.slotId, authToken);
+        await bookingService.releaseSlot(booking.slotId);
         slotAction = "RELEASED";
       }
 
@@ -267,15 +270,13 @@ export class BookingController {
       });
     } catch (error) {
       try {
-        const authToken = req.headers.authorization?.split(" ")[1];
-
-        if (authToken && booking) {
+        if (booking) {
           if (slotAction === "RELEASED") {
-            await bookingService.lockSlot(booking.slotId, authToken);
+            await bookingService.lockSlot(booking.slotId);
           }
 
           if (slotAction === "OCCUPIED") {
-            await bookingService.releaseSlot(booking.slotId, authToken);
+            await bookingService.releaseSlot(booking.slotId);
           }
         }
       } catch (rollbackError) {
@@ -306,6 +307,29 @@ export class BookingController {
         });
       }
 
+      const userId = req.user?.id;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const bookings = await bookingService.verifyOwnership(bookingId, userId);
+
+      if (bookings) {
+        return {
+          success: false,
+          message: "no verified",
+        };
+      }
+
+      const booking = await bookingService.getBookingById(bookingId);
+
+      if (!booking) {
+        return res.status(404).json({
+          success: false,
+          message: "Booking not found",
+        });
+      }
+
+      await bookingService.releaseSlot(booking.slotId);
+
       const deleted = await bookingService.deleteBooking(bookingId);
 
       if (!deleted) {
@@ -325,6 +349,50 @@ export class BookingController {
         success: false,
         message: "Failed to delete booking",
       });
+    }
+  }
+
+  async confirmBooking(req: Request, res: Response) {
+    try {
+      const bookingIdRaw = req.params.bookingId;
+      const bookingId = Array.isArray(bookingIdRaw)
+        ? bookingIdRaw[0]
+        : bookingIdRaw;
+
+      if (!bookingId) {
+        return res.status(400).json({
+          success: false,
+          message: "Booking ID required",
+        });
+      }
+
+      const booking = await bookingService.getBookingById(bookingId);
+      if (!booking) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Booking not found" });
+      }
+
+      if (booking.status !== "pending") {
+        return res
+          .status(400)
+          .json({ success: false, message: "Booking already processed" });
+      }
+
+      const updated = await bookingService.updateBookingStatus(
+        bookingId,
+        "confirmed",
+      );
+
+      return res.json({
+        success: true,
+        message: "Booking confirmed",
+        data: updated,
+      });
+    } catch {
+      return res
+        .status(500)
+        .json({ success: false, message: "Confirm failed" });
     }
   }
 }

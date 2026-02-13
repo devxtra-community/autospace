@@ -1,6 +1,5 @@
 import "reflect-metadata";
 import express from "express";
-import cors from "cors";
 import app from "./app.js";
 import dotenv from "dotenv";
 import { logger } from "./utils/logger.js";
@@ -12,7 +11,6 @@ dotenv.config();
 
 const PORT = process.env.PORT || 4004;
 
-app.use(cors());
 app.use(express.json());
 
 const startServer = async () => {

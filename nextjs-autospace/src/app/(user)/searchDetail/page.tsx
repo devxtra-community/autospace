@@ -188,9 +188,7 @@ export default function SearchPage() {
         </div>
       </div>
 
-      {/* Map Section */}
       <div className="hidden md:flex flex-1 relative bg-[#E5E7EB] overflow-hidden">
-        {/* Mock Map Grid */}
         <div
           className="absolute inset-0 opacity-20 pointer-events-none"
           style={{

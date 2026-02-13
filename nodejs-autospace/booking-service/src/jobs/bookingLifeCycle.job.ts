@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import { LessThanOrEqual, In } from "typeorm";
+import { LessThanOrEqual } from "typeorm";
 import axios from "axios";
 import { AppDataSource } from "../data-source.js";
 import { Booking } from "../entities/booking.entity.js";
@@ -34,6 +34,9 @@ export function startBookingLifecycleJob() {
             },
           );
 
+          booking.status = "occupied";
+          await bookingRepo.save(booking);
+
           logger.info(`Slot OCCUPIED for booking ${booking.id}`);
         } catch (err) {
           logger.error(`Failed to OCCUPY slot for booking ${booking.id}`, err);
@@ -42,7 +45,7 @@ export function startBookingLifecycleJob() {
 
       const toComplete = await bookingRepo.find({
         where: {
-          status: In(["confirmed", "occupied"]),
+          status: "occupied",
           endTime: LessThanOrEqual(now),
         },
       });
@@ -50,18 +53,20 @@ export function startBookingLifecycleJob() {
       for (const booking of toComplete) {
         try {
           // free slot
-          await axios.post(
-            `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}/release`,
-            {},
-            {
-              headers: {
-                Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
-                "x-user-id": "booking-service",
-                "x-user-role": "SERVICE",
-                "x-user-email": "service@internal",
+          await axios
+            .post(
+              `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}/release`,
+              {},
+              {
+                headers: {
+                  Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
+                  "x-user-id": "booking-service",
+                  "x-user-role": "SERVICE",
+                  "x-user-email": "service@internal",
+                },
               },
-            },
-          );
+            )
+            .catch(() => {});
 
           // update booking status
           booking.status = "completed";

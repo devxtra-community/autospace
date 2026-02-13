@@ -1,10 +1,40 @@
+"use client";
+
 import Image from "next/image";
+import { useEffect, useState } from "react";
+import { getMe, logoutUser } from "@/lib/auth.api";
+import Link from "next/link";
 
 export default function Navbar() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await getMe();
+        if (res.data.success) {
+          setIsLoggedIn(true);
+        }
+      } catch {
+        setIsLoggedIn(false);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      setIsLoggedIn(false);
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
   return (
     <nav className="flex items-center border border-black bg-white/60 fixed top-0 left-0 right-0 z-50 backdrop-blur-sm w-full justify-between px-18 py-6 max-w-full mx-auto">
       <div className="flex items-center">
-        <div className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <Image
             src="/auto2.png"
             alt="Autospace logo"
@@ -16,15 +46,27 @@ export default function Navbar() {
           {/* <span className="font-bold tracking-widest text-sm text-black">
             AUTOSPACE
           </span> */}
-        </div>
+        </Link>
       </div>
       <div className="flex items-center gap-4">
         <button className="px-6 py-2 bg-[var(--secondary-button)] text-black font-medium border border-black rounded-lg hover:bg-[#eac855] transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
           Rent Plot
         </button>
-        <button className="px-6 py-2 bg-white text-black font-medium border border-black rounded-lg hover:bg-gray-50 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
-          Signup
-        </button>
+        {isLoggedIn ? (
+          <button
+            onClick={handleLogout}
+            className="px-6 py-2 bg-red-100 text-red-600 font-medium border border-black rounded-lg hover:bg-red-200 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
+          >
+            Logout
+          </button>
+        ) : (
+          <Link
+            href="/login"
+            className="px-6 py-2 bg-white text-black font-medium border border-black rounded-lg hover:bg-gray-50 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
+          >
+            Signup
+          </Link>
+        )}
       </div>
     </nav>
   );

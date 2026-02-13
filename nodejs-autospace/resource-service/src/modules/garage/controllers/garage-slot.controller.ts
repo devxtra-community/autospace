@@ -3,6 +3,7 @@ import {
   createGarageSlot,
   getGarageSlots,
   getGarageSlotsByFloor,
+  getPublicAvailableSlotsService,
 } from "../services/garage-slot.service";
 
 export const createGarageSlotController = async (
@@ -93,6 +94,42 @@ export const getSlotsByFloorController = async (
     return res.status(400).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+export const getPublicAvailableSlotsController = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const garageId = req.params.garageId as string;
+    const { startTime, endTime } = req.query as {
+      startTime?: string;
+      endTime?: string;
+    };
+
+    if (!garageId) {
+      return res.status(400).json({
+        success: false,
+        message: "garageId is required",
+      });
+    }
+
+    const slots = await getPublicAvailableSlotsService({
+      garageId,
+      startTime,
+      endTime,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: slots,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch available slots",
     });
   }
 };

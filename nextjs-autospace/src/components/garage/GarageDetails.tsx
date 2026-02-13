@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   MapPin,
@@ -14,7 +14,11 @@ import {
   ShieldCheck,
   Info,
   ArrowLeft,
+  LayoutGrid,
+  Calendar,
 } from "lucide-react";
+import apiClient from "@/lib/apiClient";
+import { ParkingSlotSelectionModal } from "./booking/ParkingSlotSelectionModal";
 
 export interface GarageDetailsProps {
   garage: {
@@ -35,14 +39,22 @@ export interface GarageDetailsProps {
 }
 
 export default function GarageDetails({ garage }: GarageDetailsProps) {
+  const router = useRouter();
+  const today = new Date().toISOString().split("T")[0];
+  const [selectedDate, setSelectedDate] = useState(today);
   const [startTime, setStartTime] = useState("10:00");
   const [endTime, setEndTime] = useState("12:00");
   const [vehicleType, setVehicleType] = useState<"sedan" | "suv">("sedan");
   const [valetEnabled, setValetEnabled] = useState(false);
   const [duration, setDuration] = useState(2);
   const [isBooking, setIsBooking] = useState(false);
-
-  const router = useRouter();
+  const [bookingId, setBookingId] = useState<string | null>(null);
+  const [showPayment, setShowPayment] = useState(false);
+  const [isSlotModalOpen, setIsSlotModalOpen] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<{
+    floor: number;
+    slotId: string;
+  } | null>(null);
 
   const sedanPrice = garage.standardSlotPrice || 10;
   const suvPrice = garage.largeSlotPrice || 15;
@@ -50,29 +62,102 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
   const valetCharge = 5;
 
   useEffect(() => {
-    const start = new Date(`2000-01-01T${startTime}:00`);
-    const end = new Date(`2000-01-01T${endTime}:00`);
-    let diff = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-    if (diff < 0) diff += 24;
-    setDuration(Math.max(0.5, diff));
-  }, [startTime, endTime]);
+    if (!selectedDate || !startTime || !endTime) return;
+
+    const start = new Date(`${selectedDate}T${startTime}:00`);
+    const end = new Date(`${selectedDate}T${endTime}:00`);
+    const diff = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+
+    // If end time is before start time, it's invalid for the same day
+    // We'll set duration to 0 or a minimum if invalid, to be caught by validation
+    if (diff <= 0) {
+      setDuration(0);
+    } else {
+      setDuration(diff);
+    }
+  }, [selectedDate, startTime, endTime]);
 
   const subtotal = currentPrice * duration;
   const valetTotal = valetEnabled ? valetCharge : 0;
   const total = subtotal + valetTotal;
 
-  const handleBooking = () => {
-    setIsBooking(true);
-    setTimeout(() => {
+  const handleBooking = async () => {
+    if (!selectedSlot) {
+      alert("Please select a parking slot");
+      return;
+    }
+
+    try {
+      setIsBooking(true);
+
+      const startISO = new Date(
+        `${selectedDate}T${startTime}:00`,
+      ).toISOString();
+      const endISO = new Date(`${selectedDate}T${endTime}:00`).toISOString();
+
+      if (new Date(startISO) < new Date()) {
+        alert("Selection must be in the future");
+        setIsBooking(false);
+        return;
+      }
+
+      if (duration <= 0) {
+        alert("End time must be after start time");
+        setIsBooking(false);
+        return;
+      }
+
+      const payload = {
+        garageId: garage.id,
+        slotId: selectedSlot?.slotId,
+        startTime: startISO,
+        endTime: endISO,
+        vehicleType,
+        valetRequired: valetEnabled,
+      };
+
+      const response = await apiClient.post("/api/bookings", payload);
+
+      console.log("booking", response.data);
+
+      setBookingId(response.data.data.id);
+
+      setShowPayment(true);
+    } catch (err) {
+      const error = err as {
+        response?: {
+          status?: number;
+          data?: {
+            message?: string;
+          };
+        };
+      };
+
+      if (error?.response?.status === 401) {
+        alert("Please login to continue booking");
+        router.push("/login?redirect=" + window.location.pathname);
+        return;
+      }
+
+      alert(error?.response?.data?.message || "Booking failed");
+    } finally {
       setIsBooking(false);
-      alert("Booking confirmed!");
-    }, 2000);
+    }
+  };
+
+  const handlePaymentSuccess = async () => {
+    try {
+      await apiClient.patch(`/api/bookings/${bookingId}/confirm`);
+      alert("payment success");
+      setShowPayment(false);
+    } catch {
+      alert("Payment confirmed but booking update failed");
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-white overflow-y-auto lg:overflow-hidden font-sans">
       <div className="max-w-7xl mx-auto h-full flex flex-col">
-        {/* Header / Nav */}
         <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-100 flex-shrink-0">
           <button
             onClick={() => router.back()}
@@ -81,15 +166,11 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
             <ArrowLeft className="w-5 h-5" />
             <span className="font-medium">Back to search</span>
           </button>
-          <div className="flex items-center gap-4">
-            {/* Special offer removed */}
-          </div>
+          <div className="flex items-center gap-4"></div>
         </div>
 
         <div className="flex-1 lg:flex overflow-hidden">
-          {/* LEFT SECTION - Garage Info */}
           <div className="w-full lg:w-[65%] 2xl:w-[60%] p-4 lg:p-8 lg:overflow-y-auto custom-scrollbar bg-slate-50/30">
-            {/* Gallery Grid */}
             <div className="grid grid-cols-4 grid-rows-2 gap-3 mb-8 h-[300px] lg:h-[450px]">
               <div className="col-span-4 lg:col-span-2 row-span-2 relative group overflow-hidden shadow-sm">
                 <img
@@ -123,13 +204,12 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                     className="w-full h-full object-cover opacity-50 blur-[2px]"
                   />
                   <button className="absolute inset-0 flex items-center justify-center bg-black/40 text-white font-bold text-sm hover:bg-black/50 transition-colors">
-                    Show all 12 photos
+                    Show all photos
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Garage Info Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
               <div>
                 <div className="flex items-center gap-3 mb-2">
@@ -170,7 +250,6 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
 
             <hr className="border-gray-100 mb-8" />
 
-            {/* Pricing Section */}
             <div className="mb-8">
               <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <Car className="w-5 h-5 text-indigo-600" />
@@ -240,7 +319,6 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
               </div>
             </div>
 
-            {/* Features/Amenities */}
             <div className="mb-8">
               <h3 className="text-lg font-bold text-gray-900 mb-4">
                 Amenities
@@ -264,7 +342,6 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
             </div>
           </div>
 
-          {/* RIGHT SECTION - Booking Panel */}
           <div className="w-full lg:w-[35%] 2xl:w-[40%] p-4 lg:p-8 border-t lg:border-t-0 lg:border-l border-gray-100 bg-white lg:overflow-y-auto no-scrollbar">
             <div className="sticky top-0">
               <div className="mb-8 bg-black p-6 text-center shadow-lg">
@@ -276,39 +353,55 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                 </p>
               </div>
 
-              {/* Time Selection */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="space-y-4 mb-6">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
-                    Start Time
+                    Select Date
                   </label>
                   <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                     <input
-                      type="time"
-                      value={startTime}
-                      onChange={(e) => setStartTime(e.target.value)}
+                      type="date"
+                      min={today}
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
                       className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 text-sm font-bold focus:outline-none focus:ring-0 focus:border-primary transition-all cursor-pointer"
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
-                    End Time
-                  </label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                    <input
-                      type="time"
-                      value={endTime}
-                      onChange={(e) => setEndTime(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 text-sm font-bold focus:outline-none focus:ring-0 focus:border-primary transition-all cursor-pointer"
-                    />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
+                      Start Time
+                    </label>
+                    <div className="relative">
+                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <input
+                        type="time"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 text-sm font-bold focus:outline-none focus:ring-0 focus:border-primary transition-all cursor-pointer"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">
+                      End Time
+                    </label>
+                    <div className="relative">
+                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <input
+                        type="time"
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 text-sm font-bold focus:outline-none focus:ring-0 focus:border-primary transition-all cursor-pointer"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Vehicle Type Selection */}
               <div className="mb-6">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1 block mb-2">
                   Vehicle Type
@@ -331,7 +424,6 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                 </div>
               </div>
 
-              {/* Valet Service Integration */}
               <div className="mb-8">
                 <div
                   className={`p-4 border transition-all ${valetEnabled ? "bg-primary/5 border-primary" : "bg-slate-50 border-slate-100"}`}
@@ -370,7 +462,7 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                         <p className="text-[10px] font-bold text-gray-900">
                           Valet assigned:{" "}
                           <span className="text-secondary font-black">
-                            Rajesh Kumar
+                            ansab suttu
                           </span>
                         </p>
                         <div className="flex items-center gap-1">
@@ -383,9 +475,34 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                     </div>
                   )}
                 </div>
+
+                {/* Slot Selection Integration */}
+                <div className="mt-4">
+                  <button
+                    onClick={() => setIsSlotModalOpen(true)}
+                    className={`w-full py-4 border-2 flex items-center justify-center gap-3 transition-all duration-300 ${
+                      selectedSlot
+                        ? "bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm"
+                        : "bg-white border-dashed border-gray-200 text-gray-400 hover:border-indigo-300 hover:text-indigo-600"
+                    }`}
+                  >
+                    <LayoutGrid
+                      className={`w-5 h-5 ${selectedSlot ? "text-indigo-600" : ""}`}
+                    />
+                    <div className="text-left">
+                      <p className="text-sm font-bold uppercase tracking-wider leading-none">
+                        {selectedSlot ? "Slot Selected" : "Select Parking Slot"}
+                      </p>
+                      <p className="text-[10px] font-medium opacity-70">
+                        {selectedSlot
+                          ? `Floor ${selectedSlot.floor} • Slot ${selectedSlot.slotId}`
+                          : "Choose your preferred spot"}
+                      </p>
+                    </div>
+                  </button>
+                </div>
               </div>
 
-              {/* Payment Summary */}
               <div className="bg-slate-50/50 p-6 border border-slate-100 mb-8 divide-y divide-slate-100">
                 <div className="pb-4 space-y-3">
                   <div className="flex justify-between items-center">
@@ -435,7 +552,6 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                 </div>
               </div>
 
-              {/* CTA Button */}
               <button
                 disabled={isBooking}
                 onClick={handleBooking}
@@ -460,6 +576,48 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
           </div>
         </div>
       </div>
+
+      {showPayment && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[100]">
+          <div className="bg-white p-6 w-[380px] shadow-xl border">
+            <h3 className="text-lg font-bold mb-4">Dummy Payment</h3>
+
+            <div className="text-sm mb-6">
+              Booking ID: <b>{bookingId}</b> <br />
+              Amount: <b>${total.toFixed(2)}</b>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                className="flex-1 bg-green-500 text-white py-2"
+                onClick={handlePaymentSuccess}
+              >
+                Pay Success
+              </button>
+
+              <button
+                className="flex-1 bg-gray-200 py-2"
+                onClick={() => setShowPayment(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ParkingSlotSelectionModal
+        isOpen={isSlotModalOpen}
+        onClose={() => setIsSlotModalOpen(false)}
+        garageName={garage.name}
+        garageId={garage.id}
+        startTime={startTime}
+        endTime={endTime}
+        onConfirm={(data) => {
+          // console.log("Selected Slot:", data);
+          setSelectedSlot(data);
+        }}
+      />
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {

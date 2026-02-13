@@ -4,6 +4,12 @@ import { GarageFloor } from "../entities/garage-floor.entity";
 import { Garage } from "../entities/garage.entity";
 import { In, Like } from "typeorm";
 
+export interface PublicSlotQuery {
+  garageId: string;
+  startTime?: string;
+  endTime?: string;
+}
+
 export const createGarageSlot = async (
   managerId: string,
   floorNumber: number,
@@ -119,4 +125,40 @@ export const getGarageSlotsByFloor = async (
     where: { floorId },
     order: { slotNumber: "ASC" },
   });
+};
+
+export const getPublicAvailableSlotsService = async ({
+  garageId,
+}: PublicSlotQuery) => {
+  const slotRepo = AppDataSource.getRepository(GarageSlot);
+
+  const slots = await slotRepo.find({
+    where: {
+      floor: {
+        garage: {
+          id: garageId,
+        },
+      },
+    },
+    relations: ["floor", "floor.garage"],
+    order: {
+      floor: {
+        floorNumber: "ASC",
+      },
+      slotNumber: "ASC",
+    },
+  });
+
+  return slots.map((slot) => ({
+    id: slot.id,
+    slotNumber: slot.slotNumber,
+    floor: slot.floor.floorNumber,
+    name: slot.slotNumber,
+    status:
+      slot.status === "AVAILABLE"
+        ? "available"
+        : slot.status === "RESERVED"
+          ? "booked"
+          : "disabled",
+  }));
 };
