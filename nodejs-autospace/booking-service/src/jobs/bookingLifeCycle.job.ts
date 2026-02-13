@@ -2,7 +2,7 @@ import cron from "node-cron";
 import { LessThanOrEqual, In } from "typeorm";
 import axios from "axios";
 import { AppDataSource } from "../data-source.js";
-import { Booking } from "../models/booking.model.js";
+import { Booking } from "../entities/booking.entity.js";
 import { logger } from "../utils/logger.js";
 
 const bookingRepo = AppDataSource.getRepository(Booking);

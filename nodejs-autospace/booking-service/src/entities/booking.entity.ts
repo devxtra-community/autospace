@@ -6,6 +6,13 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 
+export enum BookingValetStatus {
+  NONE = "NONE",
+  REQUESTED = "REQUESTED",
+  ASSIGNED = "ASSIGNED",
+  COMPLETED = "COMPLETED",
+}
+
 @Entity({ name: "booking" })
 export class Booking {
   @PrimaryGeneratedColumn("uuid")
@@ -28,6 +35,20 @@ export class Booking {
 
   @Column("varchar", { default: "pending", length: 50 })
   status!: string;
+
+  @Column({ name: "valet_requested", default: false })
+  valetRequested!: boolean;
+
+  @Column({
+    name: "valet_status",
+    type: "enum",
+    enum: BookingValetStatus,
+    default: BookingValetStatus.NONE,
+  })
+  valetStatus!: BookingValetStatus;
+
+  @Column({ name: "valet_id", type: "uuid", nullable: true })
+  valetId!: string | null;
 
   @CreateDateColumn()
   createdAt!: Date;
