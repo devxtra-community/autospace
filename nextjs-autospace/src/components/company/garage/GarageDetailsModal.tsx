@@ -22,7 +22,7 @@ import {
 
 interface GarageImage {
   id: string;
-  fileId: string;
+  url: string;
 }
 
 interface Garage {
@@ -124,7 +124,7 @@ export function GarageDetailsModal({
               {images.map((img) => (
                 <img
                   key={img.id}
-                  src={`${process.env.NEXT_PUBLIC_API_URL}/api/files/${img.fileId}`}
+                  src={img.url}
                   className="h-32 w-full object-cover rounded-md border"
                   alt="Garage"
                 />

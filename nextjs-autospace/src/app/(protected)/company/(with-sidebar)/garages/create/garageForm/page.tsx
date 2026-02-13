@@ -1,15 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import {
-  Phone,
-  Mail,
-  MapPin,
-  Type,
-  Loader2,
-  Warehouse,
-  ImageIcon,
-} from "lucide-react";
+import { Phone, Mail, MapPin, Type, Loader2, Warehouse } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FieldErrors, UseFormRegister } from "react-hook-form";
@@ -31,10 +23,6 @@ export default function GarageForm({
   onCancel,
   isLoading = false,
 }: GarageFormProps) {
-  const [photoUploading, setPhotoUploading] = useState(false);
-  const [photoKey, setPhotoKey] = useState<string | null>(null);
-  const [photoError, setPhotoError] = useState<string | null>(null);
-
   const [filled, setFilled] = useState({
     name: false,
     phone: false,
@@ -44,51 +32,6 @@ export default function GarageForm({
   });
 
   const allFilled = Object.values(filled).every(Boolean);
-
-  const uploadPhoto = async (file: File) => {
-    setPhotoUploading(true);
-    setPhotoError(null);
-
-    try {
-      //  Get presigned URL
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/files/upload`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filename: file.name,
-            contentType: file.type,
-          }),
-        },
-      );
-
-      if (!res.ok) throw new Error("Failed to get upload URL");
-
-      const { uploadUrl, key } = await res.json();
-
-      //  Upload directly to R2
-      const uploadRes = await fetch(uploadUrl, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type },
-      });
-
-      if (!uploadRes.ok) throw new Error("Upload to R2 failed");
-
-      //  Success
-      setPhotoKey(key);
-    } catch (err) {
-      console.error(err);
-      setPhotoError("Photo upload failed. Please try again.");
-      setPhotoKey(null);
-    } finally {
-      setPhotoUploading(false);
-    }
-  };
-
-  /* ---------------- UI ---------------- */
 
   return (
     <div className="space-y-8">
@@ -183,39 +126,6 @@ export default function GarageForm({
           />
         </Field>
 
-        {/* Photo */}
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 font-semibold">
-            <ImageIcon className="w-4 h-4 text-yellow-500" />
-            Garage Photo (optional)
-          </label>
-
-          <input
-            type="file"
-            accept="image/*"
-            disabled={photoUploading}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) uploadPhoto(file);
-            }}
-          />
-
-          {photoUploading && (
-            <p className="text-sm text-blue-600 flex items-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Uploading photo…
-            </p>
-          )}
-
-          {photoKey && !photoUploading && (
-            <p className="text-sm text-green-600">
-              Photo uploaded successfully
-            </p>
-          )}
-
-          {photoError && <p className="text-sm text-red-600">{photoError}</p>}
-        </div>
-
         {/* Actions */}
         <div className="flex gap-3 pt-6">
           <Button type="button" variant="outline" onClick={onCancel}>
@@ -225,7 +135,7 @@ export default function GarageForm({
           <Button
             type="submit"
             className="bg-black text-yellow-400"
-            disabled={!allFilled || isLoading || photoUploading}
+            disabled={!allFilled || isLoading}
           >
             {isLoading ? (
               <>
@@ -241,8 +151,6 @@ export default function GarageForm({
     </div>
   );
 }
-
-/* ---------------- FIELD ---------------- */
 
 function Field({
   label,

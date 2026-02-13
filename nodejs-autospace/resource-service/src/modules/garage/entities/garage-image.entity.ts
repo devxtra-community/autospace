@@ -3,7 +3,10 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  JoinColumn,
+  ManyToOne,
 } from "typeorm";
+import { FileEntity } from "../../files/files.entity";
 
 @Entity("garage_images")
 export class GarageImageEntity {
@@ -15,6 +18,10 @@ export class GarageImageEntity {
 
   @Column({ name: "file_id", type: "uuid" })
   fileId!: string;
+
+  @ManyToOne(() => FileEntity, { eager: true })
+  @JoinColumn({ name: "file_id" })
+  file!: FileEntity;
 
   @Column({ type: "int", default: 0 })
   position!: number;
