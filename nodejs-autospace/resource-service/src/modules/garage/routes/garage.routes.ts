@@ -26,6 +26,7 @@ import {
 import {
   createGarageSlotController,
   getSlotController,
+  getSlotsByFloorController,
 } from "../controllers/garage-slot.controller";
 import {
   createGarageFloorController,
@@ -111,6 +112,6 @@ router.post(
   createGarageFloorController,
 );
 router.get("/floors/my", internalAuth, getMyFloorsController);
-router.get("/floors/:floorId/slots", internalAuth, getSlotController);
+router.get("/floors/:floorId/slots", internalAuth, getSlotsByFloorController);
 
 export default router;

@@ -6,7 +6,7 @@ import {
   validateBookingInput,
   validateStatusTransition,
 } from "../validators/booking.vallidator.js";
-import type { Booking } from "../models/booking.model.js";
+import type { Booking } from "../entities/booking.entity.js";
 
 const bookingService = new BookingService();
 

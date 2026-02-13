@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
-import { Booking } from "./models/booking.model.js";
+import { Booking } from "./entities/booking.entity.js";
 import "dotenv/config";
 
 // console.log("url", process.env.DATABASE_URL);

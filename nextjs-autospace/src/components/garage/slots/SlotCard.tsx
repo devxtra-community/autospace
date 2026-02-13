@@ -10,11 +10,11 @@ const statusStyles: Record<SlotStatus, string> = {
 };
 
 export function SlotCard({
-  id,
+  label,
   status,
   slotSize,
 }: {
-  id: string;
+  label: string;
   status: SlotStatus;
   slotSize: SlotSize;
 }) {
@@ -28,7 +28,7 @@ export function SlotCard({
         text-black
       `}
     >
-      <span>{id}</span>
+      <span>{label}</span>
       <span className="text-[9px] opacity-80">
         {slotSize === "LARGE" ? "SUV" : "STD"}
       </span>

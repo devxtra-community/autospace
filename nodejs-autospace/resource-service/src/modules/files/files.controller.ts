@@ -56,3 +56,20 @@ export async function createFileRecord(req: Request, res: Response) {
 
   return res.json(file);
 }
+
+export async function getFileById(req: Request, res: Response) {
+  const id = req.params.id as string;
+
+  const file = await AppDataSource.getRepository(FileEntity).findOneBy({ id });
+
+  if (!file) {
+    return res.status(404).json({ message: "File not found" });
+  }
+
+  const publicUrl = `${process.env.R2_PUBLIC_BASE_URL}/${file.key}`;
+
+  return res.json({
+    id: file.id,
+    url: publicUrl,
+  });
+}

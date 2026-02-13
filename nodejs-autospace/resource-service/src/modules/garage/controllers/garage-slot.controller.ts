@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import {
   createGarageSlot,
   getGarageSlots,
+  getGarageSlotsByFloor,
 } from "../services/garage-slot.service";
 
 export const createGarageSlotController = async (
@@ -61,6 +62,28 @@ export const getSlotController = async (req: Request, res: Response) => {
     }
 
     const slots = await getGarageSlots(managerId);
+
+    return res.status(200).json({
+      success: true,
+      data: slots,
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const getSlotsByFloorController = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const managerId = req.user.id;
+    const floorId = req.params.floorId as string;
+
+    const slots = await getGarageSlotsByFloor(managerId, floorId);
 
     return res.status(200).json({
       success: true,

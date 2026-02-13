@@ -1,8 +1,15 @@
 import apiClient from "@/lib/apiClient";
+import type { ApiGarageImage } from "@/types/garage-images";
 
 export const getGarageImages = async (garageId: string) => {
-  const res = await apiClient.get(`/api/garages/${garageId}/images`);
-  return res.data;
+  const res = await apiClient.get<ApiGarageImage[]>(
+    `/api/garages/${garageId}/images`,
+  );
+
+  return res.data.map((img) => ({
+    id: img.id,
+    url: `${process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_URL}/${img.file.key}`,
+  }));
 };
 
 export const getUploadUrl = async (file: File) => {

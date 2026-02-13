@@ -1,6 +1,6 @@
 import axios from "axios";
 import { AppDataSource } from "../data-source.js";
-import { Booking } from "../models/booking.model.js";
+import { Booking } from "../entities/booking.entity.js";
 import { In, LessThan, MoreThan } from "typeorm";
 
 const bookingRepo = AppDataSource.getRepository(Booking);

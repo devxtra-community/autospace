@@ -23,6 +23,7 @@ type BackendSlot = {
 
 type UISlot = {
   id: string;
+  label: string; // for display (e.g. A1)
   status: SlotStatus;
   slotSize: "STANDARD" | "LARGE";
 };
@@ -68,16 +69,18 @@ export function GarageFloors() {
   const loadSlots = async (floorId: string) => {
     const backendSlots: BackendSlot[] = await getSlotsByFloor(floorId);
 
-    const uiSlots: UISlot[] = backendSlots.map((s) => ({
-      id: s.slotNumber,
-      status: mapSlotStatus(s.status),
-      slotSize: s.slotSize,
-    }));
+    const uiSlots = backendSlots
+      .filter(() => true)
+      .map((s) => ({
+        id: `${floorId}-${s.slotNumber}`,
+        label: s.slotNumber,
+        status: mapSlotStatus(s.status),
+        slotSize: s.slotSize,
+      }));
 
-    setSlotsByFloor((prev) => ({
-      ...prev,
+    setSlotsByFloor({
       [floorId]: uiSlots,
-    }));
+    });
   };
 
   const handleCreateSlot = async (floor: Floor) => {
@@ -197,7 +200,7 @@ export function GarageFloors() {
               </button>
             </div>
 
-            {slots.length > 0 && <SlotsGrid slots={slots} />}
+            {slots.length > 0 && <SlotsGrid key={floor.id} slots={slots} />}
           </div>
         );
       })}

@@ -104,3 +104,19 @@ export const getGarageSlots = async (
     order: { slotNumber: "ASC" },
   });
 };
+
+export const getGarageSlotsByFloor = async (
+  managerId: string,
+  floorId: string,
+) => {
+  const garageRepo = AppDataSource.getRepository(Garage);
+  const slotRepo = AppDataSource.getRepository(GarageSlot);
+
+  const garage = await garageRepo.findOne({ where: { managerId } });
+  if (!garage) throw new Error("garage not found");
+
+  return slotRepo.find({
+    where: { floorId },
+    order: { slotNumber: "ASC" },
+  });
+};
