@@ -42,10 +42,10 @@ app.get("/health", (_req, res) => {
 app.use("/companies", companyRoutes);
 app.use("/garages", garageRoutes);
 app.use("/public", publicROutes);
-app.use("/valet", valetRoutes);
+app.use("/valets", valetRoutes);
 app.use("/files", filesRoutes);
 
 // auth service only
-app.use(internalValetRoutes);
+app.use("/garages", internalValetRoutes);
 
 export default app;

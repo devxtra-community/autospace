@@ -6,18 +6,13 @@ import {
   validateBookingInput,
   validateStatusTransition,
 } from "../validators/booking.vallidator.js";
-import type { Booking } from "../entities/booking.entity.js";
 
 const bookingService = new BookingService();
 
 export class BookingController {
   async createBookingController(req: Request, res: Response) {
-    // let locked = false;
-    const { slotId, garageId, startTime, endTime } = req.body;
+    const { slotId, garageId, startTime, endTime, valetRequested } = req.body;
     const userId = req.user?.id;
-    // const authToken = req.headers.authorization?.split(" ")[1];
-
-    // console.log("userdetails",authToken);
 
     try {
       if (!slotId || !garageId || !startTime || !endTime) {
@@ -30,16 +25,9 @@ export class BookingController {
       if (!userId) {
         return res.status(401).json({
           success: false,
-          message: "User not authenticated , Please Login",
+          message: "User not authenticated",
         });
       }
-
-      // if (!authToken) {
-      //   return res.status(401).json({
-      //     success: false,
-      //     message: "Access token missing",
-      //   });
-      // }
 
       validateBookingInput({
         slotId,
@@ -49,19 +37,6 @@ export class BookingController {
         endTime,
         status: "pending",
       });
-
-      // console.log("slotId =", slotId),
-      //     console.log("authToken =", authToken)
-      const available = await bookingService.checkSlotAvailability({
-        slotId,
-      });
-
-      if (!available) {
-        return res.status(409).json({
-          success: false,
-          message: "Slot not available",
-        });
-      }
 
       const overlap = await bookingService.checkOverlap(
         slotId,
@@ -76,20 +51,16 @@ export class BookingController {
         });
       }
 
-      // await bookingService.lockSlot(slotId);
-
-      // locked = true;
-
       const booking = await bookingService.createBooking({
         userId,
         garageId,
         slotId,
         startTime: new Date(startTime),
         endTime: new Date(endTime),
-        status: "pending",
+        valetRequested: valetRequested || false,
       });
 
-      logger.info("booking created", booking.id);
+      logger.info("Booking created", booking.id);
 
       return res.status(201).json({
         success: true,
@@ -97,14 +68,6 @@ export class BookingController {
         data: booking,
       });
     } catch (error) {
-      // if (locked && slotId ) {
-      //   try {
-      //     await bookingService.releaseSlot(slotId);
-      //   } catch (rollbackError) {
-      //     logger.error("Slot rollback failed", rollbackError);
-      //   }
-      // }
-
       if (error instanceof ValidationError) {
         return res.status(error.status).json({
           success: false,
@@ -121,16 +84,11 @@ export class BookingController {
     }
   }
 
-  // each booking single
-
   async getBooking(req: Request, res: Response) {
     try {
-      const bookingIdRaw = req.params.bookingId;
-      const bookingId = Array.isArray(bookingIdRaw)
-        ? bookingIdRaw[0]
-        : bookingIdRaw;
-
-      console.log("bookid", bookingId);
+      const bookingId = Array.isArray(req.params.bookingId)
+        ? req.params.bookingId[0]
+        : req.params.bookingId;
 
       if (!bookingId) {
         return res.status(400).json({
@@ -153,7 +111,7 @@ export class BookingController {
         data: booking,
       });
     } catch (error) {
-      logger.error("BookingController.getBooking failed", error);
+      logger.error("Get booking failed", error);
       return res.status(500).json({
         success: false,
         message: "Failed to fetch booking",
@@ -161,12 +119,9 @@ export class BookingController {
     }
   }
 
-  // get all bookings
-
   async getMyBookings(req: Request, res: Response) {
     try {
       const userId = req.user?.id;
-      console.log("user", userId);
 
       if (!userId) {
         return res.status(401).json({
@@ -182,7 +137,7 @@ export class BookingController {
         data: bookings,
       });
     } catch (error) {
-      logger.error("BookingController.getMyBookings failed", error);
+      logger.error("Get my bookings failed", error);
       return res.status(500).json({
         success: false,
         message: "Failed to fetch bookings",
@@ -190,19 +145,14 @@ export class BookingController {
     }
   }
 
-  // update Booknig status
-
   async updateStatus(req: Request, res: Response) {
-    let slotAction: "NONE" | "RELEASED" | "OCCUPIED" = "NONE";
-    let booking: Booking | null = null;
-
     try {
-      const bookingIdRaw = req.params.bookingId; // this line because from params string[]  as come sto we want to convert
-      const bookingId = Array.isArray(bookingIdRaw)
-        ? bookingIdRaw[0]
-        : bookingIdRaw;
+      const bookingId = Array.isArray(req.params.bookingId)
+        ? req.params.bookingId[0]
+        : req.params.bookingId;
 
       const { status } = req.body;
+      const userId = req.user?.id;
 
       if (!bookingId || !status) {
         return res.status(400).json({
@@ -211,51 +161,19 @@ export class BookingController {
         });
       }
 
-      const userId = req.user?.id;
-      if (!userId) return res.status(401).json({ message: "Unauthorized" });
-
-      const bookings = await bookingService.verifyOwnership(bookingId, userId);
-
-      console.log(bookings);
-
-      booking = await bookingService.getBookingById(bookingId);
-
-      if (!booking) {
-        return res.status(404).json({
-          success: false,
-          message: "Booking not found",
-        });
+      if (!userId) {
+        return res
+          .status(401)
+          .json({ success: false, message: "Unauthorized" });
       }
+
+      const booking = await bookingService.verifyOwnership(bookingId, userId);
 
       if (!validateStatusTransition(booking.status, status)) {
         return res.status(400).json({
           success: false,
           message: `Invalid status transition: ${booking.status} → ${status}`,
         });
-      }
-
-      // const authToken = req.headers.authorization?.split(" ")[1];
-
-      // if (!authToken) {
-      //   return res.status(401).json({
-      //     success: false,
-      //     message: "Auth token required for slot sync",
-      //   });
-      // }
-
-      // if (status === "confirmed") { };
-
-      if (status === "completed") {
-        await bookingService.occupySlot(booking.slotId);
-        slotAction = "OCCUPIED";
-
-        await bookingService.releaseSlot(booking.slotId);
-        slotAction = "RELEASED";
-      }
-
-      if (status === "cancelled") {
-        await bookingService.releaseSlot(booking.slotId);
-        slotAction = "RELEASED";
       }
 
       const updated = await bookingService.updateBookingStatus(
@@ -269,21 +187,7 @@ export class BookingController {
         data: updated,
       });
     } catch (error) {
-      try {
-        if (booking) {
-          if (slotAction === "RELEASED") {
-            await bookingService.lockSlot(booking.slotId);
-          }
-
-          if (slotAction === "OCCUPIED") {
-            await bookingService.releaseSlot(booking.slotId);
-          }
-        }
-      } catch (rollbackError) {
-        logger.error("Rollback failed", rollbackError);
-      }
-
-      logger.error("BookingController.updateStatus failed", error);
+      logger.error("Update booking status failed", error);
       return res.status(500).json({
         success: false,
         message: "Failed to update booking",
@@ -291,14 +195,13 @@ export class BookingController {
     }
   }
 
-  // booking delete
-
   async deleteBooking(req: Request, res: Response) {
     try {
-      const bookingIdRaw = req.params.bookingId;
-      const bookingId = Array.isArray(bookingIdRaw)
-        ? bookingIdRaw[0]
-        : bookingIdRaw;
+      const bookingId = Array.isArray(req.params.bookingId)
+        ? req.params.bookingId[0]
+        : req.params.bookingId;
+
+      const userId = req.user?.id;
 
       if (!bookingId) {
         return res.status(400).json({
@@ -307,44 +210,23 @@ export class BookingController {
         });
       }
 
-      const userId = req.user?.id;
-      if (!userId) return res.status(401).json({ message: "Unauthorized" });
-
-      const bookings = await bookingService.verifyOwnership(bookingId, userId);
-
-      if (bookings) {
-        return {
-          success: false,
-          message: "no verified",
-        };
+      if (!userId) {
+        return res
+          .status(401)
+          .json({ success: false, message: "Unauthorized" });
       }
 
-      const booking = await bookingService.getBookingById(bookingId);
-
-      if (!booking) {
-        return res.status(404).json({
-          success: false,
-          message: "Booking not found",
-        });
-      }
-
-      await bookingService.releaseSlot(booking.slotId);
+      await bookingService.verifyOwnership(bookingId, userId);
 
       const deleted = await bookingService.deleteBooking(bookingId);
-
-      if (!deleted) {
-        return res.status(404).json({
-          success: false,
-          message: "Booking not found",
-        });
-      }
 
       return res.status(200).json({
         success: true,
         message: "Booking deleted",
+        data: deleted,
       });
     } catch (error) {
-      logger.error("BookingController.deleteBooking failed", error);
+      logger.error("Delete booking failed", error);
       return res.status(500).json({
         success: false,
         message: "Failed to delete booking",
@@ -354,10 +236,9 @@ export class BookingController {
 
   async confirmBooking(req: Request, res: Response) {
     try {
-      const bookingIdRaw = req.params.bookingId;
-      const bookingId = Array.isArray(bookingIdRaw)
-        ? bookingIdRaw[0]
-        : bookingIdRaw;
+      const bookingId = Array.isArray(req.params.bookingId)
+        ? req.params.bookingId[0]
+        : req.params.bookingId;
 
       if (!bookingId) {
         return res.status(400).json({
@@ -367,16 +248,19 @@ export class BookingController {
       }
 
       const booking = await bookingService.getBookingById(bookingId);
+
       if (!booking) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Booking not found" });
+        return res.status(404).json({
+          success: false,
+          message: "Booking not found",
+        });
       }
 
       if (booking.status !== "pending") {
-        return res
-          .status(400)
-          .json({ success: false, message: "Booking already processed" });
+        return res.status(400).json({
+          success: false,
+          message: "Booking already processed",
+        });
       }
 
       const updated = await bookingService.updateBookingStatus(
@@ -384,15 +268,17 @@ export class BookingController {
         "confirmed",
       );
 
-      return res.json({
+      return res.status(200).json({
         success: true,
         message: "Booking confirmed",
         data: updated,
       });
-    } catch {
-      return res
-        .status(500)
-        .json({ success: false, message: "Confirm failed" });
+    } catch (error) {
+      logger.error("Confirm booking failed", error);
+      return res.status(500).json({
+        success: false,
+        message: "Confirm failed",
+      });
     }
   }
 }

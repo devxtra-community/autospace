@@ -7,7 +7,7 @@ import { logger } from "../utils/logger.js";
 
 const bookingRepo = AppDataSource.getRepository(Booking);
 
-const EXPIRY_MINUTES = 10;
+const EXPIRY_MINUTES = 1000;
 
 export function startPendingExpiryJob() {
   cron.schedule("* * * * *", async () => {

@@ -112,13 +112,13 @@ router.use(
 
 // valet routes
 router.use(
-  "/valet",
+  "/valets",
   authMiddleware,
   rbac(UserRole.MANAGER, UserRole.VALET),
   createProxyMiddleware({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
-    pathRewrite: (path) => `/valet${path}`,
+    pathRewrite: (path) => `/valets${path}`,
     on: {
       proxyReq: (proxyReq, req) => {
         attachUserHeaders(proxyReq, req);

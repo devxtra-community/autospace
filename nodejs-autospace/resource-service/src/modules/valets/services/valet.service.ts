@@ -1,7 +1,11 @@
 // services/valet.service.ts
 
 import { AppDataSource } from "../../../db/data-source";
-import { Valet, ValetEmployementStatus } from "../entities/valets.entity";
+import {
+  Valet,
+  ValetAvailabilityStatus,
+  ValetEmployementStatus,
+} from "../entities/valets.entity";
 import { Garage } from "../../garage/entities/garage.entity";
 
 // Approve valet
@@ -139,4 +143,58 @@ export const getValetsByGarageService = async (
       totalPages: Math.ceil(total / filters.limit),
     },
   };
+};
+
+export const getAvailableValetService = async (garageId: string) => {
+  const valetRepo = AppDataSource.getRepository(Valet);
+
+  return await valetRepo.findOne({
+    where: {
+      garageId,
+      employmentStatus: ValetEmployementStatus.ACTIVE,
+      availabilityStatus: ValetAvailabilityStatus.AVAILABLE,
+    },
+    order: { createdAt: "ASC" }, // oldest gets job first
+  });
+};
+
+export const assignValetToBookingService = async (
+  valetId: string,
+  bookingId: string,
+) => {
+  const valetRepo = AppDataSource.getRepository(Valet);
+
+  const valet = await valetRepo.findOne({
+    where: { id: valetId },
+  });
+
+  if (!valet) {
+    throw new Error("Valet not found");
+  }
+
+  if (valet.availabilityStatus !== ValetAvailabilityStatus.AVAILABLE) {
+    throw new Error("Valet is not available");
+  }
+
+  valet.availabilityStatus = ValetAvailabilityStatus.BUSY;
+  valet.currentBookingId = bookingId;
+
+  return await valetRepo.save(valet);
+};
+
+export const releaseValetService = async (valetId: string) => {
+  const valetRepo = AppDataSource.getRepository(Valet);
+
+  const valet = await valetRepo.findOne({
+    where: { id: valetId },
+  });
+
+  if (!valet) {
+    throw new Error("Valet not found");
+  }
+
+  valet.availabilityStatus = ValetAvailabilityStatus.AVAILABLE;
+  valet.currentBookingId = null;
+
+  return await valetRepo.save(valet);
 };

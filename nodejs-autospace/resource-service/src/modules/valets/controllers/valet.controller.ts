@@ -1,7 +1,10 @@
 import { Request, Response } from "express";
 import {
   approveValetService,
+  assignValetToBookingService,
+  getAvailableValetService,
   rejectValetService,
+  releaseValetService,
 } from "../services/valet.service";
 
 // export const approveValetController
