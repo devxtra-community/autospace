@@ -6,16 +6,21 @@ import {
   assignValetController,
   releaseValetController,
 } from "../controllers/internal-valet.controller";
+import { getMyValetController } from "../controllers/valet.controller";
+import { internalAuth } from "../../../middlewares/internalAuth.middleware";
 
 const router = Router();
 
-router.post("/internal/resolve-garage", resolveGarage);
-router.post("/internal/valets/register", registerValet);
+router.post("/resolve-garage", resolveGarage);
 
-router.get("/internal/valets/available/:garageId", getAvailableValetController);
+router.post("/register", registerValet);
 
-router.post("/internal/valets/:valetId/assign", assignValetController);
+router.get("/me", internalAuth, getMyValetController);
 
-router.post("/internal/valets/:valetId/release", releaseValetController);
+router.get("/available/:garageId", getAvailableValetController);
+
+router.patch("/:valetId/assign", assignValetController);
+
+router.patch("/:valetId/release", releaseValetController);
 
 export default router;

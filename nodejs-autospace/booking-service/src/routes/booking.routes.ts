@@ -30,4 +30,16 @@ router.patch(
   bookingController.confirmBooking,
 );
 
+router.patch(
+  "/internal/:bookingId/assign-valet",
+  internalAuth,
+  bookingController.assignValetInternal,
+);
+
+router.patch(
+  "/internal/:bookingId/reject-valet",
+  internalAuth,
+  bookingController.rejectValet,
+);
+
 export default router;

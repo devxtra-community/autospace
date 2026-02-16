@@ -5,8 +5,8 @@ import {
   ValidationError,
   validateBookingInput,
   validateStatusTransition,
-} from "../validators/booking.vallidator.js";
-
+} from "../validators/booking.validator.js";
+import { BookingValetStatus } from "../entities/booking.entity.js";
 const bookingService = new BookingService();
 
 export class BookingController {
@@ -278,6 +278,101 @@ export class BookingController {
       return res.status(500).json({
         success: false,
         message: "Confirm failed",
+      });
+    }
+  }
+  async assignValetInternal(req: Request, res: Response) {
+    try {
+      const bookingId = req.params.bookingId as string;
+      const { valetId } = req.body;
+
+      if (!bookingId || !valetId) {
+        return res.status(400).json({
+          success: false,
+          message: "bookingId and valetId required",
+        });
+      }
+
+      const booking = await bookingService.getBookingById(bookingId);
+
+      if (!booking) {
+        return res.status(404).json({
+          success: false,
+          message: "Booking not found",
+        });
+      }
+
+      if (!booking.valetRequested) {
+        return res.status(400).json({
+          success: false,
+          message: "Valet was not requested for this booking",
+        });
+      }
+
+      if (booking.valetStatus !== BookingValetStatus.REQUESTED) {
+        return res.status(400).json({
+          success: false,
+          message: "Valet already assigned or processed",
+        });
+      }
+
+      // ensure only correct valet can accept
+      if (booking.currentValetRequestId !== valetId) {
+        return res.status(400).json({
+          success: false,
+          message: "This valet is not assigned this request",
+        });
+      }
+
+      booking.valetId = valetId;
+      booking.valetStatus = BookingValetStatus.ASSIGNED;
+      booking.status = "confirmed";
+
+      // Clear queue tracking
+      booking.currentValetRequestId = null;
+      booking.rejectedValetIds = null;
+
+      const updated = await bookingService.updateBookingWithValet(booking);
+
+      return res.status(200).json({
+        success: true,
+        data: updated,
+      });
+    } catch (error) {
+      logger.error("Assign valet failed", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to assign valet",
+      });
+    }
+  }
+
+  async rejectValet(req: Request, res: Response) {
+    try {
+      const bookingId = req.params.bookingId as string;
+      const { valetId } = req.body;
+
+      if (!bookingId || !valetId) {
+        return res.status(400).json({
+          success: false,
+          message: "bookingId and valetId required",
+        });
+      }
+
+      const updated = await bookingService.rejectValetRequest(
+        bookingId,
+        valetId,
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: updated,
+      });
+    } catch (error) {
+      logger.error("Reject valet failed", error);
+      return res.status(400).json({
+        success: false,
+        message: "Failed to reject valet: ",
       });
     }
   }

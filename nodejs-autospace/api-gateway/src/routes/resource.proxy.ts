@@ -118,10 +118,35 @@ router.use(
   createProxyMiddleware({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
-    pathRewrite: (path) => `/valets${path}`,
+
+    pathRewrite: (path, req) => {
+      const newPath = req.originalUrl.replace(
+        /^\/api\/valets/,
+        "/internal/valets",
+      );
+
+      console.log("REWRITE ORIGINAL:", req.originalUrl);
+      console.log("REWRITE FINAL:", newPath);
+
+      return newPath;
+    },
+
     on: {
-      proxyReq: (proxyReq, req) => {
+      proxyReq: (proxyReq: ClientRequest, req: Request) => {
         attachUserHeaders(proxyReq, req);
+
+        if (
+          req.body &&
+          Object.keys(req.body).length > 0 &&
+          ["POST", "PUT", "PATCH"].includes(req.method)
+        ) {
+          const bodyData = JSON.stringify(req.body);
+
+          proxyReq.setHeader("Content-Type", "application/json");
+          proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
+
+          proxyReq.write(bodyData);
+        }
       },
     },
   }),

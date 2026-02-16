@@ -6,7 +6,7 @@ import {
   getValetByIdService,
   getPendingValetsService,
 } from "../services/valetDetail.service";
-import { GetValetsByGarageQuery } from "../validators/valets.vzlidator";
+import { GetValetsByGarageQuery } from "../validators/valets.validator";
 import { ValetEmployementStatus } from "../entities/valets.entity";
 
 // export const approveValetController

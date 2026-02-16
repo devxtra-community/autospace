@@ -3,9 +3,10 @@ import { Router } from "express";
 import {
   validateGetValetsByGarage,
   validateValetIdParam,
-} from "../validators/valets.vzlidator";
+} from "../validators/valets.validator";
 import {
   approveValetController,
+  getMyValetController,
   rejectValetController,
 } from "../controllers/valet.controller";
 import {
@@ -14,6 +15,7 @@ import {
   getValetByIdController,
   getValetsByGarageController,
 } from "../controllers/valetGarage.controller";
+import { internalAuth } from "../../../middlewares/internalAuth.middleware";
 
 const router = Router();
 
@@ -22,7 +24,7 @@ router.put(
   validateValetIdParam,
   approveValetController,
 );
-router.put("/:id//manager/reject", validateValetIdParam, rejectValetController);
+router.put("/:id/manager/reject", validateValetIdParam, rejectValetController);
 router.get("/pending", getPendingValetsController);
 router.get(
   "/garage/:garageId",

@@ -46,6 +46,6 @@ app.use("/valets", valetRoutes);
 app.use("/files", filesRoutes);
 
 // auth service only
-app.use("/garages", internalValetRoutes);
+app.use("/internal/valets", internalValetRoutes);
 
 export default app;
