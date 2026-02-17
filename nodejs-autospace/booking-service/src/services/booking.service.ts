@@ -105,7 +105,6 @@ export class BookingService {
 
         const savedBooking = await repo.save(booking);
 
-        // FIX: pass manager
         if (savedBooking.valetRequested) {
           await this.assignFirstValetRequest(savedBooking, manager);
         }
@@ -231,7 +230,11 @@ export class BookingService {
     booking.status = status;
 
     if (status === "completed" && booking.valetId) {
-      await this.releaseValet(booking.valetId);
+      try {
+        await this.releaseValet(booking.valetId);
+      } catch (err) {
+        console.log("releaseValet failed but ignoring:", err);
+      }
 
       booking.valetStatus = BookingValetStatus.COMPLETED;
     }
@@ -273,6 +276,115 @@ export class BookingService {
     }
 
     return booking;
+  }
+
+  private async enrichBookings(bookings: Booking[]) {
+    const enrichedBookings = await Promise.all(
+      bookings.map(async (booking) => {
+        try {
+          const userRes = await axios.get(
+            `${process.env.AUTH_SERVICE_URL}/internal/users/${booking.userId}`,
+            {
+              headers: {
+                "x-user-id": "booking-service",
+                "x-user-role": "SERVICE",
+              },
+            },
+          );
+
+          const garageRes = await axios.get(
+            `${process.env.RESOURCE_SERVICE_URL}/internal/garages/${booking.garageId}`,
+            {
+              headers: {
+                "x-user-id": "booking-service",
+                "x-user-role": "SERVICE",
+              },
+            },
+          );
+
+          const slotRes = await axios.get(
+            `${process.env.RESOURCE_SERVICE_URL}/internal/slots/${booking.slotId}`,
+            {
+              headers: {
+                "x-user-id": "booking-service",
+                "x-user-role": "SERVICE",
+              },
+            },
+          );
+
+          const user = userRes.data.data;
+          const garage = garageRes.data.data;
+          const slot = slotRes.data.data;
+
+          return {
+            id: booking.id,
+
+            customerName: user.fullname,
+            customerPhone: user.phone,
+
+            garageName: garage.name,
+            garageLocation: garage.locationName,
+
+            slotNumber: slot.slotNumber,
+            slotType: slot.slotSize,
+
+            pickupTime: booking.startTime,
+            dropTime: booking.endTime,
+
+            pickupDate: booking.startTime.toISOString(),
+            dropDate: booking.endTime.toISOString(),
+
+            createdAt: booking.createdAt,
+          };
+        } catch {
+          return null;
+        }
+      }),
+    );
+
+    return enrichedBookings.filter(Boolean);
+  }
+
+  async getValetRequests(valetId: string) {
+    const bookings = await bookingRepo.find({
+      where: {
+        currentValetRequestId: valetId,
+        valetStatus: BookingValetStatus.REQUESTED,
+      },
+      order: {
+        createdAt: "DESC",
+      },
+    });
+
+    return await this.enrichBookings(bookings);
+  }
+
+  async getActiveJobs(valetId: string) {
+    const bookings = await bookingRepo.find({
+      where: {
+        valetId: valetId,
+        valetStatus: BookingValetStatus.ASSIGNED,
+      },
+      order: {
+        createdAt: "DESC",
+      },
+    });
+
+    return await this.enrichBookings(bookings);
+  }
+
+  async getCompletedJobs(valetId: string) {
+    const bookings = await bookingRepo.find({
+      where: {
+        valetId: valetId,
+        valetStatus: BookingValetStatus.COMPLETED,
+      },
+      order: {
+        createdAt: "DESC",
+      },
+    });
+
+    return await this.enrichBookings(bookings);
   }
 }
 

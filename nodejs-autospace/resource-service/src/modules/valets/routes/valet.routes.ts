@@ -6,7 +6,6 @@ import {
 } from "../validators/valets.validator";
 import {
   approveValetController,
-  getMyValetController,
   rejectValetController,
 } from "../controllers/valet.controller";
 import {
@@ -15,7 +14,6 @@ import {
   getValetByIdController,
   getValetsByGarageController,
 } from "../controllers/valetGarage.controller";
-import { internalAuth } from "../../../middlewares/internalAuth.middleware";
 
 const router = Router();
 

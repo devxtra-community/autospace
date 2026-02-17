@@ -4,7 +4,6 @@ import { logger } from "../utils/logger.js";
 import {
   ValidationError,
   validateBookingInput,
-  validateStatusTransition,
 } from "../validators/booking.validator.js";
 import { BookingValetStatus } from "../entities/booking.entity.js";
 const bookingService = new BookingService();
@@ -152,27 +151,39 @@ export class BookingController {
         : req.params.bookingId;
 
       const { status } = req.body;
-      const userId = req.user?.id;
+
+      const valetId = req.user?.id;
 
       if (!bookingId || !status) {
         return res.status(400).json({
           success: false,
-          message: "bookingId and status are required",
+          message: "bookingId and status required",
         });
       }
 
-      if (!userId) {
-        return res
-          .status(401)
-          .json({ success: false, message: "Unauthorized" });
+      if (!valetId) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
       }
 
-      const booking = await bookingService.verifyOwnership(bookingId, userId);
+      const booking = await bookingService.getBookingById(bookingId);
 
-      if (!validateStatusTransition(booking.status, status)) {
-        return res.status(400).json({
+      if (!booking) {
+        return res.status(404).json({
           success: false,
-          message: `Invalid status transition: ${booking.status} → ${status}`,
+          message: "Booking not found",
+        });
+      }
+
+      if (booking.valetId !== valetId) {
+        console.log("booking.valetId:", booking.valetId);
+        console.log("req.user.id:", valetId);
+
+        return res.status(403).json({
+          success: false,
+          message: "Not your assigned job",
         });
       }
 
@@ -183,14 +194,15 @@ export class BookingController {
 
       return res.status(200).json({
         success: true,
-        message: "Booking status updated",
+        message: "Job completed",
         data: updated,
       });
     } catch (error) {
-      logger.error("Update booking status failed", error);
+      logger.error("Complete job failed", error);
+
       return res.status(500).json({
         success: false,
-        message: "Failed to update booking",
+        message: "Failed to complete job",
       });
     }
   }
@@ -284,7 +296,7 @@ export class BookingController {
   async assignValetInternal(req: Request, res: Response) {
     try {
       const bookingId = req.params.bookingId as string;
-      const { valetId } = req.body;
+      const valetId = req.user?.id;
 
       if (!bookingId || !valetId) {
         return res.status(400).json({
@@ -373,6 +385,86 @@ export class BookingController {
       return res.status(400).json({
         success: false,
         message: "Failed to reject valet: ",
+      });
+    }
+  }
+
+  async getValetRequests(req: Request, res: Response) {
+    try {
+      const valetId = req.user?.id;
+
+      if (!valetId) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
+
+      const requests = await bookingService.getValetRequests(valetId);
+
+      return res.status(200).json({
+        success: true,
+        data: requests,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch valet requests",
+        error,
+      });
+    }
+  }
+
+  async getActiveJobs(req: Request, res: Response) {
+    try {
+      const valetId = req.user?.id;
+
+      if (!valetId) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
+
+      const activeJobs = await bookingService.getActiveJobs(valetId);
+
+      return res.status(200).json({
+        success: true,
+        data: activeJobs,
+      });
+    } catch (error) {
+      logger.error("Get active jobs failed", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch active jobs",
+      });
+    }
+  }
+
+  async getCompletedJobs(req: Request, res: Response) {
+    try {
+      const valetId = req.user?.id;
+
+      if (!valetId) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
+
+      const completedJobs = await bookingService.getCompletedJobs(valetId);
+
+      return res.status(200).json({
+        success: true,
+        data: completedJobs,
+      });
+    } catch (error) {
+      logger.error("Get completed jobs failed", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch completed jobs",
       });
     }
   }

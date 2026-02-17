@@ -6,6 +6,16 @@ import { internalAuth } from "../middleware/internal-authmiddleware.js";
 
 const router: ExpressRouter = Router();
 
+router.get("/valet/requests", internalAuth, bookingController.getValetRequests);
+
+router.get("/valet/active", internalAuth, bookingController.getActiveJobs);
+
+router.get(
+  "/valet/completed",
+  internalAuth,
+  bookingController.getCompletedJobs,
+);
+
 router.post("/", internalAuth, bookingController.createBookingController);
 
 router.get("/my", internalAuth, bookingController.getMyBookings);
