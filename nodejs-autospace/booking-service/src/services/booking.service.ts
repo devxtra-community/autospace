@@ -119,10 +119,14 @@ export class BookingService {
       startTime: Date;
       endTime: Date;
       status: string;
+      vehicleType: "sedan" | "suv";
     },
     // authToken: string,
   ) {
     let slotLocked = false;
+
+    // console.log("service vehicle",bookingData.vehicleType);
+
     return await AppDataSource.transaction(async (manager) => {
       const bookingRepoTx = manager.getRepository(Booking);
 
@@ -150,10 +154,21 @@ export class BookingService {
       try {
         const booking = bookingRepoTx.create({
           ...bookingData,
+          // vehicleType: bookingData.vehicleType,
           status: "pending",
         });
 
+        function generatePin(): string {
+          return Math.floor(1000 + Math.random() * 9000).toString();
+        }
+
+        booking.entryPin = generatePin();
+
+        booking.entryUsed = false;
+        booking.exitUsed = false;
+
         const savedBooking = await bookingRepoTx.save(booking);
+
         return savedBooking;
       } catch (err) {
         if (slotLocked) {

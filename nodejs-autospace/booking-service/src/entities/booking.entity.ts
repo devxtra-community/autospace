@@ -47,8 +47,23 @@ export class Booking {
   })
   valetStatus!: BookingValetStatus;
 
+  @Column({ type: "varchar", length: 20, nullable: true })
+  vehicleType!: "sedan" | "suv" | null;
+
   @Column({ name: "valet_id", type: "uuid", nullable: true })
   valetId!: string | null;
+
+  @Column({ type: "varchar", length: 5, nullable: true })
+  entryPin!: string | null;
+
+  @Column({ type: "varchar", length: 5, nullable: true })
+  exitPin!: string | null;
+
+  @Column({ name: "entry_used", type: "boolean", default: false })
+  entryUsed!: boolean;
+
+  @Column({ name: "exit_used", type: "boolean", default: false })
+  exitUsed!: boolean;
 
   @CreateDateColumn()
   createdAt!: Date;

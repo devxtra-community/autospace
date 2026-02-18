@@ -13,14 +13,16 @@ const bookingService = new BookingService();
 export class BookingController {
   async createBookingController(req: Request, res: Response) {
     // let locked = false;
-    const { slotId, garageId, startTime, endTime } = req.body;
+    const { slotId, garageId, startTime, endTime, vehicleType } = req.body;
+
+    // console.log("vahicle from frontend",vehicleType);
     const userId = req.user?.id;
     // const authToken = req.headers.authorization?.split(" ")[1];
 
     // console.log("userdetails",authToken);
 
     try {
-      if (!slotId || !garageId || !startTime || !endTime) {
+      if (!slotId || !garageId || !startTime || !endTime || !vehicleType) {
         return res.status(400).json({
           success: false,
           message: "slotId, garageId, startTime, endTime are required",
@@ -47,6 +49,7 @@ export class BookingController {
         garageId,
         startTime,
         endTime,
+        vehicleType,
         status: "pending",
       });
 
@@ -86,6 +89,7 @@ export class BookingController {
         slotId,
         startTime: new Date(startTime),
         endTime: new Date(endTime),
+        vehicleType,
         status: "pending",
       });
 

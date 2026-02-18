@@ -20,6 +20,8 @@ exports.CreateFloorSchema = zod_1.z.object({
 exports.CreateSlotSchema = zod_1.z.object({
     floorNumber: zod_1.z.number().int().nonnegative(),
     // Only A1–A5, B1–B5, etc.
-    slotNumber: zod_1.z.string().regex(/^[A-Z][1-5]$/, "Slot must be A1–A5, B1–B5, etc."),
+    slotNumber: zod_1.z
+        .string()
+        .regex(/^[A-Z][1-5]$/, "Slot must be A1–A5, B1–B5, etc."),
     slotSize: zod_1.z.enum(["STANDARD", "LARGE"]),
 });

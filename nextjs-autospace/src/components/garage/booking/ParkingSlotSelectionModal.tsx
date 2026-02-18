@@ -86,7 +86,7 @@ export const ParkingSlotSelectionModal = ({
   const floors = Object.keys(floorData)
     .map(Number)
     .sort((a, b) => a - b);
-  // const totalFloors = floors.length || 1;
+
   const currentSlots = floorData[currentFloor] || [];
 
   const handleConfirm = () => {

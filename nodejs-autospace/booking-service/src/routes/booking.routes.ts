@@ -3,6 +3,13 @@ import type { Router as ExpressRouter } from "express";
 // import { authMiddleware } from "../middleware/auth.middleware.js";
 import { bookingController } from "../controllers/booking.controller.js";
 import { internalAuth } from "../middleware/internal-authmiddleware.js";
+import {
+  cancelBooking,
+  enterBookingController,
+  exitBooking,
+  getActiveBooking,
+  getBookingHistory,
+} from "../controllers/bookingEdge.controller.js";
 
 const router: ExpressRouter = Router();
 
@@ -29,5 +36,15 @@ router.patch(
   internalAuth,
   bookingController.confirmBooking,
 );
+
+router.post("/:bookingId/enter", internalAuth, enterBookingController);
+
+router.post("/:bookingId/exit", internalAuth, exitBooking);
+
+router.patch("/:bookingId/cancel", internalAuth, cancelBooking);
+
+router.get("/my/active", internalAuth, getActiveBooking);
+
+router.get("/my/history", internalAuth, getBookingHistory);
 
 export default router;

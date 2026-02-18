@@ -24,6 +24,7 @@ export function validateBookingInput(data: {
   garageId?: string;
   startTime?: string | Date;
   endTime?: string | Date;
+  vehicleType: string;
   status?: string;
 }) {
   const { slotId, userId, garageId, startTime, endTime, status } = data;

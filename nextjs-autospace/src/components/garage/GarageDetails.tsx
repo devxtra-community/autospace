@@ -51,6 +51,7 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [showPayment, setShowPayment] = useState(false);
   const [isSlotModalOpen, setIsSlotModalOpen] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{
     floor: number;
     slotId: string;
@@ -146,12 +147,17 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
   };
 
   const handlePaymentSuccess = async () => {
+    if (!bookingId || isConfirming) return;
+
     try {
+      setIsConfirming(true);
       await apiClient.patch(`/api/bookings/${bookingId}/confirm`);
       alert("payment success");
       setShowPayment(false);
     } catch {
       alert("Payment confirmed but booking update failed");
+    } finally {
+      setIsConfirming(false);
     }
   };
 
@@ -589,10 +595,11 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
 
             <div className="flex gap-3">
               <button
+                disabled={isConfirming}
                 className="flex-1 bg-green-500 text-white py-2"
                 onClick={handlePaymentSuccess}
               >
-                Pay Success
+                {isConfirming ? "Processing..." : "Pay Success"}
               </button>
 
               <button
