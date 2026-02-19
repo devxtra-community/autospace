@@ -1,10 +1,11 @@
 "use client";
 
-export type SlotStatus = "available" | "occupied" | "out";
+export type SlotStatus = "available" | "reserved" | "occupied" | "out";
 export type SlotSize = "STANDARD" | "LARGE";
 
 const statusStyles: Record<SlotStatus, string> = {
   available: "bg-green-500",
+  reserved: "bg-yellow-500",
   occupied: "bg-red-500",
   out: "bg-gray-300",
 };

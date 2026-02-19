@@ -6,6 +6,7 @@ import {
 } from "../validators/valets.validator";
 import {
   approveValetController,
+  getMyValetController,
   rejectValetController,
 } from "../controllers/valet.controller";
 import {
@@ -14,9 +15,12 @@ import {
   getValetByIdController,
   getValetsByGarageController,
 } from "../controllers/valetGarage.controller";
+import { internalAuth } from "../../../middlewares/internalAuth.middleware";
 
 const router = Router();
 
+router.use(internalAuth); // Apply internal authentication middleware to all routes in this router
+router.get("/me", getMyValetController);
 router.put(
   "/:id/manager/approve",
   validateValetIdParam,
@@ -31,7 +35,7 @@ router.get(
 );
 
 router.get(
-  "/company/:compoanyId",
+  "/company/:companyId",
   validateGetValetsByGarage,
   getCompanyValetsController,
 );

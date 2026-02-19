@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-import { Car, Phone, MapPin, Clock } from "lucide-react";
+import { Car, Phone, MapPin, Clock, Calendar } from "lucide-react";
 
 type RequestCardProps = {
   req: {
@@ -52,6 +52,11 @@ export default function RequestCard({
         <div className="flex items-center gap-2 text-sm">
           <Clock size={14} />
           {req.time}
+        </div>
+
+        <div className="flex items-center gap-2 text-sm">
+          <Calendar size={14} />
+          {req.date}
         </div>
 
         <div className="flex gap-2 pt-2">

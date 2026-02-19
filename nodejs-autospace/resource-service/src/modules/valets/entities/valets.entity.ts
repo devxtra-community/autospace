@@ -10,7 +10,6 @@ export enum ValetEmployementStatus {
   PENDING = "PENDING",
   ACTIVE = "ACTIVE",
   REJECTED = "REJECTED",
-  SUSPENDED = "SUSPENDED",
 }
 
 export enum ValetAvailabilityStatus {

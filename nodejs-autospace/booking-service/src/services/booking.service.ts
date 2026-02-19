@@ -50,7 +50,7 @@ export class BookingService {
   }
 
   async releaseValet(valetId: string) {
-    await axios.post(
+    await axios.patch(
       `${process.env.RESOURCE_SERVICE_URL}/internal/valets/${valetId}/release`,
       {},
       {
@@ -229,14 +229,50 @@ export class BookingService {
 
     booking.status = status;
 
-    if (status === "completed" && booking.valetId) {
+    if (status === "confirmed") {
       try {
-        await this.releaseValet(booking.valetId);
+        await axios.post(
+          `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}/occupy`,
+          {},
+          {
+            headers: {
+              "x-user-id": "booking-service",
+              "x-user-role": "SERVICE",
+              "x-user-email": "service@internal",
+            },
+          },
+        );
       } catch (err) {
-        console.log("releaseValet failed but ignoring:", err);
+        console.log("occupySlot failed but ignoring:", err);
+      }
+    }
+
+    if (status === "completed") {
+      if (booking.valetId) {
+        try {
+          await this.releaseValet(booking.valetId);
+        } catch (err) {
+          console.log("releaseValet failed but ignoring:", err);
+        }
+
+        booking.valetStatus = BookingValetStatus.COMPLETED;
       }
 
-      booking.valetStatus = BookingValetStatus.COMPLETED;
+      try {
+        await axios.post(
+          `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}/free`,
+          {},
+          {
+            headers: {
+              "x-user-id": "booking-service",
+              "x-user-role": "SERVICE",
+              "x-user-email": "service@internal",
+            },
+          },
+        );
+      } catch (err) {
+        console.log("freeSlot failed but ignoring:", err);
+      }
     }
 
     return await bookingRepo.save(booking);

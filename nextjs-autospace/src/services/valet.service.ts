@@ -6,16 +6,18 @@ export const getMyValet = async () => {
 };
 
 export const acceptBooking = async (bookingId: string) => {
-  const res = await apiClient.patch(
-    `/api/bookings/internal/${bookingId}/assign-valet`,
-  );
+  const valet = await getMyValet();
+
+  const res = await apiClient.patch(`/api/valets/${valet.id}/assign`, {
+    bookingId: bookingId,
+  });
 
   return res.data;
 };
 
 export const rejectBooking = async (bookingId: string) => {
   const res = await apiClient.patch(
-    `/api/bookings/internal/${bookingId}/reject-valet`,
+    `/api/bookings/internal/${bookingId}/reject`,
     {},
   );
   return res.data;

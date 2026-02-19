@@ -18,6 +18,11 @@ export const getMyGarages = async (companyId: string) => {
   return res.data.data;
 };
 
+export const getMyManagerGarage = async () => {
+  const res = await apiClient.get("/api/garages/manager/my");
+  return res.data.data;
+};
+
 export const getGarageById = async (garageId: string) => {
   const res = await apiClient.get(`/api/garages/${garageId}`);
   return res.data.data;

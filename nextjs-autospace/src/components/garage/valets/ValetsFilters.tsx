@@ -6,16 +6,10 @@ export function ValetsFilters() {
       <div className="flex gap-3">
         <select className="border border-border rounded-md px-3 py-2 text-sm bg-background">
           <option>Status</option>
-          <option>On Duty</option>
-          <option>On Break</option>
+          <option>Available</option>
+          <option>Busy</option>
           <option>Off Duty</option>
-        </select>
-
-        <select className="border border-border rounded-md px-3 py-2 text-sm bg-background">
-          <option>Shift</option>
-          <option>Morning</option>
-          <option>Afternoon</option>
-          <option>Evening</option>
+          <option>Offline</option>
         </select>
       </div>
     </div>

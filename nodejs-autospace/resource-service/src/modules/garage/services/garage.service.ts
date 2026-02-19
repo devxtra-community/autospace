@@ -152,3 +152,17 @@ export const updateGarageProfile = async (
 
   return garage;
 };
+
+export const getMyManagerGarageService = async (managerId: string) => {
+  const repo = AppDataSource.getRepository(Garage);
+
+  const garage = await repo.findOne({
+    where: { managerId },
+  });
+
+  if (!garage) {
+    throw new Error("Garage not found for this manager");
+  }
+
+  return garage;
+};

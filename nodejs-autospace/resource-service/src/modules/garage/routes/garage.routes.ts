@@ -3,6 +3,7 @@ import {
   assignManagerController,
   createGarageController,
   getGaragesByCompanyController,
+  getMyManagerGarageController,
   updateGarageProfileController,
 } from "../controllers/garage.controller";
 import {
@@ -74,6 +75,7 @@ router.get("/:id", internalAuth, getGarageByIdController);
 router.put("/:id", internalAuth, updateGarageProfileController);
 router.post("/:garageId/images", internalAuth, addGarageImageController);
 router.get("/:garageId/images", internalAuth, getGarageImagesController);
+router.get("/manager/my", internalAuth, getMyManagerGarageController);
 
 // slots
 router.post(

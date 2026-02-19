@@ -72,6 +72,18 @@ export const rejectValetService = async (
   return await valetRepo.save(valet);
 };
 
+import axios from "axios";
+
+type SimpleUser = {
+  id: string;
+  fullname: string;
+  email: string;
+  phone: string;
+};
+
+const AUTH_SERVICE_URL =
+  process.env.AUTH_SERVICE_URL || "http://localhost:4001";
+
 export const getValetsByGarageService = async (
   garageId: string,
   managerUserId: string,
@@ -84,6 +96,7 @@ export const getValetsByGarageService = async (
   const valetRepo = AppDataSource.getRepository(Valet);
   const garageRepo = AppDataSource.getRepository(Garage);
 
+  // verify garage
   const garage = await garageRepo.findOne({
     where: { id: garageId },
   });
@@ -94,6 +107,7 @@ export const getValetsByGarageService = async (
     throw new Error("You are not the manager of this garage");
   }
 
+  // fetch valets from resource DB
   const where: any = { garageId };
 
   if (filters.status) {
@@ -102,11 +116,49 @@ export const getValetsByGarageService = async (
 
   const skip = (filters.page - 1) * filters.limit;
 
-  const [data, total] = await valetRepo.findAndCount({
+  const [valets, total] = await valetRepo.findAndCount({
     where,
     skip,
     take: filters.limit,
     order: { createdAt: "DESC" },
+  });
+
+  // fetch users from auth-service using existing endpoint
+  const users: SimpleUser[] = await Promise.all(
+    valets.map(async (valet) => {
+      try {
+        const res = await axios.get(
+          `${AUTH_SERVICE_URL}/internal/users/${valet.id}`,
+        );
+
+        return res.data.data;
+      } catch {
+        return {
+          id: valet.id,
+          fullname: "",
+          email: "",
+          phone: "",
+        };
+      }
+    }),
+  );
+
+  // merge valet + user
+  const data = valets.map((valet) => {
+    const user = users.find((u) => u.id === valet.id);
+
+    return {
+      id: valet.id,
+
+      name: user?.fullname || "",
+      email: user?.email || "",
+      phone: user?.phone || "",
+
+      employmentStatus: valet.employmentStatus,
+      availabilityStatus: valet.availabilityStatus,
+
+      createdAt: valet.createdAt,
+    };
   });
 
   return {

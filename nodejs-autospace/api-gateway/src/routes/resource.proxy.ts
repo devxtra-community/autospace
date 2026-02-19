@@ -120,14 +120,27 @@ router.use(
     changeOrigin: true,
 
     pathRewrite: (path, req) => {
-      const newPath = req.originalUrl.replace(
-        /^\/api\/valets/,
-        "/internal/valets",
-      );
+      const original = req.originalUrl;
 
-      console.log("REWRITE ORIGINAL:", req.originalUrl);
-      console.log("REWRITE FINAL:", newPath);
+      console.log("REWRITE ORIGINAL:", original);
 
+      // internal routes (used by booking-service / auth-service)
+      if (
+        original.includes("/assign") ||
+        original.includes("/release") ||
+        original.includes("/available") ||
+        original.includes("/register")
+      ) {
+        const newPath = original.replace(/^\/api\/valets/, "/internal/valets");
+
+        console.log("REWRITE INTERNAL:", newPath);
+        return newPath;
+      }
+
+      // manager / frontend routes
+      const newPath = original.replace(/^\/api\/valets/, "/valets");
+
+      console.log("REWRITE PUBLIC:", newPath);
       return newPath;
     },
 

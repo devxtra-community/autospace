@@ -51,6 +51,6 @@ export const validateGetValetsByGarage = (
     });
   }
 
-  req.query = result.data as any;
+  Object.assign(req.query, result.data);
   next();
 };

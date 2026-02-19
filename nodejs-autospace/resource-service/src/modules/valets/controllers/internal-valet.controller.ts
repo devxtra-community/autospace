@@ -73,11 +73,11 @@ export const assignValetController = async (req: Request, res: Response) => {
 
     // STEP 1: Ask booking-service to assign valet FIRST
     await axios.patch(
-      `${process.env.BOOKING_SERVICE_URL}/bookings/internal/${bookingId}/assign-valet`,
+      `${process.env.BOOKING_SERVICE_URL}/bookings/internal/${bookingId}/assign`,
       { valetId },
       {
         headers: {
-          "x-user-id": "resource-service",
+          "x-user-id": valetId,
           "x-user-role": "SERVICE",
           "x-user-email": "service@internal",
         },

@@ -21,7 +21,7 @@ export const registerValetService = async (data: ValetRegisterDto) => {
   }
 
   const { data: resolveData } = await axios.post(
-    `${RESOURCE_SERVICE_URL}/internal/resolve-garage`,
+    `${RESOURCE_SERVICE_URL}/internal/valets/resolve-garage`,
     { companyBrn, garageCode },
   );
 

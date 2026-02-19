@@ -1,5 +1,9 @@
 import { Request, Response } from "express";
-import { createGarage, updateGarageProfile } from "../services/garage.service";
+import {
+  createGarage,
+  getMyManagerGarageService,
+  updateGarageProfile,
+} from "../services/garage.service";
 import {
   assignManagerToGarage,
   getGaragesByCompanyId,
@@ -151,6 +155,34 @@ export const updateGarageProfileController = async (
     return res.status(400).json({
       success: false,
       message: error.message || "Failed to update garage",
+    });
+  }
+};
+
+export const getMyManagerGarageController = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const managerId = req.user?.id;
+
+    if (!managerId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const garage = await getMyManagerGarageService(managerId);
+
+    return res.status(200).json({
+      success: true,
+      data: garage,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch garage",
     });
   }
 };

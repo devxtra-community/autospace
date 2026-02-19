@@ -18,7 +18,8 @@ export const getValetsByGarageController = async (
 ): Promise<Response> => {
   try {
     const garageId = req.params.garageId as string;
-    const managerUserId = req.headers["x-user-id"] as string;
+    const managerUserId = req.user?.id;
+    console.log("Manager User ID:", managerUserId);
     const { status, page, limit } =
       req.query as unknown as GetValetsByGarageQuery;
 
@@ -134,7 +135,7 @@ export const getPendingValetsController = async (
 ): Promise<Response> => {
   try {
     const garageId = req.query.garageId as string;
-    const managerUserId = req.headers["x-user-id"] as string;
+    const managerUserId = req.user?.id;
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
 

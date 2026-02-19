@@ -44,7 +44,6 @@ type BackendBooking = {
   pickupTime: string;
   dropTime: string;
 };
-/* ================= HELPER ================= */
 
 const transformBooking = (b: BackendBooking): BookingRequest => ({
   id: b.id,

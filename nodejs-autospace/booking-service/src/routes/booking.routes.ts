@@ -41,13 +41,13 @@ router.patch(
 );
 
 router.patch(
-  "/internal/:bookingId/assign-valet",
+  "/internal/:bookingId/assign",
   internalAuth,
   bookingController.assignValetInternal,
 );
 
 router.patch(
-  "/internal/:bookingId/reject-valet",
+  "/internal/:bookingId/reject",
   internalAuth,
   bookingController.rejectValet,
 );

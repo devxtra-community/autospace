@@ -30,6 +30,7 @@ export const getUserProfile = async (userId: string) => {
       "role",
       "status",
       "created_at",
+      "companyId",
     ],
   });
 
@@ -42,6 +43,7 @@ export const getUserProfile = async (userId: string) => {
     phone: user.phone,
     role: user.role,
     status: user.status,
+    companyId: user.companyId,
     createdAt: user.created_at,
   };
 };

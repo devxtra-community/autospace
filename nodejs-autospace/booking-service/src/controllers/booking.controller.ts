@@ -6,6 +6,7 @@ import {
   validateBookingInput,
 } from "../validators/booking.validator.js";
 import { BookingValetStatus } from "../entities/booking.entity.js";
+import axios from "axios";
 const bookingService = new BookingService();
 
 export class BookingController {
@@ -328,7 +329,6 @@ export class BookingController {
         });
       }
 
-      // ensure only correct valet can accept
       if (booking.currentValetRequestId !== valetId) {
         return res.status(400).json({
           success: false,
@@ -340,11 +340,26 @@ export class BookingController {
       booking.valetStatus = BookingValetStatus.ASSIGNED;
       booking.status = "confirmed";
 
-      // Clear queue tracking
       booking.currentValetRequestId = null;
       booking.rejectedValetIds = null;
 
       const updated = await bookingService.updateBookingWithValet(booking);
+
+      try {
+        await axios.post(
+          `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}/occupy`,
+          {},
+          {
+            headers: {
+              "x-user-id": "booking-service",
+              "x-user-role": "SERVICE",
+              "x-user-email": "service@internal",
+            },
+          },
+        );
+      } catch (err) {
+        console.log("occupySlot failed:", err);
+      }
 
       return res.status(200).json({
         success: true,
