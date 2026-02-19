@@ -9,6 +9,7 @@ import {
   exitBooking,
   getActiveBooking,
   getBookingHistory,
+  listManagerBookings,
 } from "../controllers/bookingEdge.controller.js";
 
 const router: ExpressRouter = Router();
@@ -16,8 +17,6 @@ const router: ExpressRouter = Router();
 router.post("/", internalAuth, bookingController.createBookingController);
 
 router.get("/my", internalAuth, bookingController.getMyBookings);
-
-router.get("/:bookingId", internalAuth, bookingController.getBooking);
 
 router.patch(
   "/update/:bookingId",
@@ -46,5 +45,9 @@ router.patch("/:bookingId/cancel", internalAuth, cancelBooking);
 router.get("/my/active", internalAuth, getActiveBooking);
 
 router.get("/my/history", internalAuth, getBookingHistory);
+
+router.get("/manager/bookings", internalAuth, listManagerBookings);
+
+router.get("/:bookingId", internalAuth, bookingController.getBooking);
 
 export default router;

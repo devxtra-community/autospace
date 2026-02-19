@@ -12,36 +12,39 @@ export function startBookingLifecycleJob() {
     try {
       const now = new Date();
 
-      const toOccupy = await bookingRepo.find({
-        where: {
-          status: "confirmed",
-          startTime: LessThanOrEqual(now),
-        },
-      });
+      // const toOccupy = await bookingRepo.find({
+      //   where: {
+      //     status: "confirmed",
+      //     startTime: LessThanOrEqual(now),
+      //   },
+      // });
 
-      for (const booking of toOccupy) {
-        try {
-          await axios.post(
-            `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}/occupy`,
-            {},
-            {
-              headers: {
-                Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
-                "x-user-id": "booking-service",
-                "x-user-role": "SERVICE",
-                "x-user-email": "service@internal",
-              },
-            },
-          );
+      // for (const booking of toOccupy) {
+      //   try {
+      //     await axios.post(
+      //       `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}/occupy`,
+      //       {},
+      //       {
+      //         headers: {
+      //           Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
+      //           "x-user-id": "booking-service",
+      //           "x-user-role": "SERVICE",
+      //           "x-user-email": "service@internal",
+      //         },
+      //       },
+      //     );
 
-          booking.status = "occupied";
-          await bookingRepo.save(booking);
+      //     logger.info(`Before OCCUPY: entryPin=${booking.entryPin} id=${booking.id}`);
 
-          logger.info(`Slot OCCUPIED for booking ${booking.id}`);
-        } catch (err) {
-          logger.error(`Failed to OCCUPY slot for booking ${booking.id}`, err);
-        }
-      }
+      //     await bookingRepo.update(booking.id, {
+      //       status: "occupied",
+      //     });
+
+      //     logger.info(`Slot OCCUPIED for booking ${booking.id}`);
+      //   } catch (err) {
+      //     logger.error(`Failed to OCCUPY slot for booking ${booking.id}`, err);
+      //   }
+      // }
 
       const toComplete = await bookingRepo.find({
         where: {
@@ -69,8 +72,9 @@ export function startBookingLifecycleJob() {
             .catch(() => {});
 
           // update booking status
-          booking.status = "completed";
-          await bookingRepo.save(booking);
+          await bookingRepo.update(booking.id, {
+            status: "completed",
+          });
 
           logger.info(`Booking COMPLETED ${booking.id}`);
         } catch (err) {

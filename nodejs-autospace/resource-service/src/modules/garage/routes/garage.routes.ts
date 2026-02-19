@@ -25,7 +25,9 @@ import {
 } from "../controllers/garage-image.controller";
 import {
   createGarageSlotController,
+  getGarageByManager,
   getPublicAvailableSlotsController,
+  getSlotByIdInternal,
   getSlotController,
   getSlotsByFloorController,
 } from "../controllers/garage-slot.controller";
@@ -105,6 +107,8 @@ router.get(
   listSlotsByGarage,
 );
 
+router.get("/internal/slots/:slotId", internalAuth, getSlotByIdInternal);
+
 //floor
 router.post(
   "/floors",
@@ -118,5 +122,9 @@ router.get("/floors/:floorId/slots", internalAuth, getSlotsByFloorController);
 // user side
 
 router.get("/:garageId/slots", internalAuth, getPublicAvailableSlotsController);
+
+// manager garageid for booking service
+
+router.get("/internal/:managerId/garageId", getGarageByManager);
 
 export default router;

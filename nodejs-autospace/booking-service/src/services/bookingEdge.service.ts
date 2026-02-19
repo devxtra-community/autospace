@@ -175,3 +175,38 @@ export async function getBookingHistoryService(userId: string) {
     status: b.status,
   }));
 }
+
+export async function enrichBookingsWithSlot(bookings: Booking[]) {
+  const enriched = await Promise.all(
+    bookings.map(async (booking) => {
+      try {
+        const slotRes = await axios.get(
+          `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}`,
+          {
+            headers: {
+              "x-user-id": "booking-service",
+              "x-user-role": "SERVICE",
+            },
+          },
+        );
+
+        const slot = slotRes.data.data;
+
+        return {
+          ...booking,
+          slotNumber: slot.slotNumber,
+          slotSize: slot.slotSize,
+        };
+      } catch {
+        console.error("Slot fetch failed for", booking.slotId);
+        return {
+          ...booking,
+          slotNumber: null,
+          slotSize: null,
+        };
+      }
+    }),
+  );
+
+  return enriched;
+}

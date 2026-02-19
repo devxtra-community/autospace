@@ -1,4 +1,5 @@
 "use client";
+import Navbar from "@/components/landing/Navbar";
 
 import { useEffect, useState } from "react";
 import { getMyBookings, Booking } from "@/services/booking.service";
@@ -82,58 +83,61 @@ export default function MyBookingsPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">My Bookings</h1>
+    <main className="min-h-screen bg-white pt-32 pb-12 px-4 md:px-8">
+      <Navbar />
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8">My Bookings</h1>
 
-      {/* Tabs */}
-      <div className="flex  mb-8 bg-[#F5F1E6] rounded-sm p-1">
-        <button
-          onClick={() => setActiveTab("active")}
-          className={cn(
-            "flex-1 py-3 text-sm font-bold transition-all rounded-sm",
-            activeTab === "active"
-              ? "bg-white text-black border border-black"
-              : "text-gray-500 hover:text-black",
-          )}
-        >
-          Active Bookings
-        </button>
-        <button
-          onClick={() => setActiveTab("history")}
-          className={cn(
-            "flex-1 py-3 text-sm font-bold transition-all rounded-sm",
-            activeTab === "history"
-              ? "bg-white text-black border border-black"
-              : "text-gray-500 hover:text-black",
-          )}
-        >
-          Booking History
-        </button>
-      </div>
+        {/* Tabs */}
+        <div className="flex  mb-8 bg-[#F5F1E6] rounded-sm p-1">
+          <button
+            onClick={() => setActiveTab("active")}
+            className={cn(
+              "flex-1 py-3 text-sm font-bold transition-all rounded-sm",
+              activeTab === "active"
+                ? "bg-white text-black border border-black"
+                : "text-gray-500 hover:text-black",
+            )}
+          >
+            Active Bookings
+          </button>
+          <button
+            onClick={() => setActiveTab("history")}
+            className={cn(
+              "flex-1 py-3 text-sm font-bold transition-all rounded-sm",
+              activeTab === "history"
+                ? "bg-white text-black border border-black"
+                : "text-gray-500 hover:text-black",
+            )}
+          >
+            Booking History
+          </button>
+        </div>
 
-      {/* Content */}
-      <div className="space-y-6">
-        {activeTab === "active" ? (
-          activeBookings.length > 0 ? (
-            activeBookings.map((booking) => (
-              <ActiveBookingCard key={booking.id} booking={booking} />
+        {/* Content */}
+        <div className="space-y-6">
+          {activeTab === "active" ? (
+            activeBookings.length > 0 ? (
+              activeBookings.map((booking) => (
+                <ActiveBookingCard key={booking.id} booking={booking} />
+              ))
+            ) : (
+              <div className="text-center py-12 bg-gray-50 border border-dashed border-black/20 rounded-sm">
+                <p className="text-gray-500">No active bookings found.</p>
+              </div>
+            )
+          ) : historyBookings.length > 0 ? (
+            historyBookings.map((booking) => (
+              <HistoryBookingCard key={booking.id} booking={booking} />
             ))
           ) : (
             <div className="text-center py-12 bg-gray-50 border border-dashed border-black/20 rounded-sm">
-              <p className="text-gray-500">No active bookings found.</p>
+              <p className="text-gray-500">No booking history found.</p>
             </div>
-          )
-        ) : historyBookings.length > 0 ? (
-          historyBookings.map((booking) => (
-            <HistoryBookingCard key={booking.id} booking={booking} />
-          ))
-        ) : (
-          <div className="text-center py-12 bg-gray-50 border border-dashed border-black/20 rounded-sm">
-            <p className="text-gray-500">No booking history found.</p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+    </main>
   );
 }
 
