@@ -9,6 +9,7 @@ import {
   Loader2,
   CheckCircle2,
   X,
+  RefreshCw,
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -21,7 +22,8 @@ function cn(...inputs: ClassValue[]) {
 
 const statusStyles: Record<string, string> = {
   completed: "bg-green-100 text-green-700 border-green-200",
-  active: "bg-blue-100 text-blue-700 border-blue-200",
+  occupied: "bg-blue-100 text-blue-700 border-blue-200",
+  confirmed: "bg-indigo-100 text-indigo-700 border-indigo-200",
   pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
   cancelled: "bg-red-100 text-red-700 border-red-200",
 };
@@ -30,23 +32,30 @@ const statusStyles: Record<string, string> = {
 interface VerifyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onVerify: () => void;
-  bookingId?: string;
+  onVerify: (type: "entry" | "exit") => void;
+  booking?: Booking | null;
 }
 
 const VerifyModal: React.FC<VerifyModalProps> = ({
   isOpen,
   onClose,
   onVerify,
-  bookingId,
+  booking,
 }) => {
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  if (!isOpen) return null;
+  if (!isOpen || !booking) return null;
+
+  const isEntry = booking.status === "confirmed";
+  const endpoint = isEntry
+    ? `/api/bookings/${booking.id}/enter`
+    : `/api/bookings/${booking.id}/exit`;
 
   const handleVerify = async () => {
+    if (loading) return;
+
     if (!pin.trim()) {
       setError("Enter PIN");
       return;
@@ -56,13 +65,37 @@ const VerifyModal: React.FC<VerifyModalProps> = ({
     setLoading(true);
 
     try {
-      await apiClient.post(`/api/bookings/${bookingId}/enter`, { pin });
+      await apiClient.post(endpoint, { pin });
 
-      onVerify();
+      onVerify(isEntry ? "entry" : "exit");
       setPin("");
       onClose();
-    } catch {
-      setError("Invalid PIN / Verification failed");
+    } catch (err: unknown) {
+      let message = "Verification failed";
+
+      if (typeof err === "object" && err !== null && "response" in err) {
+        const response = (err as { response?: unknown }).response;
+
+        if (
+          typeof response === "object" &&
+          response !== null &&
+          "data" in response
+        ) {
+          const data = (response as { data?: unknown }).data;
+
+          if (
+            typeof data === "object" &&
+            data !== null &&
+            "message" in data &&
+            typeof (data as { message?: unknown }).message === "string"
+          ) {
+            message = (data as { message: string }).message;
+          }
+        }
+      }
+
+      setError(message);
+      setPin("");
     } finally {
       setLoading(false);
     }
@@ -80,16 +113,16 @@ const VerifyModal: React.FC<VerifyModalProps> = ({
 
         <div className="text-center space-y-4">
           <h2 className="text-xl font-bold text-foreground mt-2">
-            Verify Entry
+            {isEntry ? "Verify Entry" : "Verify Exit"}
           </h2>
           <p className="text-sm text-muted-foreground">
             Booking ID:{" "}
-            <span className="font-semibold text-foreground">{bookingId}</span>
+            <span className="font-semibold text-foreground">{booking.id}</span>
           </p>
 
           <div className="space-y-1.5 text-left">
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground ml-1">
-              Enter Entry PIN
+              Enter {isEntry ? "Entry" : "Exit"} PIN
             </label>
             <input
               type="text"
@@ -109,6 +142,7 @@ const VerifyModal: React.FC<VerifyModalProps> = ({
           <div className="flex gap-3 pt-2">
             <button
               onClick={onClose}
+              disabled={loading}
               className="flex-1 h-11 rounded-[var(--radius)] border border-border font-medium text-muted-foreground hover:bg-accent transition-colors"
             >
               Cancel
@@ -135,53 +169,40 @@ interface ManagerBookingsTableProps {
   bookings: Booking[];
   loading?: boolean;
   onRowClick?: (booking: Booking) => void;
+  refreshBookings: () => void;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  onSearchChange: (search: string) => void;
+  onDateChange: (date: string) => void;
+  searchTerm: string;
+  dateFilter: string;
 }
 
 export default function ManagerBookingsTable({
   bookings,
   loading = false,
   onRowClick,
+  refreshBookings,
+  currentPage,
+  totalPages,
+  onPageChange,
+  onSearchChange,
+  onDateChange,
+  searchTerm,
+  dateFilter,
 }: ManagerBookingsTableProps) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [dateFilter, setDateFilter] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
-  const itemsPerPage = 10;
-
-  // Filter Logic
-  const filteredBookings = bookings.filter((booking) => {
-    const matchesSearch = booking.id
-      .toString()
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesDate = dateFilter
-      ? booking.startTime.includes(dateFilter)
-      : true;
-    return matchesSearch && matchesDate;
-  });
-
-  // Sorting - Date descending default
-  const sortedBookings = [...filteredBookings].sort(
-    (a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
-  );
-
-  // Pagination Logic
-  const totalPages = Math.ceil(sortedBookings.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedBookings = sortedBookings.slice(
-    startIndex,
-    startIndex + itemsPerPage,
-  );
-
-  const handleApplyFilters = () => {
-    setCurrentPage(1);
-  };
-
-  const handleVerifySuccess = () => {
-    setSuccessMessage("Entry Verified Successfully");
+  const handleVerifySuccess = (type: "entry" | "exit") => {
+    setSuccessMessage(
+      type === "entry"
+        ? "Entry Verified Successfully"
+        : "Exit Verified Successfully",
+    );
+    refreshBookings();
     setTimeout(() => setSuccessMessage(""), 3000);
   };
 
@@ -218,7 +239,7 @@ export default function ManagerBookingsTable({
               <input
                 type="date"
                 value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
+                onChange={(e) => onDateChange(e.target.value)}
                 className="w-full h-11 px-4 rounded-[var(--radius)] border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all bg-background text-foreground"
               />
             </div>
@@ -232,26 +253,27 @@ export default function ManagerBookingsTable({
                   type="text"
                   placeholder="Booking ID..."
                   value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setCurrentPage(1);
-                  }}
+                  onChange={(e) => onSearchChange(e.target.value)}
                   className="w-full h-11 pl-10 pr-4 rounded-[var(--radius)] border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all bg-background text-foreground"
                 />
               </div>
             </div>
           </div>
-          <button
-            onClick={handleApplyFilters}
-            className="h-11 px-8 bg-secondary hover:bg-secondary/90 text-primary-foreground rounded-[var(--radius)] font-medium transition-colors cursor-pointer w-full md:w-auto"
-          >
-            Apply Filters
-          </button>
+          <div className="flex gap-2 w-full md:w-auto">
+            <button
+              onClick={() => refreshBookings()}
+              disabled={loading}
+              className="h-11 w-11 flex items-center justify-center bg-background border border-border hover:bg-muted rounded-[var(--radius)] text-muted-foreground transition-all active:rotate-180 duration-500 disabled:opacity-50 shadow-sm"
+              title="Refresh Bookings"
+            >
+              <RefreshCw className={cn("w-5 h-5", loading && "animate-spin")} />
+            </button>
+          </div>
         </div>
 
-        {/* Table Container */}
-        <div className="bg-card rounded-[var(--radius)] shadow-xl overflow-hidden border border-border flex flex-col min-h-[500px]">
-          <div className="flex-1 overflow-x-auto">
+        {/* Table Container - Adaptive Height, No Page Scroll for 8 rows */}
+        <div className="bg-card rounded-[var(--radius)] shadow-xl overflow-hidden border border-border flex flex-col h-auto">
+          <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[700px]">
               <thead className="sticky top-0 z-10">
                 <tr className="bg-secondary">
@@ -275,22 +297,22 @@ export default function ManagerBookingsTable({
 
               <tbody className="divide-y divide-border">
                 {loading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
+                  Array.from({ length: 8 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
                       <td colSpan={5} className="p-8">
                         <div className="h-4 bg-muted rounded w-full"></div>
                       </td>
                     </tr>
                   ))
-                ) : paginatedBookings.length > 0 ? (
-                  paginatedBookings.map((booking, index) => (
+                ) : bookings.length > 0 ? (
+                  bookings.map((booking, index) => (
                     <tr
                       key={booking.id}
                       onClick={() => onRowClick?.(booking)}
                       className="group hover:bg-muted/50 cursor-pointer transition-colors"
                     >
                       <td className="py-4 px-6 text-sm text-muted-foreground font-medium">
-                        {startIndex + index + 1}
+                        {(currentPage - 1) * 8 + index + 1}
                       </td>
                       <td className="py-4 px-6 text-sm font-semibold text-foreground">
                         {booking.slotNumber}
@@ -350,34 +372,37 @@ export default function ManagerBookingsTable({
             </table>
           </div>
 
-          {/* Pagination */}
+          {/* Pagination - Simplified Next/Prev as requested */}
           {totalPages > 1 && (
-            <div className="p-6 bg-card border-t border-border flex items-center justify-center">
-              <div className="flex items-center space-x-2">
+            <div className="p-4 bg-card border-t border-border flex items-center justify-between px-6">
+              <span className="text-sm text-muted-foreground">
+                Showing Page{" "}
+                <span className="font-semibold text-foreground">
+                  {currentPage}
+                </span>{" "}
+                of{" "}
+                <span className="font-semibold text-foreground">
+                  {totalPages || 1}
+                </span>
+              </span>
+              <div className="flex items-center space-x-3">
                 <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="p-2 rounded-[var(--radius)] border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-foreground"
+                  onClick={() => onPageChange(currentPage - 1)}
+                  disabled={currentPage === 1 || loading}
+                  className="flex items-center gap-1.5 px-4 h-10 rounded-[var(--radius)] border border-border hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-all text-foreground font-medium text-sm shadow-sm"
                 >
-                  <ChevronLeft className="w-5 h-5" />
+                  <ChevronLeft className="w-4 h-4" />
+                  Previous
                 </button>
-                <div className="flex items-center px-4 space-x-2">
-                  <span className="text-sm font-medium text-foreground">
-                    Page {currentPage}
-                  </span>
-                  <span className="text-sm text-muted-foreground">of</span>
-                  <span className="text-sm font-medium text-foreground">
-                    {totalPages}
-                  </span>
-                </div>
                 <button
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  onClick={() => onPageChange(currentPage + 1)}
+                  disabled={
+                    currentPage === totalPages || totalPages === 0 || loading
                   }
-                  disabled={currentPage === totalPages}
-                  className="p-2 rounded-[var(--radius)] border border-border hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-foreground"
+                  className="flex items-center gap-1.5 px-4 h-10 rounded-[var(--radius)] border border-border hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-all text-foreground font-medium text-sm shadow-sm"
                 >
-                  <ChevronRight className="w-5 h-5" />
+                  Next
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -390,7 +415,7 @@ export default function ManagerBookingsTable({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onVerify={handleVerifySuccess}
-        bookingId={selectedBooking?.id}
+        booking={selectedBooking}
       />
     </div>
   );

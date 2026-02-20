@@ -1,7 +1,7 @@
 "use client";
 import Navbar from "@/components/landing/Navbar";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getMyBookings, Booking } from "@/services/booking.service";
 import { getGarageById } from "@/services/garage.service";
 import {
@@ -35,40 +35,61 @@ export default function MyBookingsPage() {
   const [bookings, setBookings] = useState<BookingWithGarage[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await getMyBookings();
-        // For each booking, we ideally want garage details.
-        // For now, let's just fetch the bookings and we'll handle garage details.
-        // In a real app, the backend should return this joined.
-        const bookingsWithDetails = await Promise.all(
-          data.map(async (b) => {
-            try {
-              const garage = await getGarageById(b.garageId);
-              return { ...b, garage };
-            } catch {
-              return b;
-            }
-          }),
-        );
-        console.log("booking details", bookingsWithDetails);
-
-        setBookings(bookingsWithDetails);
-      } catch (err) {
-        console.error("Failed to fetch bookings", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+  const fetchData = useCallback(async (isPolling = false) => {
+    try {
+      const data = await getMyBookings();
+      const bookingsWithDetails = await Promise.all(
+        data.map(async (b) => {
+          try {
+            const garage = await getGarageById(b.garageId);
+            return { ...b, garage };
+          } catch {
+            return b;
+          }
+        }),
+      );
+      console.log(
+        isPolling ? "Polling bookings..." : "Initial booking fetch",
+        bookingsWithDetails,
+      );
+      setBookings(bookingsWithDetails);
+    } catch (err) {
+      console.error("Failed to fetch bookings", err);
+    } finally {
+      if (!isPolling) setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    // Only poll for updates if the active tab is visible
+    if (activeTab !== "active") return;
+
+    // Check if there are any bookings that might change status
+    const hasTransitionableBookings = bookings.some(
+      (b) =>
+        b.status === "confirmed" ||
+        b.status === "pending" ||
+        b.status === "occupied",
+    );
+
+    if (!hasTransitionableBookings && bookings.length > 0) return;
+
+    const interval = setInterval(() => {
+      fetchData(true);
+    }, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [fetchData, activeTab, bookings]);
 
   const activeBookings = bookings.filter(
     (b) =>
       b.status === "confirmed" ||
       b.status === "pending" ||
-      b.status === "active",
+      b.status === "occupied",
   );
   const historyBookings = bookings.filter(
     (b) => b.status === "completed" || b.status === "cancelled",
@@ -298,8 +319,12 @@ function ActiveBookingCard({ booking }: { booking: BookingWithGarage }) {
 
         <div className="space-y-3">
           <button className="w-full flex items-center justify-center gap-2 py-3 border border-black rounded-sm text-sm font-bold hover:bg-gray-50 transition-colors">
-            ENTRY PIN :{" "}
-            <span className="text-green-800">{booking.entryPin}</span>
+            {booking.status === "confirmed" ? "ENTRY PIN :" : "EXIT PIN :"}{" "}
+            {booking.status === "confirmed" ? (
+              <span className="text-green-800">{booking.entryPin}</span>
+            ) : (
+              <span className="text-green-800">{booking.exitPin}</span>
+            )}
           </button>
           <button className="w-full flex items-center justify-center gap-2 py-3 bg-[#C5E4FD] border border-black rounded-sm text-sm font-bold hover:bg-[#b0dcfd] transition-colors">
             Track your Valet <Wifi size={18} className="rotate-90" />

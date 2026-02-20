@@ -69,6 +69,9 @@ export async function exitBookingService(bookingId: string, pin: string) {
 
     if (booking.exitPin !== pin) throw new Error("Invalid exit PIN");
 
+    // const now = new Date();
+    // if (now < booking.endTime) throw new Error("Too early to enter");
+
     if (booking.status !== "occupied")
       throw new Error("Car not parked / booking not active");
 

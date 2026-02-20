@@ -10,46 +10,16 @@ const bookingRepo = AppDataSource.getRepository(Booking);
 export function startBookingLifecycleJob() {
   cron.schedule("* * * * *", async () => {
     try {
+      const extendFive = 5;
+
       const now = new Date();
 
-      // const toOccupy = await bookingRepo.find({
-      //   where: {
-      //     status: "confirmed",
-      //     startTime: LessThanOrEqual(now),
-      //   },
-      // });
-
-      // for (const booking of toOccupy) {
-      //   try {
-      //     await axios.post(
-      //       `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}/occupy`,
-      //       {},
-      //       {
-      //         headers: {
-      //           Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
-      //           "x-user-id": "booking-service",
-      //           "x-user-role": "SERVICE",
-      //           "x-user-email": "service@internal",
-      //         },
-      //       },
-      //     );
-
-      //     logger.info(`Before OCCUPY: entryPin=${booking.entryPin} id=${booking.id}`);
-
-      //     await bookingRepo.update(booking.id, {
-      //       status: "occupied",
-      //     });
-
-      //     logger.info(`Slot OCCUPIED for booking ${booking.id}`);
-      //   } catch (err) {
-      //     logger.error(`Failed to OCCUPY slot for booking ${booking.id}`, err);
-      //   }
-      // }
+      const graceTime = new Date(now.getTime() - extendFive * 60 * 1000);
 
       const toComplete = await bookingRepo.find({
         where: {
           status: "occupied",
-          endTime: LessThanOrEqual(now),
+          endTime: LessThanOrEqual(graceTime),
         },
       });
 

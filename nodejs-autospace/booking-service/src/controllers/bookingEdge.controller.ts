@@ -198,7 +198,7 @@ async function getManagerGarageId(managerId: string) {
 }
 
 export async function listManagerBookings(req: Request, res: Response) {
-  const { page = 1, limit = 10, search, status, sort = "DESC" } = req.query;
+  const { page = 1, limit = 8, search, status, sort = "DESC" } = req.query;
 
   const userId = req.user?.id;
 
