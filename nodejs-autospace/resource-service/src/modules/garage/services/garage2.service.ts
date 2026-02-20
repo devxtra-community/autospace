@@ -2,6 +2,12 @@ import { AppDataSource } from "../../../db/data-source";
 import { Garage, GarageStatus } from "../entities/garage.entity";
 import { Company, CompanyStatus } from "../../company/entities/company.entity";
 import axios from "axios";
+import { GarageSlot } from "../entities/garage-slot.entity";
+import { GarageFloor } from "../entities/garage-floor.entity";
+import {
+  Valet,
+  ValetEmployementStatus,
+} from "../../valets/entities/valets.entity";
 
 const AUTH_SERVICE_URL =
   process.env.AUTH_SERVICE_URL || "http://localhost:4001/api/manager";
@@ -103,17 +109,91 @@ export const getGarageById = async (id: string) => {
 };
 
 export const getAllGarages = async (page = 1, limit = 10) => {
-  const repo = AppDataSource.getRepository(Garage);
+  const garageRepo = AppDataSource.getRepository(Garage);
+  const floorRepo = AppDataSource.getRepository(GarageFloor);
+  const slotRepo = AppDataSource.getRepository(GarageSlot);
+  const valetRepo = AppDataSource.getRepository(Valet);
 
-  const [data, total] = await repo.findAndCount({
+  const [garages, total] = await garageRepo.findAndCount({
     skip: (page - 1) * limit,
     take: limit,
-    // valetAvailable : valetAvailable,
     order: { createdAt: "DESC" },
   });
 
+  const enriched = await Promise.all(
+    garages.map(async (garage) => {
+      let managerName = "Not assigned";
+
+      if (garage.managerId) {
+        try {
+          const res = await axios.get(
+            `${AUTH_SERVICE_URL}/internal/users/${garage.managerId}`,
+            {
+              headers: {
+                "x-user-id": "resource-service",
+                "x-user-role": "SERVICE",
+              },
+            },
+          );
+
+          managerName = res.data?.data?.fullname || "Unknown";
+        } catch {
+          managerName = "Unknown";
+        }
+      }
+
+      const floorCount = await floorRepo.count({
+        where: { garageId: garage.id },
+      });
+
+      const slotCount = await slotRepo
+        .createQueryBuilder("slot")
+        .innerJoin("slot.floor", "floor")
+        .where("floor.garageId = :garageId", { garageId: garage.id })
+        .getCount();
+
+      const valetCount = await valetRepo.count({
+        where: {
+          garageId: garage.id,
+          employmentStatus: ValetEmployementStatus.ACTIVE,
+        },
+      });
+
+      return {
+        garageId: garage.id,
+
+        garageCode: garage.garageRegistrationNumber,
+
+        name: garage.name,
+
+        managerName,
+
+        contactEmail: garage.contactEmail,
+
+        contactPhone: garage.contactPhone,
+
+        locationName: garage.locationName,
+
+        capacity: garage.capacity,
+
+        floorCount,
+
+        slotCount,
+
+        valetCount,
+
+        status: garage.status,
+
+        createdAt: garage.createdAt,
+
+        companyId: garage.companyId,
+      };
+    }),
+  );
+
   return {
-    data,
+    data: enriched,
+
     meta: {
       total,
       page,

@@ -1,7 +1,7 @@
 import axios from "axios";
 import { AppDataSource } from "../data-source.js";
-import { Booking } from "../entities/booking.entity.js";
-import { In, LessThan, MoreThan } from "typeorm";
+import { Booking, BookingValetStatus } from "../entities/booking.entity.js";
+import { EntityManager, In, LessThan, MoreThan } from "typeorm";
 
 const bookingRepo = AppDataSource.getRepository(Booking);
 
@@ -19,87 +19,25 @@ export class BookingService {
     return !!overlap;
   }
 
-  async checkSlotAvailability({
-    slotId,
-  }: {
-    slotId: string;
-    // authToken: string;
-  }) {
-    console.log("CHECK SLOT FUNCTION HIT", slotId);
-    // console.log("CHECK authtoken FUNCTION HIT");
-    try {
-      const response = await axios.get(
-        `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${slotId}/status`,
-        {
-          headers: {
-            "x-user-id": "booking-service",
-            "x-user-role": "SERVICE",
-            "x-user-email": "service@internal",
-          },
-        },
-      );
-
-      console.log("RESPONSE =>", response.data);
-
-      return response.data.data?.status === "AVAILABLE";
-    } catch {
-      // console.log("AXIOS ERROR FULL =>", error);
-      // console.log("AXIOS ERROR MSG =>", error.message);
-      // console.log("AXIOS ERROR STATUS =>", error?.response?.status);
-      // console.log("AXIOS ERROR DATA =>", error?.response?.data);
-      throw new Error("Failed to check slot availability");
-    }
-  }
-
   async lockSlot(slotId: string) {
-    try {
-      const response = await axios.post(
-        `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${slotId}/lock`,
-        {},
-        {
-          headers: {
-            "x-user-id": "booking-service",
-            "x-user-role": "SERVICE",
-            "x-user-email": "service@internal",
-          },
+    const response = await axios.post(
+      `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${slotId}/lock`,
+      {},
+      {
+        headers: {
+          "x-user-id": "booking-service",
+          "x-user-role": "SERVICE",
+          "x-user-email": "service@internal",
         },
-      );
+      },
+    );
 
-      return response.data?.success === true;
-    } catch {
-      // console.error(
-      //   "REAL SLOT ERROR =>",
-      //   error?.response?.status,
-      //   error?.response?.data,
-      //   error.message
-      // );
-      throw new Error("Failed to check slot availability");
-    }
+    return response.data?.success === true;
   }
 
   async releaseSlot(slotId: string) {
-    try {
-      const response = await axios.post(
-        `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${slotId}/free`,
-        {},
-        {
-          headers: {
-            "x-user-id": "booking-service",
-            "x-user-role": "SERVICE",
-            "x-user-email": "service@internal",
-          },
-        },
-      );
-
-      return response.data;
-    } catch {
-      throw new Error("Failed to release slot");
-    }
-  }
-
-  async occupySlot(slotId: string) {
     await axios.post(
-      `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${slotId}/occupy`,
+      `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${slotId}/free`,
       {},
       {
         headers: {
@@ -111,26 +49,36 @@ export class BookingService {
     );
   }
 
-  async createBooking(
-    bookingData: {
-      userId: string;
-      garageId: string;
-      slotId: string;
-      startTime: Date;
-      endTime: Date;
-      status: string;
-      vehicleType: "sedan" | "suv";
-    },
-    // authToken: string,
-  ) {
-    let slotLocked = false;
+  // KEEP THIS (from shri branch)
+  async releaseValet(valetId: string) {
+    await axios.patch(
+      `${process.env.RESOURCE_SERVICE_URL}/internal/valets/${valetId}/release`,
+      {},
+      {
+        headers: {
+          "x-user-id": "booking-service",
+          "x-user-role": "SERVICE",
+          "x-user-email": "service@internal",
+        },
+      },
+    );
+  }
 
-    // console.log("service vehicle",bookingData.vehicleType);
+  // MERGED createBooking (HEAD + shri)
+  async createBooking(bookingData: {
+    userId: string;
+    garageId: string;
+    slotId: string;
+    startTime: Date;
+    endTime: Date;
+    vehicleType: "sedan" | "suv";
+    status?: string;
+    valetRequested: boolean;
+  }) {
+    return await AppDataSource.transaction(async (manager: EntityManager) => {
+      const repo = manager.getRepository(Booking);
 
-    return await AppDataSource.transaction(async (manager) => {
-      const bookingRepoTx = manager.getRepository(Booking);
-
-      const overlap = await bookingRepoTx.findOne({
+      const overlap = await repo.findOne({
         where: {
           slotId: bookingData.slotId,
           status: In(["pending", "confirmed"]),
@@ -140,114 +88,291 @@ export class BookingService {
       });
 
       if (overlap) {
-        throw new Error("Slot already booked for this time range");
+        throw new Error("Slot already booked");
       }
 
       const locked = await this.lockSlot(bookingData.slotId);
 
       if (!locked) {
-        throw new Error("Slot already reserved by another user");
+        throw new Error("Slot lock failed");
       }
 
-      slotLocked = true;
-
       try {
-        const booking = bookingRepoTx.create({
-          ...bookingData,
-          // vehicleType: bookingData.vehicleType,
-          status: "pending",
-        });
-
         function generatePin(): string {
           return Math.floor(1000 + Math.random() * 9000).toString();
         }
 
-        booking.entryPin = generatePin();
+        const booking = repo.create({
+          userId: bookingData.userId,
+          garageId: bookingData.garageId,
+          slotId: bookingData.slotId,
+          startTime: bookingData.startTime,
+          endTime: bookingData.endTime,
+          vehicleType: bookingData.vehicleType,
+          status: bookingData.status || "pending",
+          valetRequested: bookingData.valetRequested,
+          valetStatus: bookingData.valetRequested
+            ? BookingValetStatus.REQUESTED
+            : BookingValetStatus.NONE,
 
-        booking.entryUsed = false;
-        booking.exitUsed = false;
+          entryPin: generatePin(),
+          entryUsed: false,
+          exitUsed: false,
+        });
 
-        const savedBooking = await bookingRepoTx.save(booking);
+        const savedBooking = await repo.save(booking);
+
+        if (savedBooking.valetRequested) {
+          await this.assignFirstValetRequest(savedBooking, manager);
+        }
 
         return savedBooking;
       } catch (err) {
-        if (slotLocked) {
-          await this.releaseSlot(bookingData.slotId);
-        }
+        await this.releaseSlot(bookingData.slotId);
         throw err;
       }
     });
   }
 
-  async getBookingById(bookingId: string) {
+  async assignFirstValetRequest(booking: Booking, manager: EntityManager) {
     try {
-      const booking = await bookingRepo.findOne({
-        where: { id: bookingId },
-      });
-      return booking;
+      const response = await axios.get(
+        `${process.env.RESOURCE_SERVICE_URL}/internal/valets/available/${booking.garageId}`,
+        {
+          headers: {
+            "x-user-id": "booking-service",
+            "x-user-role": "SERVICE",
+            "x-user-email": "service@internal",
+          },
+        },
+      );
+
+      const valet = response.data?.data;
+
+      if (!valet) return null;
+
+      booking.currentValetRequestId = valet.id;
+      booking.rejectedValetIds = [];
+      booking.valetStatus = BookingValetStatus.REQUESTED;
+
+      return await manager.getRepository(Booking).save(booking);
     } catch {
-      throw new Error("Failed to fetch booking");
+      console.log("Valet assignment failed");
+      return null;
     }
+  }
+
+  async rejectValetRequest(bookingId: string, valetId: string) {
+    const booking = await bookingRepo.findOne({
+      where: { id: bookingId },
+    });
+
+    if (!booking) throw new Error("Booking not found");
+
+    if (booking.currentValetRequestId !== valetId)
+      throw new Error("Not assigned valet");
+
+    const rejected = booking.rejectedValetIds || [];
+
+    rejected.push(valetId);
+
+    booking.rejectedValetIds = rejected;
+
+    const response = await axios.get(
+      `${process.env.RESOURCE_SERVICE_URL}/internal/valets/available/${booking.garageId}`,
+      {
+        headers: {
+          "x-user-id": "booking-service",
+          "x-user-role": "SERVICE",
+          "x-user-email": "service@internal",
+        },
+        params: {
+          exclude: rejected.join(","),
+        },
+      },
+    );
+
+    const nextValet = response.data?.data;
+
+    if (!nextValet) {
+      booking.currentValetRequestId = null;
+      booking.valetStatus = BookingValetStatus.NONE;
+
+      return await bookingRepo.save(booking);
+    }
+
+    booking.currentValetRequestId = nextValet.id;
+    booking.valetStatus = BookingValetStatus.REQUESTED;
+
+    return await bookingRepo.save(booking);
+  }
+
+  async updateBookingWithValet(booking: Booking) {
+    return await bookingRepo.save(booking);
+  }
+
+  async getBookingById(id: string) {
+    const booking = await bookingRepo.findOne({
+      where: { id },
+    });
+
+    if (!booking) throw new Error("Booking not found");
+
+    return booking;
   }
 
   async getUserBookings(userId: string) {
-    try {
-      const bookings = await bookingRepo.find({
-        where: { userId },
-      });
-      return bookings;
-    } catch {
-      throw new Error("Failed to fetch user bookings");
-    }
-  }
-
-  async updateBookingStatus(bookingId: string, status: string) {
-    try {
-      const booking = await bookingRepo.findOne({
-        where: { id: bookingId },
-      });
-
-      if (!booking) {
-        throw new Error("Booking not found");
-      }
-
-      booking.status = status;
-      const updatedBooking = await bookingRepo.save(booking);
-      return updatedBooking;
-    } catch {
-      throw new Error("Failed to update booking");
-    }
-  }
-
-  async deleteBooking(bookingId: string) {
-    return await AppDataSource.transaction(async (manager) => {
-      const repo = manager.getRepository(Booking);
-
-      const booking = await repo.findOne({ where: { id: bookingId } });
-      if (!booking) throw new Error("Booking not found");
-
-      // release slot first
-      await this.releaseSlot(booking.slotId);
-
-      const result = await repo.delete(bookingId);
-      if (!result.affected) {
-        // rollback slot
-        await this.lockSlot(booking.slotId);
-        throw new Error("Delete failed");
-      }
-
-      return true;
+    return await bookingRepo.find({
+      where: { userId },
+      order: { createdAt: "DESC" },
     });
   }
 
-  async verifyOwnership(bookingId: string, userId: string) {
-    const booking = await bookingRepo.findOne({ where: { id: bookingId } });
+  async updateBookingStatus(bookingId: string, status: string) {
+    const booking = await bookingRepo.findOne({
+      where: { id: bookingId },
+    });
 
     if (!booking) throw new Error("Booking not found");
-    if (booking.userId !== userId)
-      throw new Error("Forbidden - Not your booking");
+
+    booking.status = status;
+
+    if (status === "confirmed") {
+      await axios.post(
+        `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}/occupy`,
+        {},
+        {
+          headers: {
+            "x-user-id": "booking-service",
+            "x-user-role": "SERVICE",
+          },
+        },
+      );
+    }
+
+    if (status === "completed") {
+      if (booking.valetId) {
+        await this.releaseValet(booking.valetId);
+
+        booking.valetStatus = BookingValetStatus.COMPLETED;
+      }
+
+      await axios.post(
+        `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}/free`,
+        {},
+        {
+          headers: {
+            "x-user-id": "booking-service",
+            "x-user-role": "SERVICE",
+          },
+        },
+      );
+    }
+
+    return await bookingRepo.save(booking);
+  }
+
+  async deleteBooking(bookingId: string) {
+    const booking = await bookingRepo.findOne({
+      where: { id: bookingId },
+    });
+
+    if (!booking) throw new Error("Booking not found");
+
+    await this.releaseSlot(booking.slotId);
+
+    if (booking.valetId) await this.releaseValet(booking.valetId);
+
+    await bookingRepo.delete(bookingId);
+
+    return true;
+  }
+
+  async verifyOwnership(bookingId: string, userId: string) {
+    const booking = await bookingRepo.findOne({
+      where: { id: bookingId },
+    });
+
+    if (!booking) throw new Error("Booking not found");
+
+    if (booking.userId !== userId) throw new Error("Forbidden");
 
     return booking;
+  }
+
+  // KEEP enrichBookings
+  private async enrichBookings(bookings: Booking[]) {
+    const enrichedBookings = await Promise.all(
+      bookings.map(async (booking) => {
+        try {
+          const userRes = await axios.get(
+            `${process.env.AUTH_SERVICE_URL}/internal/users/${booking.userId}`,
+          );
+
+          const garageRes = await axios.get(
+            `${process.env.RESOURCE_SERVICE_URL}/internal/garages/${booking.garageId}`,
+          );
+
+          const slotRes = await axios.get(
+            `${process.env.RESOURCE_SERVICE_URL}/internal/slots/${booking.slotId}`,
+          );
+
+          const user = userRes.data.data;
+          const garage = garageRes.data.data;
+          const slot = slotRes.data.data;
+
+          return {
+            id: booking.id,
+            customerName: user.fullname,
+            customerPhone: user.phone,
+            garageName: garage.name,
+            garageLocation: garage.locationName,
+            slotNumber: slot.slotNumber,
+            slotType: slot.slotSize,
+            pickupTime: booking.startTime,
+            dropTime: booking.endTime,
+            createdAt: booking.createdAt,
+          };
+        } catch {
+          return null;
+        }
+      }),
+    );
+
+    return enrichedBookings.filter(Boolean);
+  }
+
+  async getValetRequests(valetId: string) {
+    const bookings = await bookingRepo.find({
+      where: {
+        currentValetRequestId: valetId,
+        valetStatus: BookingValetStatus.REQUESTED,
+      },
+    });
+
+    return await this.enrichBookings(bookings);
+  }
+
+  async getActiveJobs(valetId: string) {
+    const bookings = await bookingRepo.find({
+      where: {
+        valetId,
+        valetStatus: BookingValetStatus.ASSIGNED,
+      },
+    });
+
+    return await this.enrichBookings(bookings);
+  }
+
+  async getCompletedJobs(valetId: string) {
+    const bookings = await bookingRepo.find({
+      where: {
+        valetId,
+        valetStatus: BookingValetStatus.COMPLETED,
+      },
+    });
+
+    return await this.enrichBookings(bookings);
   }
 }
 

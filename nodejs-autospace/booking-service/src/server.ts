@@ -10,7 +10,7 @@ import { startNoShowExpiryJob } from "./jobs/noShowExpiry.job.js";
 
 dotenv.config();
 
-const PORT = process.env.PORT || 4004;
+const PORT = process.env.PORT || 4002;
 
 app.use(express.json());
 

@@ -91,19 +91,12 @@ export const getAllCompaniesController = async (
   try {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
+    const search = req.query.search as string | undefined;
 
-    if (page < 1 || limit < 1) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid pagination parameters",
-      });
-    }
-
-    const result = await getAllCompanies(page, limit);
+    const result = await getAllCompanies(page, limit, search);
 
     return res.status(200).json({
       success: true,
-      message: "Companies fetched successfully",
       data: result.data,
       meta: result.meta,
     });

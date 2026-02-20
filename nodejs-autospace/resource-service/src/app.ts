@@ -6,7 +6,9 @@ import garageRoutes from "./modules/garage/routes/garage.routes";
 import internalValetRoutes from "./modules/valets/routes/internal-valet.routes";
 import valetRoutes from "./modules/valets/routes/valet.routes";
 import filesRoutes from "./modules/files/files.routes";
-import publicROutes from "./modules/garage/routes/public.garage.routes";
+import publicRoutes from "./modules/garage/routes/public.garage.routes";
+import internalGarageRoutes from "./modules/garage/routes/internal-garage.routes";
+import internalSlotRoutes from "./modules/garage/routes/internal-slot.routes";
 
 const app = express();
 
@@ -41,11 +43,13 @@ app.get("/health", (_req, res) => {
 
 app.use("/companies", companyRoutes);
 app.use("/garages", garageRoutes);
-app.use("/public", publicROutes);
-app.use("/valet", valetRoutes);
+app.use("/public", publicRoutes);
+app.use("/valets", valetRoutes);
 app.use("/files", filesRoutes);
 
 // auth service only
-app.use(internalValetRoutes);
+app.use("/internal/valets", internalValetRoutes);
+app.use("/internal/garages", internalGarageRoutes);
+app.use("/internal/slots", internalSlotRoutes);
 
 export default app;

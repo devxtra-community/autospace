@@ -13,6 +13,16 @@ import {
 
 const router: ExpressRouter = Router();
 
+router.get("/valet/requests", internalAuth, bookingController.getValetRequests);
+
+router.get("/valet/active", internalAuth, bookingController.getActiveJobs);
+
+router.get(
+  "/valet/completed",
+  internalAuth,
+  bookingController.getCompletedJobs,
+);
+
 router.post("/", internalAuth, bookingController.createBookingController);
 
 router.get("/my", internalAuth, bookingController.getMyBookings);
@@ -46,5 +56,16 @@ router.patch("/:bookingId/cancel", internalAuth, cancelBooking);
 router.get("/my/active", internalAuth, getActiveBooking);
 
 router.get("/my/history", internalAuth, getBookingHistory);
+router.patch(
+  "/internal/:bookingId/assign",
+  internalAuth,
+  bookingController.assignValetInternal,
+);
+
+router.patch(
+  "/internal/:bookingId/reject",
+  internalAuth,
+  bookingController.rejectValet,
+);
 
 export default router;

@@ -112,16 +112,54 @@ router.use(
 
 // valet routes
 router.use(
-  "/valet",
+  "/valets",
   authMiddleware,
   rbac(UserRole.MANAGER, UserRole.VALET),
   createProxyMiddleware({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
-    pathRewrite: (path) => `/valet${path}`,
+
+    pathRewrite: (path, req) => {
+      const original = req.originalUrl;
+
+      console.log("REWRITE ORIGINAL:", original);
+
+      // internal routes (used by booking-service / auth-service)
+      if (
+        original.includes("/assign") ||
+        original.includes("/release") ||
+        original.includes("/available") ||
+        original.includes("/register")
+      ) {
+        const newPath = original.replace(/^\/api\/valets/, "/internal/valets");
+
+        console.log("REWRITE INTERNAL:", newPath);
+        return newPath;
+      }
+
+      // manager / frontend routes
+      const newPath = original.replace(/^\/api\/valets/, "/valets");
+
+      console.log("REWRITE PUBLIC:", newPath);
+      return newPath;
+    },
+
     on: {
-      proxyReq: (proxyReq, req) => {
+      proxyReq: (proxyReq: ClientRequest, req: Request) => {
         attachUserHeaders(proxyReq, req);
+
+        if (
+          req.body &&
+          Object.keys(req.body).length > 0 &&
+          ["POST", "PUT", "PATCH"].includes(req.method)
+        ) {
+          const bodyData = JSON.stringify(req.body);
+
+          proxyReq.setHeader("Content-Type", "application/json");
+          proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
+
+          proxyReq.write(bodyData);
+        }
       },
     },
   }),

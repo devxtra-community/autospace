@@ -64,6 +64,11 @@ export class Booking {
 
   @Column({ name: "exit_used", type: "boolean", default: false })
   exitUsed!: boolean;
+  @Column({ name: "current_valet_request_id", type: "uuid", nullable: true })
+  currentValetRequestId!: string | null;
+
+  @Column({ name: "rejected_valet_ids", type: "json", nullable: true })
+  rejectedValetIds!: string[] | null;
 
   @CreateDateColumn()
   createdAt!: Date;

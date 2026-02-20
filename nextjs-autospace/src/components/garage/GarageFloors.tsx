@@ -7,8 +7,11 @@ import {
   createGarageFloor,
   createGarageSlot,
 } from "@/services/garage.service";
+
 import { SlotsGrid } from "./slots/SlotsGrid";
 import { SlotStatus } from "./slots/SlotCard";
+
+/* ================= TYPES ================= */
 
 type Floor = {
   id: string;
@@ -16,14 +19,15 @@ type Floor = {
 };
 
 type BackendSlot = {
+  id: string;
   slotNumber: string;
-  status: string;
+  status: "AVAILABLE" | "RESERVED" | "OCCUPIED" | "OUT";
   slotSize: "STANDARD" | "LARGE";
 };
 
 type UISlot = {
   id: string;
-  label: string; // for display (e.g. A1)
+  label: string;
   status: SlotStatus;
   slotSize: "STANDARD" | "LARGE";
 };
@@ -33,10 +37,14 @@ type SlotInput = {
   slotSize: "STANDARD" | "LARGE";
 };
 
+/* ================= STATUS MAPPER ================= */
+
 function mapSlotStatus(status: string): SlotStatus {
   switch (status) {
     case "AVAILABLE":
       return "available";
+    case "RESERVED":
+      return "reserved";
     case "OCCUPIED":
       return "occupied";
     case "OUT":
@@ -46,6 +54,8 @@ function mapSlotStatus(status: string): SlotStatus {
   }
 }
 
+/* ================= COMPONENT ================= */
+
 export function GarageFloors() {
   const [floors, setFloors] = useState<Floor[]>([]);
   const [slotsByFloor, setSlotsByFloor] = useState<Record<string, UISlot[]>>(
@@ -54,34 +64,54 @@ export function GarageFloors() {
   const [newFloorNumber, setNewFloorNumber] = useState<number | "">("");
   const [slotInputs, setSlotInputs] = useState<Record<string, SlotInput>>({});
 
+  /* ================= INIT ================= */
+
   useEffect(() => {
-    getMyGarageFloors().then(setFloors);
+    const init = async () => {
+      const floorsData: Floor[] = await getMyGarageFloors();
+      setFloors(floorsData);
+
+      await Promise.all(floorsData.map((floor) => loadSlots(floor.id)));
+    };
+
+    init();
   }, []);
+
+  /* ================= LOAD SLOTS ================= */
+
+  const loadSlots = async (floorId: string) => {
+    const backendSlots: BackendSlot[] = await getSlotsByFloor(floorId);
+
+    const uiSlots: UISlot[] = backendSlots.map((s) => ({
+      id: s.id,
+      label: s.slotNumber,
+      status: mapSlotStatus(s.status),
+      slotSize: s.slotSize,
+    }));
+
+    setSlotsByFloor((prev) => ({
+      ...prev,
+      [floorId]: uiSlots,
+    }));
+  };
+
+  /* ================= CREATE FLOOR ================= */
 
   const handleCreateFloor = async () => {
     if (!newFloorNumber) return;
 
     await createGarageFloor({ floorNumber: Number(newFloorNumber) });
     setNewFloorNumber("");
-    setFloors(await getMyGarageFloors());
+
+    const updatedFloors = await getMyGarageFloors();
+    setFloors(updatedFloors);
+
+    for (const floor of updatedFloors) {
+      await loadSlots(floor.id);
+    }
   };
 
-  const loadSlots = async (floorId: string) => {
-    const backendSlots: BackendSlot[] = await getSlotsByFloor(floorId);
-
-    const uiSlots = backendSlots
-      .filter(() => true)
-      .map((s) => ({
-        id: `${floorId}-${s.slotNumber}`,
-        label: s.slotNumber,
-        status: mapSlotStatus(s.status),
-        slotSize: s.slotSize,
-      }));
-
-    setSlotsByFloor({
-      [floorId]: uiSlots,
-    });
-  };
+  /* ================= CREATE SLOT ================= */
 
   const handleCreateSlot = async (floor: Floor) => {
     const input = slotInputs[floor.id];
@@ -101,9 +131,11 @@ export function GarageFloors() {
         [floor.id]: { slotNumber: "", slotSize: "STANDARD" },
       }));
     } catch (err) {
-      console.error(err);
+      console.error("Create slot failed", err);
     }
   };
+
+  /* ================= UI ================= */
 
   return (
     <div className="space-y-8">
@@ -117,7 +149,9 @@ export function GarageFloors() {
             placeholder="Floor number"
             className="border px-3 py-2 rounded w-32"
             value={newFloorNumber}
-            onChange={(e) => setNewFloorNumber(Number(e.target.value))}
+            onChange={(e) =>
+              setNewFloorNumber(e.target.value ? Number(e.target.value) : "")
+            }
           />
 
           <button
@@ -130,7 +164,7 @@ export function GarageFloors() {
       </div>
 
       {/* FLOORS */}
-      {floors.map((floor) => {
+      {floors.map((floor: Floor) => {
         const slots = slotsByFloor[floor.id] ?? [];
 
         return (
@@ -153,12 +187,10 @@ export function GarageFloors() {
                 onChange={(e) => {
                   const value = e.target.value.toUpperCase();
 
-                  // allow only A1–A5 typing
-                  if (/^[A-Z]?[1-5]?$/.test(value)) {
+                  if (/^[A-Z]?[1-9]?$/.test(value)) {
                     setSlotInputs((prev) => ({
                       ...prev,
                       [floor.id]: {
-                        ...prev[floor.id],
                         slotNumber: value,
                         slotSize: prev[floor.id]?.slotSize ?? "STANDARD",
                       },
@@ -174,9 +206,8 @@ export function GarageFloors() {
                   setSlotInputs((prev) => ({
                     ...prev,
                     [floor.id]: {
-                      ...prev[floor.id],
-                      slotSize: e.target.value as "STANDARD" | "LARGE",
                       slotNumber: prev[floor.id]?.slotNumber ?? "",
+                      slotSize: e.target.value as "STANDARD" | "LARGE",
                     },
                   }))
                 }
@@ -196,11 +227,11 @@ export function GarageFloors() {
                 onClick={() => loadSlots(floor.id)}
                 className="text-blue-600 underline text-sm"
               >
-                Load slots
+                Reload
               </button>
             </div>
 
-            {slots.length > 0 && <SlotsGrid key={floor.id} slots={slots} />}
+            {slots.length > 0 && <SlotsGrid slots={slots} />}
           </div>
         );
       })}
