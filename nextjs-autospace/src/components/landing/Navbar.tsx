@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { getMe, logoutUser } from "@/lib/auth.api";
-import { User, LogOut, Settings } from "lucide-react";
+import { User, LogOut, Settings, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 
 export default function Navbar() {
@@ -52,6 +52,14 @@ export default function Navbar() {
         <button className="px-6 py-2 bg-[var(--secondary-button)] text-black font-medium border border-black rounded-sm hover:bg-[#eac855] transition-colors  active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
           Rent Plot
         </button>
+        {isLoggedIn && (
+          <Link
+            href="/bookings"
+            className="flex items-center justify-center w-10 h-10 bg-white border border-black rounded-full hover:bg-gray-50 transition-colors active:translate-y-[1px]"
+          >
+            <ShoppingBag size={20} />
+          </Link>
+        )}
         {isLoggedIn ? (
           <div className="relative">
             <button

@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+
 .font-zalando {
   font-family: var(--font-zalando-sans-expanded);
 }
