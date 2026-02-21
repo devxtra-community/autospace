@@ -10,12 +10,14 @@ import {
   rejectValetController,
 } from "../controllers/valet.controller";
 import {
+  getAvailableValetForUser,
   getCompanyValetsController,
   getPendingValetsController,
   getValetByIdController,
   getValetsByGarageController,
 } from "../controllers/valetGarage.controller";
 import { internalAuth } from "../../../middlewares/internalAuth.middleware";
+// import { getAvailableValetController } from "../controllers/internal-valet.controller";
 
 const router = Router();
 
@@ -28,6 +30,9 @@ router.put(
 );
 router.put("/:id/manager/reject", validateValetIdParam, rejectValetController);
 router.get("/pending", getPendingValetsController);
+
+router.get("/garage/:garageId/valets/active", getAvailableValetForUser);
+
 router.get(
   "/garage/:garageId",
   validateGetValetsByGarage,

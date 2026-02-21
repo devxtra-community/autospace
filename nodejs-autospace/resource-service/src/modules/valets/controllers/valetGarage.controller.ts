@@ -1,5 +1,8 @@
 import { Request, Response } from "express";
-import { getValetsByGarageService } from "../services/valet.service";
+import {
+  getAvailableValetService,
+  getValetsByGarageService,
+} from "../services/valet.service";
 
 import {
   getCompanyValetsService,
@@ -180,6 +183,24 @@ export const getPendingValetsController = async (
     return res.status(500).json({
       success: false,
       message: "Failed to fetch pending valets",
+    });
+  }
+};
+
+export const getAvailableValetForUser = async (req: Request, res: Response) => {
+  try {
+    const garageId = req.params.garageId as string;
+
+    const valet = await getAvailableValetService(garageId);
+
+    return res.status(200).json({
+      success: true,
+      available: !!valet,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to check valet availability",
     });
   }
 };

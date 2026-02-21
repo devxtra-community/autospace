@@ -114,7 +114,7 @@ router.use(
 router.use(
   "/valets",
   authMiddleware,
-  rbac(UserRole.MANAGER, UserRole.VALET),
+  rbac(UserRole.MANAGER, UserRole.VALET, UserRole.CUSTOMER),
   createProxyMiddleware({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
