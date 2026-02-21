@@ -7,7 +7,7 @@ import {
   Star,
   Phone,
   Navigation,
-  Map as MapIcon,
+  // Map as MapIcon,
   Clock,
   Car,
   ChevronRight,
@@ -19,6 +19,12 @@ import {
 } from "lucide-react";
 import apiClient from "@/lib/apiClient";
 import { ParkingSlotSelectionModal } from "./booking/ParkingSlotSelectionModal";
+import { getGarageImages } from "@/services/garageImages.service";
+import { checkValetAvailability } from "@/services/garageValets.service";
+
+// import { useSwipeable } from "react-swipeable";
+
+import SmoothSwipeButton from "./swipeButton";
 
 export interface GarageDetailsProps {
   garage: {
@@ -56,6 +62,25 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
     floor: number;
     slotId: string;
   } | null>(null);
+  const [swiped, setSwiped] = useState(false);
+
+  const [valetState, setValetState] = useState<
+    "IDLE" | "AVAILABLE" | "REQUESTED" | "ASSIGNED" | "NONE"
+  >("IDLE");
+
+  interface Valet {
+    id: string;
+    name: string;
+    phone: string;
+    rating?: number;
+    avatar?: string;
+  }
+
+  const [assignedValet, setAssignedValet] = useState<Valet | null>(null);
+
+  const [images, setImages] = useState<string[]>([]);
+  const [imgLoading, setImgLoading] = useState(true);
+  const [showAllImages, setShowAllImages] = useState(false);
 
   const sedanPrice = garage.standardSlotPrice || 10;
   const suvPrice = garage.largeSlotPrice || 15;
@@ -69,8 +94,6 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
     const end = new Date(`${selectedDate}T${endTime}:00`);
     const diff = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
 
-    // If end time is before start time, it's invalid for the same day
-    // We'll set duration to 0 or a minimum if invalid, to be caught by validation
     if (diff <= 0) {
       setDuration(0);
     } else {
@@ -78,9 +101,88 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
     }
   }, [selectedDate, startTime, endTime]);
 
+  useEffect(() => {
+    const loadImages = async () => {
+      try {
+        setImgLoading(true);
+        const imgs = await getGarageImages(garage.id);
+
+        // take only urls
+        const urls = imgs.map((i) => i.url);
+
+        setImages(urls);
+      } catch (err) {
+        console.error("Failed to load garage images", err);
+        setImages([]);
+      } finally {
+        setImgLoading(false);
+      }
+    };
+
+    if (garage?.id) loadImages();
+  }, [garage.id]);
+
   const subtotal = currentPrice * duration;
   const valetTotal = valetEnabled ? valetCharge : 0;
   const total = subtotal + valetTotal;
+
+  const openDirections = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation not supported");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const userLat = pos.coords.latitude;
+        const userLng = pos.coords.longitude;
+
+        const destLat = garage.latitude;
+        const destLng = garage.longitude;
+
+        const url = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${destLat},${destLng}&travelmode=driving`;
+
+        window.open(url, "_blank");
+      },
+      () => {
+        alert("Location permission denied");
+      },
+    );
+  };
+
+  const startValetPolling = (bookingIdParam?: string | null) => {
+    const id = bookingIdParam || bookingId;
+    if (!id) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await apiClient.get(`/api/bookings/${id}`);
+        const booking = res.data?.data;
+
+        if (!booking) return;
+
+        // valet accepted
+        if (booking.valetStatus === "ASSIGNED") {
+          setValetState("ASSIGNED");
+          setAssignedValet(booking.valet);
+          setValetEnabled(true);
+          clearInterval(interval);
+        }
+
+        // no valet found / stopped
+        if (
+          booking.valetStatus === "NONE" ||
+          booking.valetStatus === "COMPLETED"
+        ) {
+          setValetState("NONE");
+          clearInterval(interval);
+        }
+      } catch (err) {
+        console.error("Valet polling failed", err);
+        clearInterval(interval);
+      }
+    }, 3000); // check every 3 sec
+  };
 
   const handleBooking = async () => {
     if (!selectedSlot) {
@@ -121,9 +223,14 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
 
       console.log("booking", response.data);
 
-      setBookingId(response.data.data.id);
-
+      const newBookingId = response.data.data.id;
+      setBookingId(newBookingId);
       setShowPayment(true);
+
+      if (valetEnabled) {
+        setValetState("REQUESTED");
+        startValetPolling(newBookingId);
+      }
     } catch (err) {
       const error = err as {
         response?: {
@@ -161,6 +268,33 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
     }
   };
 
+  const requestValet = async () => {
+    if (!garage.valetAvailable) {
+      alert("This garage does not provide valet");
+      return;
+    }
+
+    try {
+      setValetState("REQUESTED");
+
+      // get ACTIVE valets only
+      const valets = await checkValetAvailability(garage.id);
+
+      if (!valets) {
+        setValetState("NONE");
+        alert("All valets are busy right now");
+        return;
+      }
+
+      // Valets available
+      setValetEnabled(true);
+      setValetState("AVAILABLE");
+    } catch {
+      setValetState("NONE");
+      alert("Failed to check valet availability");
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-white overflow-y-auto lg:overflow-hidden font-sans">
       <div className="max-w-7xl mx-auto h-full flex flex-col">
@@ -177,44 +311,163 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
 
         <div className="flex-1 lg:flex overflow-hidden">
           <div className="w-full lg:w-[65%] 2xl:w-[60%] p-4 lg:p-8 lg:overflow-y-auto custom-scrollbar bg-slate-50/30">
-            <div className="grid grid-cols-4 grid-rows-2 gap-3 mb-8 h-[300px] lg:h-[450px]">
-              <div className="col-span-4 lg:col-span-2 row-span-2 relative group overflow-hidden shadow-sm">
-                <img
-                  src="/images/garage_exterior.png"
-                  alt="Garage Exterior"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
+            {imgLoading ? (
+              <div className="mb-8 grid grid-cols-4 grid-rows-2 gap-3 h-[300px] lg:h-[450px] animate-pulse">
+                <div className="col-span-4 lg:col-span-2 row-span-2 bg-gray-200" />
+                <div className="hidden lg:block col-span-2 row-span-1 bg-gray-200" />
+                <div className="hidden lg:block col-span-1 row-span-1 bg-gray-200" />
+                <div className="hidden lg:block col-span-1 row-span-1 bg-gray-200" />
               </div>
-              <div className="hidden lg:block col-span-2 row-span-1 relative group overflow-hidden shadow-sm">
+            ) : images.length === 0 ? (
+              <div className="relative group overflow-hidden shadow-sm mb-8 h-[300px] lg:h-[450px]">
                 <img
                   src="/images/garage_interior.png"
-                  alt="Garage Interior"
+                  alt="Garage Default"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
               </div>
-              <div className="hidden lg:block col-span-1 row-span-1 relative group overflow-hidden shadow-sm">
-                <img
-                  src="/images/garage_valet.png"
-                  alt="Valet Station"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
+            ) : (
+              <div
+                className={`mb-8 transition-all duration-500 ${showAllImages ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 h-auto" : "grid grid-cols-4 grid-rows-2 gap-3 h-[300px] lg:h-[450px]"}`}
+              >
+                {!showAllImages ? (
+                  <>
+                    {/* Only 1 Image */}
+                    {images.length === 1 && (
+                      <div className="col-span-4 row-span-2 relative group overflow-hidden shadow-sm">
+                        <img
+                          src={images[0]}
+                          alt="Garage"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
+                      </div>
+                    )}
+
+                    {/* Exactly 2 Images */}
+                    {images.length === 2 && (
+                      <>
+                        <div className="col-span-4 lg:col-span-2 row-span-2 relative group overflow-hidden shadow-sm">
+                          <img
+                            src={images[0]}
+                            alt="Garage 1"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
+                        </div>
+                        <div className="hidden lg:block lg:col-span-2 row-span-2 relative group overflow-hidden shadow-sm">
+                          <img
+                            src={images[1]}
+                            alt="Garage 2"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
+                        </div>
+                      </>
+                    )}
+
+                    {/* Exactly 3 Images */}
+                    {images.length === 3 && (
+                      <>
+                        <div className="col-span-4 lg:col-span-2 row-span-2 relative group overflow-hidden shadow-sm">
+                          <img
+                            src={images[0]}
+                            alt="Garage 1"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
+                        </div>
+                        <div className="hidden lg:block lg:col-span-2 row-span-1 relative group overflow-hidden shadow-sm">
+                          <img
+                            src={images[1]}
+                            alt="Garage 2"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
+                        </div>
+                        <div className="hidden lg:block lg:col-span-2 row-span-1 relative group overflow-hidden shadow-sm">
+                          <img
+                            src={images[2]}
+                            alt="Garage 3"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
+                        </div>
+                      </>
+                    )}
+
+                    {/* 4 or More Images */}
+                    {images.length >= 4 && (
+                      <>
+                        <div className="col-span-4 lg:col-span-2 row-span-2 relative group overflow-hidden shadow-sm">
+                          <img
+                            src={images[0]}
+                            alt="Garage"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
+                        </div>
+                        <div className="hidden lg:block col-span-2 row-span-1 relative group overflow-hidden shadow-sm">
+                          <img
+                            src={images[1]}
+                            alt="Garage Interior"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
+                        </div>
+                        <div className="hidden lg:block col-span-1 row-span-1 relative group overflow-hidden shadow-sm">
+                          <img
+                            src={images[2]}
+                            alt="Valet Station"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
+                        </div>
+                        <div className="hidden lg:block col-span-1 row-span-1 relative group overflow-hidden shadow-sm">
+                          <div className="w-full h-full bg-gray-200 flex items-center justify-center relative">
+                            <img
+                              src={images[3]}
+                              alt="More images"
+                              className="w-full h-full object-cover opacity-50 blur-[2px]"
+                            />
+                            <button
+                              onClick={() => setShowAllImages(true)}
+                              className="absolute inset-0 flex items-center justify-center bg-black/40 text-white font-bold text-sm hover:bg-black/50 transition-colors"
+                            >
+                              Show all {images.length} photos
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {images.map((img, idx) => (
+                      <div
+                        key={idx}
+                        className="relative group overflow-hidden shadow-sm aspect-video lg:aspect-square"
+                      >
+                        <img
+                          src={img || "/images/garage_interior.png"}
+                          alt={`Garage ${idx + 1}`}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => setShowAllImages(false)}
+                      className="col-span-full py-4 text-sm font-bold text-indigo-600 hover:text-indigo-800 transition-colors bg-white border border-gray-100 flex items-center justify-center gap-2 shadow-sm"
+                    >
+                      <LayoutGrid className="w-4 h-4" />
+                      Show less photos
+                    </button>
+                  </>
+                )}
               </div>
-              <div className="hidden lg:block col-span-1 row-span-1 relative group overflow-hidden shadow-sm">
-                <div className="w-full h-full bg-gray-200 flex items-center justify-center relative">
-                  <img
-                    src="/images/garage_interior.png"
-                    alt="More images"
-                    className="w-full h-full object-cover opacity-50 blur-[2px]"
-                  />
-                  <button className="absolute inset-0 flex items-center justify-center bg-black/40 text-white font-bold text-sm hover:bg-black/50 transition-colors">
-                    Show all photos
-                  </button>
-                </div>
-              </div>
-            </div>
+            )}
 
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
               <div>
@@ -243,14 +496,17 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <button className="flex-1 lg:flex-none px-6 py-2.5 bg-white border border-gray-200 text-sm font-bold shadow-sm hover:bg-gray-50 active:scale-95 transition-all flex items-center justify-center gap-2">
+                <button
+                  onClick={openDirections}
+                  className="flex-1 lg:flex-none px-6 py-2.5 bg-blue-300 border border-gray-200 text-sm font-bold shadow-sm hover:bg-blue-200 active:scale-95 transition-all flex items-center justify-center gap-2"
+                >
                   <Navigation className="w-4 h-4" />
                   Get Direction
                 </button>
-                <button className="flex-1 lg:flex-none px-6 py-2.5 bg-white border border-gray-200 text-sm font-bold shadow-sm hover:bg-gray-50 active:scale-95 transition-all flex items-center justify-center gap-2">
+                {/* <button className="flex-1 lg:flex-none px-6 py-2.5 bg-white border border-gray-200 text-sm font-bold shadow-sm hover:bg-gray-50 active:scale-95 transition-all flex items-center justify-center gap-2">
                   <MapIcon className="w-4 h-4" />
                   View on Map
-                </button>
+                </button> */}
               </div>
             </div>
 
@@ -449,35 +705,64 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                       </div>
                     </div>
                     <button
-                      onClick={() => setValetEnabled(!valetEnabled)}
+                      onClick={requestValet}
+                      disabled={!garage.valetAvailable}
                       className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-wider transition-all ${valetEnabled ? "bg-primary text-gray-900 shadow-md scale-105" : "bg-white border border-gray-200 text-gray-400 hover:text-gray-900"}`}
                     >
-                      {valetEnabled ? "Selected" : "Check Availability"}
+                      {!garage.valetAvailable
+                        ? "Not Available"
+                        : valetEnabled
+                          ? "Valet Ready"
+                          : "Check Availability"}
                     </button>
                   </div>
-                  {valetEnabled && (
-                    <div className="mt-4 pt-4 border-t border-primary/20 flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="w-8 h-8 bg-slate-200 overflow-hidden">
-                        <img
-                          src="/api/placeholder/100/100"
-                          alt="Valet"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-bold text-gray-900">
-                          Valet assigned:{" "}
-                          <span className="text-secondary font-black">
-                            ansab suttu
-                          </span>
-                        </p>
-                        <div className="flex items-center gap-1">
-                          <Star className="w-2.5 h-2.5 fill-black text-black" />
-                          <span className="text-[10px] font-bold text-gray-600">
-                            4.8 (2k+ rides)
-                          </span>
-                        </div>
-                      </div>
+                  {!garage.valetAvailable && (
+                    <p className="text-xs text-red-500 font-bold">
+                      This garage does not provide valet service
+                    </p>
+                  )}
+
+                  {/* No valet available */}
+                  {garage.valetAvailable && valetState === "NONE" && (
+                    <p className="text-xs text-red-500 font-bold">
+                      All valets are busy right now
+                    </p>
+                  )}
+
+                  {/* Available but not booked yet */}
+                  {valetState === "AVAILABLE" && !swiped && (
+                    <SmoothSwipeButton
+                      onSwipeComplete={() => {
+                        setSwiped(true);
+                        setValetEnabled(true);
+                      }}
+                      availableText="✔ Valet available — Swipe to use valet"
+                      successText="✓ Valet enabled. Will be assigned after booking."
+                    />
+                  )}
+
+                  {swiped && valetEnabled && (
+                    <p className="text-xs text-green-700 font-bold mt-2">
+                      ✔ Valet enabled. Will be assigned after booking.
+                    </p>
+                  )}
+
+                  {/* Searching after booking */}
+                  {valetState === "REQUESTED" && (
+                    <div className="text-sm text-blue-600 font-bold animate-pulse">
+                      Searching for available valet...
+                    </div>
+                  )}
+
+                  {/* Assigned */}
+                  {valetState === "ASSIGNED" && assignedValet && (
+                    <div className="mt-4 p-3 border rounded bg-green-50">
+                      <p className="text-sm font-bold text-green-700">
+                        ✔ Valet Assigned: {assignedValet.name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Phone: {assignedValet.phone}
+                      </p>
                     </div>
                   )}
                 </div>

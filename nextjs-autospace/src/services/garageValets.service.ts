@@ -25,6 +25,13 @@ export const getGarageValets = async (
   return res.data.data;
 };
 
+export const checkValetAvailability = async (garageId: string) => {
+  const res = await apiClient.get(
+    `/api/valets/garage/${garageId}/valets/active`,
+  );
+  return res.data.available as boolean;
+};
+
 export const getPendingValets = async (
   garageId: string,
 ): Promise<GarageValet[]> => {
