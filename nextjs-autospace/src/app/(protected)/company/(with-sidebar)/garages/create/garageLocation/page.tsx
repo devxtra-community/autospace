@@ -150,8 +150,8 @@ export default function GarageLocation({
           {locationConfirmed ? (
             <Button
               type="button"
-              className="flex-1 h-11 bg-black text-yellow-400"
-              onClick={onSubmit}
+              className="flex-1 h-11 bg-black text-yellow-400 hover:bg-gray-800"
+              onClick={() => onSubmit()}
               disabled={isSubmitting}
             >
               Create Garage
@@ -159,7 +159,7 @@ export default function GarageLocation({
           ) : (
             <Button
               type="button"
-              className="flex-1 h-11 bg-black text-yellow-400"
+              className="flex-1 h-11 bg-black text-yellow-400 hover:bg-gray-800"
               disabled={!hasSelectedLocation}
               onClick={() => setLocationConfirmed(true)}
             >

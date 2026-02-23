@@ -35,7 +35,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="flex items-center border border-black bg-white/60 fixed top-0 left-0 right-0 z-50 backdrop-blur-sm w-full justify-between px-18 py-6 max-w-full mx-auto">
+    <nav className="flex items-center bg-white/60 fixed top-0 left-0 right-0 z-50 backdrop-blur-sm w-full justify-between px-18 py-6 max-w-full mx-auto">
       <div className="flex items-center">
         <Link href="/" className="flex items-center gap-2">
           <Image
@@ -97,7 +97,7 @@ export default function Navbar() {
         ) : (
           <Link
             href="/login"
-            className="px-6 py-2 bg-white text-black font-medium border border-black rounded-lg hover:bg-gray-50 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
+            className="px-6 py-2 bg-white text-black font-medium border border-black rounded-lg hover:bg-gray-50 transition-colors"
           >
             Signup
           </Link>

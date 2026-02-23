@@ -33,15 +33,26 @@ export default function SearchPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(true);
   const [garages, setGarages] = useState<PublicGarage[]>([]);
   const [loading, setLoading] = useState(true);
+  // const [valetFilter, setValetFilter] = useState<boolean | null>(null);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       if (!lat || !lng) return;
-      const res = await apiClient.get(
-        `/api/public/user/garages?lat=${lat}&lng=${lng}`,
-      );
 
+      const url = `/api/public/user/garages?lat=${lat}&lng=${lng}`;
+
+      // if (valetFilter === true) {
+      //   url += `&valetAvailable=true`;
+      // }
+
+      // if (valetFilter === false) {
+      //   url += `&valetAvailable=false`;
+      // }
+
+      // console.log("THe url",url);
+
+      const res = await apiClient.get(url);
       setGarages(res.data.data);
       // console.log("garages", res.data);
     } catch (error) {

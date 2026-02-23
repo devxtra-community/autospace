@@ -30,6 +30,7 @@ const createAuthProxy = (targetPath: string) => {
         method: req.method,
         url,
         data: req.body,
+        params: req.query,
         headers: {
           "Content-Type": "application/json",
           Cookie: req.headers.cookie || "",

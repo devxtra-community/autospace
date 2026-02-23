@@ -26,7 +26,10 @@ export const PublicGarageQuerySchema = z
     valetAvailable: z
       .enum(["true", "false"])
       .optional()
-      .transform((val) => val === "true"),
+      .transform((val) => {
+        if (val === undefined) return undefined;
+        return val === "true";
+      }),
     page: z.coerce.number().min(1).optional().default(1),
     limit: z.coerce.number().min(1).max(100).optional().default(10),
   })
