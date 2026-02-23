@@ -9,6 +9,7 @@ declare global {
       email: string;
       role: UserRole;
       status: UserStatus;
+      companyId?: string;
     }
 
     interface Request {

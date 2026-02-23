@@ -7,6 +7,7 @@ import {
 } from "../validators/booking.validator.js";
 import { BookingValetStatus } from "../entities/booking.entity.js";
 import axios from "axios";
+import { getCompanyBookingsService } from "../services/bookingCompany.service.js";
 const bookingService = new BookingService();
 
 export class BookingController {
@@ -28,7 +29,8 @@ export class BookingController {
       if (!slotId || !garageId || !startTime || !endTime || !vehicleType) {
         return res.status(400).json({
           success: false,
-          message: "slotId, garageId, startTime, endTime are required",
+          message:
+            "slotId, garageId, startTime, endTime and vehicleType are required",
         });
       }
 
@@ -310,12 +312,22 @@ export class BookingController {
   async assignValetInternal(req: Request, res: Response) {
     try {
       const bookingId = req.params.bookingId as string;
-      const valetId = req.user?.id;
+
+      const { valetId } = req.body;
+
+      const managerId = req.user?.id;
 
       if (!bookingId || !valetId) {
         return res.status(400).json({
           success: false,
           message: "bookingId and valetId required",
+        });
+      }
+
+      if (!managerId) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
         });
       }
 
@@ -331,48 +343,47 @@ export class BookingController {
       if (!booking.valetRequested) {
         return res.status(400).json({
           success: false,
-          message: "Valet was not requested for this booking",
+          message: "Valet not requested",
         });
       }
 
-      if (booking.valetStatus !== BookingValetStatus.REQUESTED) {
+      // THIS IS THE FIX
+      if (
+        booking.valetStatus !== BookingValetStatus.REQUESTED &&
+        booking.valetStatus !== BookingValetStatus.NONE
+      ) {
         return res.status(400).json({
           success: false,
-          message: "Valet already assigned or processed",
+          message: "Valet already assigned or completed",
         });
       }
 
-      if (booking.currentValetRequestId !== valetId) {
-        return res.status(400).json({
-          success: false,
-          message: "This valet is not assigned this request",
-        });
-      }
+      // ASSIGN VALET
 
       booking.valetId = valetId;
+
       booking.valetStatus = BookingValetStatus.ASSIGNED;
+
       booking.status = "confirmed";
 
       booking.currentValetRequestId = null;
-      booking.rejectedValetIds = null;
+
+      booking.rejectedValetIds = [];
 
       const updated = await bookingService.updateBookingWithValet(booking);
 
-      try {
-        await axios.post(
-          `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}/occupy`,
-          {},
-          {
-            headers: {
-              "x-user-id": "booking-service",
-              "x-user-role": "SERVICE",
-              "x-user-email": "service@internal",
-            },
+      // occupy slot
+
+      await axios.post(
+        `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}/occupy`,
+        {},
+        {
+          headers: {
+            "x-user-id": "booking-service",
+            "x-user-role": "SERVICE",
           },
-        );
-      } catch (err) {
-        console.log("occupySlot failed:", err);
-      }
+        },
+      );
 
       return res.status(200).json({
         success: true,
@@ -380,13 +391,13 @@ export class BookingController {
       });
     } catch (error) {
       logger.error("Assign valet failed", error);
+
       return res.status(500).json({
         success: false,
         message: "Failed to assign valet",
       });
     }
   }
-
   async rejectValet(req: Request, res: Response) {
     try {
       const bookingId = req.params.bookingId as string;
@@ -417,9 +428,36 @@ export class BookingController {
     }
   }
 
+  async getManualAssignments(req: Request, res: Response) {
+    try {
+      const managerId = req.user?.id;
+
+      if (!managerId) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
+
+      const bookings = await bookingService.getManualAssignments(managerId);
+
+      return res.status(200).json({
+        success: true,
+        data: bookings,
+      });
+    } catch (error) {
+      console.error("Manual assign fetch failed:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch manual assignments",
+      });
+    }
+  }
   async getValetRequests(req: Request, res: Response) {
     try {
       const valetId = req.user?.id;
+      console.log("valetId:", valetId);
 
       if (!valetId) {
         return res.status(401).json({
@@ -493,6 +531,41 @@ export class BookingController {
       return res.status(500).json({
         success: false,
         message: "Failed to fetch completed jobs",
+      });
+    }
+  }
+
+  async getCompanyBookings(req: Request, res: Response) {
+    try {
+      const companyId = req.params.companyId as string;
+
+      if (!companyId) {
+        return res.status(400).json({
+          success: false,
+          message: "companyId required",
+        });
+      }
+
+      const result = await getCompanyBookingsService(companyId, {
+        page: Number(req.query.page),
+        limit: Number(req.query.limit),
+        status: req.query.status as string,
+        garageId: req.query.garageId as string,
+        startDate: req.query.startDate as string,
+        endDate: req.query.endDate as string,
+        search: req.query.search as string,
+      });
+
+      return res.json({
+        success: true,
+        ...result,
+      });
+    } catch (err) {
+      console.error(err);
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch company bookings",
       });
     }
   }

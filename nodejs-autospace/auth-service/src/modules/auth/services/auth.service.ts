@@ -73,16 +73,16 @@ export const updateUserProfile = async (
 };
 
 export const getAllUsersService = async (filters: {
-  status?: UserStatus;
-  role?: UserRole;
+  page?: number;
+  limit?: number;
   search?: string;
-  page: number;
-  limit: number;
+  role?: UserRole;
+  status?: UserStatus;
 }) => {
   const repo = AppDataSource.getRepository(User);
 
-  const page = Math.max(filters.page, 1);
-  const limit = Math.min(filters.limit, 50);
+  const page = filters.page || 1;
+  const limit = filters.limit || 10;
   const skip = (page - 1) * limit;
 
   const qb = repo.createQueryBuilder("user");
@@ -97,23 +97,31 @@ export const getAllUsersService = async (filters: {
     "user.created_at",
   ]);
 
+  /* SEARCH */
   if (filters.search) {
-    qb.where(
-      `(user.fullname ILIKE :search 
-        OR user.email ILIKE :search 
-        OR user.phone ILIKE :search)`,
+    qb.andWhere(
+      `(user.fullname ILIKE :search
+     OR user.email ILIKE :search
+     OR user.phone ILIKE :search)`,
       { search: `%${filters.search}%` },
     );
   }
 
-  if (filters.status) {
-    qb.andWhere("user.status = :status", { status: filters.status });
-  }
-
+  /* ROLE */
   if (filters.role) {
-    qb.andWhere("user.role = :role", { role: filters.role });
+    qb.andWhere("user.role = :role", {
+      role: filters.role,
+    });
   }
 
+  /* STATUS */
+  if (filters.status) {
+    qb.andWhere("user.status = :status", {
+      status: filters.status,
+    });
+  }
+
+  /* PAGINATION */
   qb.orderBy("user.created_at", "DESC").skip(skip).take(limit);
 
   const [users, total] = await qb.getManyAndCount();
@@ -128,6 +136,7 @@ export const getAllUsersService = async (filters: {
       status: u.status,
       role: u.role,
     })),
+
     meta: {
       page,
       limit,

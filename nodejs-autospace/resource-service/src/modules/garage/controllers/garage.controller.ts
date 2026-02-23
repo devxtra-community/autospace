@@ -89,26 +89,33 @@ export const getGaragesByCompanyController = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    const companyId = req.params.companyId as string;
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
+    const companyId = Array.isArray(req.params.companyId)
+      ? req.params.companyId[0]
+      : req.params.companyId;
+    const page = req.query.page ? Number(req.query.page) : 1;
 
-    if (page < 1 || limit < 1) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid pagination parameters",
-      });
-    }
+    const limit = req.query.limit ? Number(req.query.limit) : 10;
 
-    const result = await getGaragesByCompanyId(companyId, page, limit);
+    const search = req.query.search ? String(req.query.search) : undefined;
+
+    const status = req.query.status ? String(req.query.status) : undefined;
+
+    const result = await getGaragesByCompanyId(companyId, {
+      page,
+      limit,
+      search,
+      status,
+    });
 
     return res.status(200).json({
       success: true,
       message: "Garages fetched successfully",
+
       data: result.data,
+
       meta: result.meta,
     });
-  } catch (error) {
+  } catch {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch garages",

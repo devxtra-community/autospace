@@ -11,6 +11,7 @@ export enum BookingValetStatus {
   REQUESTED = "REQUESTED",
   ASSIGNED = "ASSIGNED",
   COMPLETED = "COMPLETED",
+  REJECTED = "REJECTED",
 }
 
 @Entity({ name: "booking" })

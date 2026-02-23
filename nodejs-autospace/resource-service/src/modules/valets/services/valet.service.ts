@@ -5,6 +5,7 @@ import {
   ValetEmployementStatus,
 } from "../entities/valets.entity";
 import { Garage } from "../../garage/entities/garage.entity";
+import axios from "axios";
 
 export const approveValetService = async (
   valetId: string,
@@ -72,7 +73,7 @@ export const rejectValetService = async (
   return await valetRepo.save(valet);
 };
 
-import axios from "axios";
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL;
 
 type SimpleUser = {
   id: string;
@@ -81,54 +82,64 @@ type SimpleUser = {
   phone: string;
 };
 
-const AUTH_SERVICE_URL =
-  process.env.AUTH_SERVICE_URL || "http://localhost:4001";
+interface Filters {
+  page?: number;
+  limit?: number;
+  employmentStatus?: ValetEmployementStatus;
+  availabilityStatus?: ValetAvailabilityStatus;
+  search?: string;
+}
 
 export const getValetsByGarageService = async (
   garageId: string,
   managerUserId: string,
-  filters: {
-    status?: ValetEmployementStatus;
-    page: number;
-    limit: number;
-  },
+  filters: Filters,
 ) => {
   const valetRepo = AppDataSource.getRepository(Valet);
   const garageRepo = AppDataSource.getRepository(Garage);
 
-  // verify garage
   const garage = await garageRepo.findOne({
     where: { id: garageId },
   });
 
   if (!garage) throw new Error("Garage not found");
 
-  if (garage.managerId !== managerUserId) {
-    throw new Error("You are not the manager of this garage");
-  }
+  if (garage.managerId !== managerUserId) throw new Error("Not manager");
 
-  // fetch valets from resource DB
-  const where: any = { garageId };
+  const page = filters.page || 1;
+  const limit = filters.limit || 10;
+  const skip = (page - 1) * limit;
 
-  if (filters.status) {
-    where.employmentStatus = filters.status;
-  }
+  const where: any = {
+    garageId,
+  };
 
-  const skip = (filters.page - 1) * filters.limit;
+  if (filters.employmentStatus)
+    where.employmentStatus = filters.employmentStatus;
+
+  if (filters.availabilityStatus)
+    where.availabilityStatus = filters.availabilityStatus;
 
   const [valets, total] = await valetRepo.findAndCount({
     where,
     skip,
-    take: filters.limit,
-    order: { createdAt: "DESC" },
+    take: limit,
+    order: {
+      createdAt: "DESC",
+    },
   });
 
-  // fetch users from auth-service using existing endpoint
   const users: SimpleUser[] = await Promise.all(
     valets.map(async (valet) => {
       try {
         const res = await axios.get(
           `${AUTH_SERVICE_URL}/internal/users/${valet.id}`,
+          {
+            headers: {
+              "x-user-id": "resource-service",
+              "x-user-role": "SERVICE",
+            },
+          },
         );
 
         return res.data.data;
@@ -143,31 +154,39 @@ export const getValetsByGarageService = async (
     }),
   );
 
-  // merge valet + user
-  const data = valets.map((valet) => {
+  let data = valets.map((valet) => {
     const user = users.find((u) => u.id === valet.id);
 
     return {
       id: valet.id,
-
       name: user?.fullname || "",
       email: user?.email || "",
       phone: user?.phone || "",
-
       employmentStatus: valet.employmentStatus,
       availabilityStatus: valet.availabilityStatus,
-
       createdAt: valet.createdAt,
     };
   });
 
+  if (filters.search) {
+    const s = filters.search.toLowerCase();
+
+    data = data.filter(
+      (v) =>
+        v.name.toLowerCase().includes(s) ||
+        v.email.toLowerCase().includes(s) ||
+        v.phone.toLowerCase().includes(s),
+    );
+  }
+
   return {
     data,
+
     meta: {
-      page: filters.page,
-      limit: filters.limit,
+      page,
+      limit,
       total,
-      totalPages: Math.ceil(total / filters.limit),
+      totalPages: Math.ceil(total / limit),
     },
   };
 };
@@ -188,14 +207,58 @@ export const getAvailableValetService = async (
       availabilityStatus: ValetAvailabilityStatus.AVAILABLE,
     });
 
-  // EXCLUDE rejected valets
-  if (excludeIds && excludeIds.length > 0) {
+  if (excludeIds?.length) {
     query.andWhere("valet.id NOT IN (:...excludeIds)", {
       excludeIds,
     });
   }
 
-  return await query.orderBy("valet.createdAt", "ASC").getOne();
+  const valets = await query.getMany();
+
+  // fetch user data from auth service
+  const users: SimpleUser[] = await Promise.all(
+    valets.map(async (valet) => {
+      try {
+        const res = await axios.get(
+          `${AUTH_SERVICE_URL}/internal/users/${valet.id}`,
+          {
+            headers: {
+              "x-user-id": "booking-service",
+              "x-user-role": "SERVICE",
+            },
+          },
+        );
+
+        return res.data.data;
+      } catch {
+        return {
+          id: valet.id,
+          fullname: "",
+          phone: "",
+          email: "",
+        };
+      }
+    }),
+  );
+
+  // merge valet + user
+  return valets.map((valet) => {
+    const user = users.find((u) => u.id === valet.id);
+
+    return {
+      id: valet.id,
+
+      name: user?.fullname ?? "",
+
+      phone: user?.phone ?? "",
+
+      availabilityStatus: valet.availabilityStatus,
+
+      employmentStatus: valet.employmentStatus,
+
+      garageId: valet.garageId,
+    };
+  });
 };
 
 export const markValetBusyService = async (
@@ -218,6 +281,17 @@ export const markValetBusyService = async (
   valet.currentBookingId = bookingId;
 
   return await valetRepo.save(valet);
+};
+
+export const getAllActiveValetsService = async (garageId: string) => {
+  const valetRepo = AppDataSource.getRepository(Valet);
+
+  return await valetRepo.find({
+    where: {
+      garageId,
+      employmentStatus: ValetEmployementStatus.ACTIVE,
+    },
+  });
 };
 
 export const releaseValetService = async (valetId: string) => {

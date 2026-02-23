@@ -5,6 +5,7 @@ import {
   getAvailableValetController,
   assignValetController,
   releaseValetController,
+  rejectBookingController,
 } from "../controllers/internal-valet.controller";
 import { getMyValetController } from "../controllers/valet.controller";
 import { internalAuth } from "../../../middlewares/internalAuth.middleware";
@@ -20,6 +21,8 @@ router.get("/me", internalAuth, getMyValetController);
 router.get("/available/:garageId", getAvailableValetController);
 
 router.patch("/:valetId/assign", assignValetController);
+
+router.patch("/:valetId/reject", rejectBookingController);
 
 router.patch("/:valetId/release", releaseValetController);
 

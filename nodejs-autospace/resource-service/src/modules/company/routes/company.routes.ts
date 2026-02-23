@@ -14,6 +14,7 @@ import { validateCreateCompany } from "../validators/company.validator";
 import { getPendingCompanies } from "../controllers/admin.company.controller";
 import { validateCompany } from "../controllers/internal.company.controller";
 import { internalAuth } from "../../../middlewares/internalAuth.middleware";
+import { getCompanyEmployeesController } from "../controllers/companyEmployee.controller";
 
 const router = Router();
 
@@ -25,6 +26,11 @@ router.put("/admin/:id/active", internalAuth, approveCompany);
 router.put("/admin/:id/reject", internalAuth, rejectCompany);
 router.get("/admin/pending", internalAuth, getPendingCompanies);
 router.put("/:id", internalAuth, updateCompanyProfileController);
+router.get(
+  "/:companyId/employees",
+  internalAuth,
+  getCompanyEmployeesController,
+);
 
 // internal (resource service-to- auth service) check is company approved while manager registers
 

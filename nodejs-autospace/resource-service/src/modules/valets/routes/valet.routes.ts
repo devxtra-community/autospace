@@ -16,6 +16,7 @@ import {
   getValetsByGarageController,
 } from "../controllers/valetGarage.controller";
 import { internalAuth } from "../../../middlewares/internalAuth.middleware";
+import { getAllActiveValetsController } from "../controllers/internal-valet.controller";
 
 const router = Router();
 
@@ -41,5 +42,7 @@ router.get(
 );
 
 router.get("/:id", validateValetIdParam, getValetByIdController);
+
+router.get("/active/:garageId", getAllActiveValetsController);
 
 export default router;

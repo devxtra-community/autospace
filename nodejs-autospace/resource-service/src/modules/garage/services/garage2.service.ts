@@ -8,6 +8,7 @@ import {
   Valet,
   ValetEmployementStatus,
 } from "../../valets/entities/valets.entity";
+import { ILike } from "typeorm";
 
 const AUTH_SERVICE_URL =
   process.env.AUTH_SERVICE_URL || "http://localhost:4001/api/manager";
@@ -27,9 +28,7 @@ export const assignManagerToGarage = async (
     },
   });
 
-  if (!company) {
-    throw new Error("Active company not found for owner");
-  }
+  if (!company) throw new Error("Active company not found");
 
   const garage = await garageRepo.findOne({
     where: {
@@ -39,82 +38,126 @@ export const assignManagerToGarage = async (
     },
   });
 
-  if (!garage) {
-    throw new Error("Garage not found or not active");
-  }
+  if (!garage) throw new Error("Garage not found");
 
-  if (garage.managerId) {
-    throw new Error("Garage already has a manager");
-  }
+  if (garage.managerId) throw new Error("Garage already has manager");
 
-  const { data: manager } = await axios.get(
-    `${AUTH_SERVICE_URL}/internal/${managerId}`,
+  // FIXED endpoint
+  const res = await axios.get(
+    `${AUTH_SERVICE_URL}/internal/users/${managerId}`,
+    {
+      headers: {
+        "x-user-id": "resource-service",
+        "x-user-role": "SERVICE",
+      },
+    },
   );
 
-  if (manager.role !== "manager") {
-    throw new Error("User is not a manager");
-  }
+  const manager = res.data.data;
 
-  if (manager.companyId !== company.id) {
-    throw new Error("Manager does not belong to this company");
-  }
+  if (!manager) throw new Error("Manager not found");
 
-  if (manager.managerState !== "unassigned") {
+  if (manager.role !== "manager") throw new Error("User is not manager");
+
+  if (manager.companyId !== company.id)
+    throw new Error("Manager not from this company");
+
+  if (manager.managerState !== "unassigned")
     throw new Error("Manager already assigned");
-  }
 
   garage.managerId = managerId;
+
   await garageRepo.save(garage);
 
-  await axios.post(`${AUTH_SERVICE_URL}/internal/${managerId}/assign`);
+  await axios.post(
+    `${AUTH_SERVICE_URL}/internal/users/${managerId}/assign`,
+    {},
+    {
+      headers: {
+        "x-user-id": "resource-service",
+        "x-user-role": "SERVICE",
+      },
+    },
+  );
 
   return {
-    garageCode: garage.garageRegistrationNumber,
+    garageCode,
     managerId,
-    message: "Manager assigned to garage successfully",
   };
 };
 
-export const getGarageById = async (id: string) => {
+export const getGarageById = async (garageId: string) => {
   const repo = AppDataSource.getRepository(Garage);
 
   const garage = await repo.findOne({
-    where: { id },
+    where: { id: garageId },
   });
 
   if (!garage) {
     throw new Error("Garage not found");
   }
 
-  let manager = null;
-
-  if (garage.managerId) {
-    try {
-      const { data } = await axios.get(
-        `${AUTH_SERVICE_URL}/internal/${garage.managerId}`,
-      );
-
-      manager = {
-        fullname: data.fullname ?? data.email ?? "Manager",
-      };
-    } catch {
-      manager = null;
-    }
+  if (!garage.managerId) {
+    return {
+      ...garage,
+      manager: null,
+    };
   }
 
-  return {
-    ...garage,
-    manager,
-  };
+  try {
+    const res = await axios.get(
+      `${AUTH_SERVICE_URL}/internal/users/${garage.managerId}`,
+      {
+        headers: {
+          "x-user-id": "resource-service",
+          "x-user-role": "SERVICE",
+        },
+      },
+    );
+
+    const user = res.data?.data;
+
+    return {
+      ...garage,
+      manager: user
+        ? {
+            fullname: user.fullname || user.email || "Manager",
+          }
+        : null,
+    };
+  } catch {
+    return {
+      ...garage,
+      manager: null,
+    };
+  }
 };
 
-export const getAllGarages = async (page = 1, limit = 10) => {
+export const getAllGarages = async (
+  page = 1,
+  limit = 10,
+  search?: string,
+  status?: string,
+) => {
   const garageRepo = AppDataSource.getRepository(Garage);
   const floorRepo = AppDataSource.getRepository(GarageFloor);
   const slotRepo = AppDataSource.getRepository(GarageSlot);
   const valetRepo = AppDataSource.getRepository(Valet);
 
+  const where: any = {};
+
+  // search filter
+  if (search) {
+    where.name = ILike(`%${search}%`);
+  }
+
+  // status filter
+  if (status && status !== "all") {
+    where.status = status;
+  }
+
   const [garages, total] = await garageRepo.findAndCount({
+    where,
     skip: (page - 1) * limit,
     take: limit,
     order: { createdAt: "DESC" },
@@ -149,7 +192,9 @@ export const getAllGarages = async (page = 1, limit = 10) => {
       const slotCount = await slotRepo
         .createQueryBuilder("slot")
         .innerJoin("slot.floor", "floor")
-        .where("floor.garageId = :garageId", { garageId: garage.id })
+        .where("floor.garageId = :garageId", {
+          garageId: garage.id,
+        })
         .getCount();
 
       const valetCount = await valetRepo.count({
@@ -161,15 +206,12 @@ export const getAllGarages = async (page = 1, limit = 10) => {
 
       return {
         garageId: garage.id,
-
         garageCode: garage.garageRegistrationNumber,
-
         name: garage.name,
 
         managerName,
 
         contactEmail: garage.contactEmail,
-
         contactPhone: garage.contactPhone,
 
         locationName: garage.locationName,
@@ -177,13 +219,10 @@ export const getAllGarages = async (page = 1, limit = 10) => {
         capacity: garage.capacity,
 
         floorCount,
-
         slotCount,
-
         valetCount,
 
         status: garage.status,
-
         createdAt: garage.createdAt,
 
         companyId: garage.companyId,
@@ -193,7 +232,6 @@ export const getAllGarages = async (page = 1, limit = 10) => {
 
   return {
     data: enriched,
-
     meta: {
       total,
       page,
@@ -203,20 +241,59 @@ export const getAllGarages = async (page = 1, limit = 10) => {
   };
 };
 
+interface GarageFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  managerFilter?: "assigned" | "unassigned";
+}
+
 export const getGaragesByCompanyId = async (
   companyId: string,
-  page = 1,
-  limit = 10,
+  filters: GarageFilters,
 ) => {
   const repo = AppDataSource.getRepository(Garage);
 
-  const [garages, total] = await repo.findAndCount({
-    where: { companyId },
-    skip: (page - 1) * limit,
-    take: limit,
-    order: { createdAt: "DESC" },
-  });
+  const page = filters.page || 1;
+  const limit = filters.limit || 10;
+  const search = filters.search;
+  const status = filters.status;
 
+  const qb = repo
+    .createQueryBuilder("garage")
+    .where("garage.companyId = :companyId", { companyId });
+
+  /* SEARCH */
+  if (search) {
+    qb.andWhere(
+      `(LOWER(garage.name) LIKE :search
+        OR LOWER(garage.locationName) LIKE :search
+        OR LOWER(garage.garageRegistrationNumber) LIKE :search)`,
+      { search: `%${search.toLowerCase()}%` },
+    );
+  }
+
+  if (filters.managerFilter === "assigned") {
+    qb.andWhere("garage.managerId IS NOT NULL");
+  }
+
+  if (filters.managerFilter === "unassigned") {
+    qb.andWhere("garage.managerId IS NULL");
+  }
+
+  /* STATUS FILTER */
+  if (status) {
+    qb.andWhere("garage.status = :status", { status });
+  }
+
+  qb.orderBy("garage.createdAt", "DESC")
+    .skip((page - 1) * limit)
+    .take(limit);
+
+  const [garages, total] = await qb.getManyAndCount();
+
+  /* ENRICH MANAGER */
   const enriched = await Promise.all(
     garages.map(async (garage) => {
       if (!garage.managerId) {
@@ -224,18 +301,31 @@ export const getGaragesByCompanyId = async (
       }
 
       try {
-        const { data } = await axios.get(
-          `${AUTH_SERVICE_URL}/internal/${garage.managerId}`,
+        const res = await axios.get(
+          `${AUTH_SERVICE_URL}/internal/users/${garage.managerId}`,
+          {
+            headers: {
+              "x-user-id": "resource-service",
+              "x-user-role": "SERVICE",
+            },
+          },
         );
+
+        const user = res.data?.data;
 
         return {
           ...garage,
-          manager: {
-            fullname: data.fullname ?? data.email ?? "Manager",
-          },
+          manager: user
+            ? {
+                fullname: user.fullname || user.email || "Manager",
+              }
+            : null,
         };
       } catch {
-        return { ...garage, manager: null };
+        return {
+          ...garage,
+          manager: null,
+        };
       }
     }),
   );

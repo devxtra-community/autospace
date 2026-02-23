@@ -68,4 +68,15 @@ router.patch(
   bookingController.rejectValet,
 );
 
+router.get(
+  "/manager/manual-assign",
+  internalAuth,
+  bookingController.getManualAssignments,
+);
+
+router.get(
+  "/company/:companyId",
+  internalAuth,
+  bookingController.getCompanyBookings,
+);
 export default router;

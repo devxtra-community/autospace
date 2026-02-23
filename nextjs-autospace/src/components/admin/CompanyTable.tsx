@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, Building2 } from "lucide-react";
-
 import { cn } from "@/lib/utils";
 import { useEffect, useState, useCallback } from "react";
 import { getCompanyAdmin } from "@/services/admin.service";
@@ -23,7 +22,8 @@ export interface CompanyData {
   createdAt: string;
 }
 
-interface CompanyApiResponse {
+/* ✅ Backend response type (NO ANY) */
+interface CompanyAdminApiItem {
   companyId: string;
   companyCode: string;
   companyName: string;
@@ -63,6 +63,14 @@ export function CompanyTable({
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [status, setStatus] = useState<string>("all");
+
+  const limit = 8;
+
+  /* Reset page when filters change */
+  useEffect(() => {
+    setPage(1);
+  }, [search, status]);
 
   /* ================= FETCH ================= */
 
@@ -70,11 +78,16 @@ export function CompanyTable({
     try {
       setLoading(true);
 
-      const res = await getCompanyAdmin();
+      const res = await getCompanyAdmin({
+        page,
+        limit,
+        search: search || undefined,
+        status: status !== "all" ? status : undefined,
+      });
 
       if (res?.success) {
-        const safeData: CompanyData[] = (res.data || []).map(
-          (c: CompanyApiResponse): CompanyData => ({
+        const safeData: CompanyData[] = (res.data as CompanyAdminApiItem[]).map(
+          (c) => ({
             companyId: c.companyId,
             companyCode: c.companyCode,
             companyName: c.companyName,
@@ -83,21 +96,21 @@ export function CompanyTable({
             contactPhone: c.contactPhone,
             businessLocation: c.businessLocation,
             garagesCount: c.garagesCount ?? 0,
-            status: (c.status || "pending").toLowerCase() as CompanyStatus,
+            status: c.status.toLowerCase() as CompanyStatus,
             createdAt: c.createdAt,
           }),
         );
 
         setCompanies(safeData);
         setTotalPages(res.meta?.totalPages || 1);
-        setTotal(res.meta?.total || safeData.length);
+        setTotal(res.meta?.total || 0);
       }
     } catch (err) {
       console.error("Fetch companies failed", err);
     } finally {
       setLoading(false);
     }
-  }, [page, search]);
+  }, [page, search, status]);
 
   useEffect(() => {
     fetchData();
@@ -107,6 +120,25 @@ export function CompanyTable({
 
   return (
     <div className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden">
+      {/* FILTER BAR */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-3 p-4 border-b border-border">
+        <div className="text-sm text-muted-foreground">
+          Showing {companies.length} of {total}
+        </div>
+
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          className="border rounded-lg px-3 py-2 text-sm w-full sm:w-auto"
+        >
+          <option value="all">All</option>
+          <option value="pending">Pending</option>
+          <option value="active">Active</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+
+      {/* TABLE */}
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>
@@ -114,11 +146,9 @@ export function CompanyTable({
               <th className="px-6 py-4 text-xs font-bold uppercase text-muted-foreground">
                 Company Code
               </th>
-
               <th className="px-6 py-4 text-xs font-bold uppercase text-muted-foreground">
                 Company Name
               </th>
-
               <th className="px-6 py-4 text-xs font-bold uppercase text-muted-foreground">
                 Status
               </th>
@@ -144,25 +174,21 @@ export function CompanyTable({
                     selectedCompanyId === company.companyId && "bg-muted",
                   )}
                 >
-                  {/* CODE */}
                   <td className="px-6 py-4 font-mono">
                     #{company.companyCode}
                   </td>
 
-                  {/* NAME */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 bg-muted rounded-lg flex items-center justify-center">
                         <Building2 size={18} />
                       </div>
-
                       <span className="font-semibold">
                         {company.companyName}
                       </span>
                     </div>
                   </td>
 
-                  {/* STATUS */}
                   <td className="px-6 py-4">
                     <span
                       className={cn(
@@ -175,18 +201,26 @@ export function CompanyTable({
                   </td>
                 </tr>
               ))}
+
+            {!loading && companies.length === 0 && (
+              <tr>
+                <td
+                  colSpan={3}
+                  className="py-12 text-center text-muted-foreground"
+                >
+                  No companies found
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
       {/* PAGINATION */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-3 px-6 py-4 border-t border-border">
+        <div />
 
-      <div className="flex justify-between items-center px-6 py-4 border-t border-border">
-        <span className="text-sm text-muted-foreground">
-          Showing {companies.length} of {total}
-        </span>
-
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}

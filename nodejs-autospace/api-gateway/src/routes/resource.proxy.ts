@@ -126,10 +126,13 @@ router.use(
 
       // internal routes (used by booking-service / auth-service)
       if (
+        original.includes("/active") ||
         original.includes("/assign") ||
         original.includes("/release") ||
         original.includes("/available") ||
-        original.includes("/register")
+        original.includes("/register") ||
+        original.includes("/resolve-garage") ||
+        original.includes("/reject")
       ) {
         const newPath = original.replace(/^\/api\/valets/, "/internal/valets");
 

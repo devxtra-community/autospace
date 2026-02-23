@@ -28,4 +28,24 @@ router.get("/count/:companyId", async (req, res) => {
   });
 });
 
+router.get("/manager/:managerId", internalAuth, async (req, res) => {
+  const garage = await repo.findOne({
+    where: {
+      managerId: req.params.managerId as string,
+    },
+  });
+
+  if (!garage) {
+    return res.status(404).json({
+      success: false,
+      message: "Garage not found",
+    });
+  }
+
+  return res.json({
+    success: true,
+    data: garage,
+  });
+});
+
 export default router;

@@ -26,7 +26,13 @@ const attachUserHeaders = (proxyReq: ClientRequest, req: Request) => {
 router.use(
   "/bookings",
   authMiddleware,
-  rbac(UserRole.CUSTOMER, UserRole.ADMIN, UserRole.MANAGER, UserRole.VALET),
+  rbac(
+    UserRole.CUSTOMER,
+    UserRole.ADMIN,
+    UserRole.OWNER,
+    UserRole.MANAGER,
+    UserRole.VALET,
+  ),
   createProxyMiddleware({
     target: BOOKING_SERVICE_URL,
     changeOrigin: true,

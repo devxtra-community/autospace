@@ -16,48 +16,62 @@ export const getValetsByGarageController = async (
   req: Request,
   res: Response,
 ): Promise<Response> => {
-  try {
-    const garageId = req.params.garageId as string;
-    const managerUserId = req.user?.id;
-    console.log("Manager User ID:", managerUserId);
-    const { status, page, limit } =
-      req.query as unknown as GetValetsByGarageQuery;
+  const garageIdParam = req.params.garageId;
 
-    if (!managerUserId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
+  const garageId = Array.isArray(garageIdParam)
+    ? garageIdParam[0]
+    : garageIdParam;
 
-    const result = await getValetsByGarageService(garageId, managerUserId, {
-      status: status as ValetEmployementStatus | undefined,
-      page,
-      limit,
-    });
+  const managerUserId = req.user?.id;
 
-    return res.status(200).json({
-      success: true,
-      message: "Valets fetched successfully",
-      data: result.data,
-      meta: result.meta,
-    });
-  } catch (error: any) {
-    if (
-      error.message === "Garage not found" ||
-      error.message.includes("not the manager")
-    ) {
-      return res.status(403).json({
-        success: false,
-        message: error.message,
-      });
-    }
-
-    return res.status(500).json({
+  if (!managerUserId) {
+    return res.status(401).json({
       success: false,
-      message: "Failed to fetch valets",
+      message: "Unauthorized",
     });
   }
+
+  if (!garageId) {
+    return res.status(400).json({
+      success: false,
+      message: "GarageId required",
+    });
+  }
+
+  const page = typeof req.query.page === "string" ? Number(req.query.page) : 1;
+
+  const limit =
+    typeof req.query.limit === "string" ? Number(req.query.limit) : 10;
+
+  const employmentStatus =
+    typeof req.query.employmentStatus === "string"
+      ? req.query.employmentStatus
+      : undefined;
+
+  const availabilityStatus =
+    typeof req.query.availabilityStatus === "string"
+      ? req.query.availabilityStatus
+      : undefined;
+
+  const search =
+    typeof req.query.search === "string" ? req.query.search : undefined;
+
+  const result = await getValetsByGarageService(garageId, managerUserId, {
+    page: Number(req.query.page) || 1,
+    limit: Number(req.query.limit) || 10,
+
+    employmentStatus: req.query.employmentStatus as any,
+
+    availabilityStatus: req.query.availabilityStatus as any,
+
+    search: req.query.search as string | undefined,
+  });
+
+  return res.json({
+    success: true,
+    data: result.data,
+    meta: result.meta,
+  });
 };
 
 // Get company valets (for owner)

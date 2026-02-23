@@ -9,10 +9,14 @@ import { updateGarageProfile } from "@/services/garage.service";
 interface Garage {
   id: string;
   name: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  capacity: number;
-  valetAvailable: boolean;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  locationName?: string | null;
+  status?: string | null;
+  manager?: { fullname?: string } | null;
+  garageRegistrationNumber?: string | null;
+  capacity?: number | null;
+  valetAvailable?: boolean | null;
 }
 
 export function GarageEditModal({
@@ -38,11 +42,11 @@ export function GarageEditModal({
     if (!open || !garage) return;
 
     setForm({
-      name: garage.name || "",
-      contactEmail: garage.contactEmail || "",
-      contactPhone: garage.contactPhone || "",
-      capacity: garage.capacity?.toString() || "",
-      valetAvailable: garage.valetAvailable || false,
+      name: garage.name ?? "",
+      contactEmail: garage.contactEmail ?? "",
+      contactPhone: garage.contactPhone ?? "",
+      capacity: garage.capacity?.toString() ?? "",
+      valetAvailable: garage.valetAvailable ?? false,
     });
   }, [open, garage]);
 
@@ -94,7 +98,10 @@ export function GarageEditModal({
             type="checkbox"
             checked={form.valetAvailable}
             onChange={(e) =>
-              setForm({ ...form, valetAvailable: e.target.checked })
+              setForm({
+                ...form,
+                valetAvailable: e.target.checked,
+              })
             }
           />
           Valet Available

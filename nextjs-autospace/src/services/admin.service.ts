@@ -32,15 +32,29 @@ export const rejectGarage = async (id: number | string) => {
   return res.data;
 };
 
-export const getCompanyAdmin = async () => {
-  const res = await apiClient.get("/api/companies/admin/all");
-  console.log("all companies", res.data);
+export const getCompanyAdmin = async (params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}) => {
+  const res = await apiClient.get("/api/companies/admin/all", {
+    params,
+  });
+
   return res.data;
 };
 
-export const getGarageAdmin = async () => {
-  const res = await apiClient.get("api/garages/admin/all");
-  console.log("all garages", res.data);
+export const getGarageAdmin = async (params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}) => {
+  const res = await apiClient.get("/api/garages/admin/all", {
+    params,
+  });
+
   return res.data;
 };
 
@@ -53,4 +67,5 @@ export const getAllUsersService = async (params?: {
 }) => {
   const res = await apiClient.get("api/auth/admin/allusers", { params });
   return res.data;
+  console.log("users", res.data);
 };

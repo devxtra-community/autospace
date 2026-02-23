@@ -1,5 +1,4 @@
 import apiClient from "@/lib/apiClient";
-// import { api } from "@/lib/auth.api";
 
 export const getMyCompany = async () => {
   const res = await apiClient.get("/api/companies/my");
@@ -40,4 +39,54 @@ export const updateCompany = async (
   });
 
   return res.data.data;
+};
+
+export const getCompanyEmployees = async (
+  companyId: string,
+  filters?: {
+    page?: number;
+    limit?: number;
+    role?: "MANAGER" | "VALET";
+    employmentStatus?: string;
+    search?: string;
+  },
+) => {
+  const res = await apiClient.get(`/api/companies/${companyId}/employees`, {
+    params: {
+      page: filters?.page ?? 1,
+      limit: filters?.limit ?? 10,
+      role: filters?.role,
+      employmentStatus: filters?.employmentStatus,
+      search: filters?.search,
+    },
+  });
+
+  return res.data;
+};
+
+export const getCompanyBookings = async (
+  companyId: string,
+  filters?: {
+    page?: number;
+    limit?: number;
+    garageId?: string;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+  },
+) => {
+  const res = await apiClient.get(`/api/bookings/company/${companyId}`, {
+    params: {
+      page: filters?.page ?? 1,
+      limit: filters?.limit ?? 10,
+      garageId: filters?.garageId,
+      status: filters?.status,
+      startDate: filters?.startDate,
+      endDate: filters?.endDate,
+      search: filters?.search,
+    },
+  });
+
+  return res.data;
 };

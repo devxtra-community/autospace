@@ -89,11 +89,19 @@ export const getAllCompaniesController = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
-    const search = req.query.search as string | undefined;
+    const page = req.query.page ? Number(req.query.page) : 1;
+    const limit = req.query.limit ? Number(req.query.limit) : 10;
+    const search = req.query.search ? String(req.query.search) : undefined;
+    const status = req.query.status ? String(req.query.status) : undefined;
 
-    const result = await getAllCompanies(page, limit, search);
+    if (page < 1 || limit < 1) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid pagination parameters",
+      });
+    }
+
+    const result = await getAllCompanies(page, limit, search, status);
 
     return res.status(200).json({
       success: true,
@@ -109,7 +117,6 @@ export const getAllCompaniesController = async (
     });
   }
 };
-
 export const updateCompanyProfileController = async (
   req: Request,
   res: Response,

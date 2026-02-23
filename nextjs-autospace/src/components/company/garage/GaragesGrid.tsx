@@ -1,109 +1,101 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { GarageCard, GarageStatus } from "./GarageCard";
-import { getMyGarages } from "@/services/garage.service";
-import { getMyCompany } from "@/services/company.service";
 import { GarageDetailsModal } from "./GarageDetailsModal";
 import { GarageEditModal } from "./GarageEditModal";
 import { AssignManagerModal } from "./AssignManagerModal";
 
-interface GarageAPI {
+export interface Garage {
   id: string;
-  garageRegistrationNumber: string;
   name: string;
-  locationName: string;
-  status: GarageStatus;
-  capacity: number;
-  valetAvailable: boolean; // required, not optional
-  contactEmail?: string;
-  contactPhone?: string;
+  locationName?: string | null;
+  status?: GarageStatus | null;
+  capacity?: number | null;
+  garageRegistrationNumber?: string | null;
+  valetAvailable?: boolean | null;
   manager?: {
-    fullname?: string;
+    id: string;
+    fullname: string;
   } | null;
 }
 
-export function GaragesGrid() {
-  const [garages, setGarages] = useState<GarageAPI[]>([]);
-  const [companyId, setCompanyId] = useState<string | null>(null);
+interface Props {
+  garages: Garage[];
+  companyId: string;
+}
 
+export function GaragesGrid({ garages, companyId }: Props) {
   const [selectedGarageId, setSelectedGarageId] = useState<string | null>(null);
-
   const [editOpen, setEditOpen] = useState(false);
-  const [selectedGarage, setSelectedGarage] = useState<GarageAPI | null>(null);
-
+  const [selectedGarage, setSelectedGarage] = useState<Garage | null>(null);
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignGarageCode, setAssignGarageCode] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const company = await getMyCompany();
-      setCompanyId(company.id);
+  const handleEdit = (id: string) => {
+    const garage = garages.find((g) => g.id === id) ?? null;
+    setSelectedGarage(garage);
+    setEditOpen(true);
+  };
 
-      const data = await getMyGarages(company.id);
-      setGarages(data);
-    };
-
-    fetchData();
-  }, []);
+  const handleAssignManager = (garage: Garage) => {
+    if (!garage.garageRegistrationNumber) return;
+    setAssignGarageCode(garage.garageRegistrationNumber);
+    setAssignOpen(true);
+  };
 
   return (
     <>
-      {/* GARAGE GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
         {garages.map((garage) => (
           <GarageCard
             key={garage.id}
             id={garage.id}
             name={garage.name}
-            location={garage.locationName}
-            status={garage.status}
-            capacity={garage.capacity}
+            location={garage.locationName ?? ""}
+            status={garage.status ?? "active"}
+            capacity={garage.capacity ?? 0}
             managerName={garage.manager?.fullname ?? null}
-            onOpenDetails={(id) => setSelectedGarageId(id)}
-            onEdit={(id) => {
-              const g = garages.find((x) => x.id === id);
-              if (!g) return;
-
-              setSelectedGarage(g);
-              setEditOpen(true);
-            }}
-            onAssignManager={() => {
-              setAssignGarageCode(garage.garageRegistrationNumber);
-              setAssignOpen(true);
-            }}
+            onOpenDetails={setSelectedGarageId}
+            onEdit={handleEdit}
+            onAssignManager={() => handleAssignManager(garage)}
           />
         ))}
       </div>
 
-      {/* DETAILS MODAL */}
-      <GarageDetailsModal
-        open={!!selectedGarageId}
-        garageId={selectedGarageId}
-        onClose={() => setSelectedGarageId(null)}
-      />
+      {selectedGarageId && (
+        <GarageDetailsModal
+          open={true}
+          garageId={selectedGarageId}
+          onClose={() => setSelectedGarageId(null)}
+        />
+      )}
 
-      {/* EDIT MODAL */}
-      <GarageEditModal
-        open={editOpen}
-        garage={selectedGarage}
-        onClose={() => {
-          setEditOpen(false);
-          setSelectedGarage(null);
-        }}
-        onUpdated={() => window.location.reload()}
-      />
+      {selectedGarage && (
+        <GarageEditModal
+          open={editOpen}
+          garage={{
+            id: selectedGarage.id,
+            name: selectedGarage.name,
+            locationName: selectedGarage.locationName ?? "",
+            status: selectedGarage.status ?? "active",
+            capacity: selectedGarage.capacity ?? 0,
+            garageRegistrationNumber:
+              selectedGarage.garageRegistrationNumber ?? "",
+            valetAvailable: selectedGarage.valetAvailable ?? false,
+            manager: selectedGarage.manager ?? null,
+          }}
+          onClose={() => setEditOpen(false)}
+          onUpdated={() => window.location.reload()}
+        />
+      )}
 
-      {/* ASSIGN MANAGER MODAL */}
-      {companyId && assignGarageCode && (
+      {assignGarageCode && (
         <AssignManagerModal
           open={assignOpen}
           garageCode={assignGarageCode}
           companyId={companyId}
-          onClose={() => {
-            setAssignOpen(false);
-            setAssignGarageCode(null);
-          }}
+          onClose={() => setAssignOpen(false)}
           onAssigned={() => window.location.reload()}
         />
       )}

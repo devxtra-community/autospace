@@ -1,5 +1,17 @@
 import apiClient from "@/lib/apiClient";
 
+/* ================= TYPES ================= */
+
+export interface GetMyGaragesParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  managerFilter?: "assigned" | "unassigned";
+}
+
+/* ================= CREATE GARAGE ================= */
+
 export const createGarage = async (payload: {
   name: string;
   locationName: string;
@@ -10,23 +22,56 @@ export const createGarage = async (payload: {
   description?: string;
 }) => {
   const res = await apiClient.post("/api/garages/register", payload);
+
   return res.data.data;
 };
 
-export const getMyGarages = async (companyId: string) => {
-  const res = await apiClient.get(`/api/garages/byCompany/${companyId}`);
-  return res.data.data;
+/* ================= GET COMPANY GARAGES ================= */
+
+export const getMyGarages = async (
+  companyId: string,
+  page = 1,
+  limit = 6,
+  search?: string,
+  status?: string,
+  managerFilter?: "assigned" | "unassigned",
+) => {
+  // ✅ FIX: use proper type instead of any
+  const params: GetMyGaragesParams = {
+    page,
+    limit,
+  };
+
+  if (search) params.search = search;
+
+  if (status) params.status = status;
+
+  if (managerFilter) params.managerFilter = managerFilter;
+
+  const res = await apiClient.get(`/api/garages/byCompany/${companyId}`, {
+    params,
+  });
+
+  return res.data;
 };
+
+/* ================= MANAGER GARAGE ================= */
 
 export const getMyManagerGarage = async () => {
   const res = await apiClient.get("/api/garages/manager/my");
+
   return res.data.data;
 };
 
+/* ================= GARAGE BY ID ================= */
+
 export const getGarageById = async (garageId: string) => {
   const res = await apiClient.get(`/api/garages/${garageId}`);
+
   return res.data.data;
 };
+
+/* ================= UPDATE GARAGE ================= */
 
 export const updateGarageProfile = async (
   garageId: string,
@@ -39,26 +84,36 @@ export const updateGarageProfile = async (
   },
 ) => {
   const res = await apiClient.put(`/api/garages/${garageId}`, data);
+
   return res.data.data;
 };
+
+/* ================= ASSIGN MANAGER ================= */
 
 export const assignManagerToGarage = async (payload: {
   garageCode: string;
   managerId: string;
 }) => {
   const res = await apiClient.post("/api/garages/assign-manager", payload);
+
   return res.data.data;
 };
 
+/* ================= FLOORS ================= */
+
 export const createGarageFloor = async (payload: { floorNumber: number }) => {
   const res = await apiClient.post("/api/garages/floors", payload);
+
   return res.data.data;
 };
 
 export const getMyGarageFloors = async () => {
   const res = await apiClient.get("/api/garages/floors/my");
+
   return res.data.data;
 };
+
+/* ================= SLOTS ================= */
 
 export const createGarageSlot = async (payload: {
   floorNumber: number;
@@ -66,15 +121,18 @@ export const createGarageSlot = async (payload: {
   slotSize: "STANDARD" | "LARGE";
 }) => {
   const res = await apiClient.post("/api/garages/slots", payload);
+
   return res.data.data;
 };
 
 export const getMyGarageSlots = async () => {
   const res = await apiClient.get("/api/garages/slots/my");
+
   return res.data.data;
 };
 
 export const getSlotsByFloor = async (floorId: string) => {
   const res = await apiClient.get(`/api/garages/floors/${floorId}/slots`);
+
   return res.data.data;
 };

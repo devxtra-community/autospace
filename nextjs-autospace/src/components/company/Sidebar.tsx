@@ -17,7 +17,7 @@ import { logoutUser } from "@/lib/auth.api";
 const navItems = [
   { label: "Dashboard", href: "/company/dashboard", icon: LayoutDashboard },
   { label: "Bookings", href: "/company/bookings", icon: Car },
-  { label: "Valets", href: "/company/valets", icon: Users },
+  { label: "Employees", href: "/company/employees", icon: Users },
   { label: "Garages", href: "/company/garages", icon: Warehouse },
 ];
 

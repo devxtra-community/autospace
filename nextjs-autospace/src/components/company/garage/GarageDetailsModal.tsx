@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Modal } from "@/components/ui/Modal";
+import { MapPin, Phone, Mail, Layers, User, CheckCircle } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+
 import { getGarageById } from "@/services/garage.service";
 import {
   attachGarageImage,
@@ -9,16 +12,10 @@ import {
   getUploadUrl,
   uploadToR2,
 } from "@/services/garageImages.service";
+
 import apiClient from "@/lib/apiClient";
-import {
-  MapPin,
-  Phone,
-  Mail,
-  Layers,
-  User,
-  Hash,
-  CheckCircle,
-} from "lucide-react";
+
+/* ================= TYPES ================= */
 
 interface GarageImage {
   id: string;
@@ -40,6 +37,8 @@ interface Garage {
   longitude: number;
 }
 
+/* ================= COMPONENT ================= */
+
 export function GarageDetailsModal({
   open,
   onClose,
@@ -50,18 +49,22 @@ export function GarageDetailsModal({
   garageId: string | null;
 }) {
   const [garage, setGarage] = useState<Garage | null>(null);
+
   const [images, setImages] = useState<GarageImage[]>([]);
-  const [loading, setLoading] = useState(false);
+
   const [uploading, setUploading] = useState(false);
+
+  /* ================= FETCH GARAGE ================= */
 
   useEffect(() => {
     if (!open || !garageId) return;
 
-    setLoading(true);
     getGarageById(garageId)
       .then(setGarage)
-      .finally(() => setLoading(false));
+      .catch(() => setGarage(null));
   }, [open, garageId]);
+
+  /* ================= FETCH IMAGES ================= */
 
   useEffect(() => {
     if (!open || !garageId) return;
@@ -71,10 +74,13 @@ export function GarageDetailsModal({
       .catch(() => setImages([]));
   }, [open, garageId]);
 
+  /* ================= IMAGE UPLOAD ================= */
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !garageId) return;
 
     const file = e.target.files[0];
+
     setUploading(true);
 
     try {
@@ -87,114 +93,145 @@ export function GarageDetailsModal({
         mimeType: file.type,
         size: file.size,
       });
+
       const fileId = fileRes.data.id;
 
       await attachGarageImage(garageId, fileId);
 
       const updated = await getGarageImages(garageId);
+
       setImages(updated);
     } finally {
       setUploading(false);
     }
   };
 
-  return (
-    <Modal open={open} onClose={onClose} title="Garage Details">
-      {loading ? (
-        <p className="text-sm text-muted-foreground">Loading...</p>
-      ) : garage ? (
-        <div className="space-y-6">
-          {/* HEADER */}
-          <div className="border-b pb-4">
-            <h2 className="text-xl font-semibold">{garage.name}</h2>
+  /* ================= CLOSE IF NOT OPEN ================= */
 
-            {garage.garageRegistrationNumber && (
-              <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                <Hash size={14} />
-                Garage Code: {garage.garageRegistrationNumber}
-              </p>
-            )}
+  if (!open) return null;
+
+  /* ================= UI ================= */
+
+  return (
+    <>
+      {/* OVERLAY */}
+      <div
+        className={cn(
+          "fixed inset-0 z-50 bg-black/40",
+          open ? "opacity-100 visible" : "opacity-0 invisible",
+        )}
+        onClick={onClose}
+      />
+
+      {/* DRAWER */}
+      <div
+        className={cn(
+          "fixed top-0 right-0 z-50 h-full",
+          "w-full sm:w-[520px] lg:w-[620px]",
+          "bg-white shadow-2xl border-l",
+          "transition-transform duration-300",
+          open ? "translate-x-0" : "translate-x-full",
+          "flex flex-col",
+        )}
+      >
+        {/* HEADER */}
+        <div className="border-b px-6 py-4 flex justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Garage Details</h2>
+
+            <p className="text-sm text-muted-foreground">
+              #{garage?.garageRegistrationNumber ?? ""}
+            </p>
           </div>
 
+          <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg">
+            ✕
+          </button>
+        </div>
+
+        {/* BODY */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+          {/* TITLE */}
+          <h1 className="text-xl font-semibold">{garage?.name ?? ""}</h1>
+
           {/* IMAGES */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium">Garage Images</h3>
+          <div>
+            <h3 className="text-sm font-medium mb-3">Garage Images</h3>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {images.map((img) => (
                 <img
                   key={img.id}
                   src={img.url}
-                  className="h-32 w-full object-cover rounded-md border"
-                  alt="Garage"
+                  alt=""
+                  className="h-[110px] w-full object-cover rounded-lg border"
                 />
               ))}
             </div>
 
-            {garage.status === "active" && (
+            {garage?.status === "active" && (
               <input
                 type="file"
                 accept="image/*"
                 disabled={uploading}
                 onChange={handleImageUpload}
+                className="mt-3 text-sm"
               />
             )}
           </div>
 
-          {/* INFO GRID */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+          {/* INFO */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <InfoItem
               icon={<MapPin size={16} />}
               label="Location"
-              value={garage.locationName}
+              value={garage?.locationName ?? ""}
             />
 
-            {garage.contactEmail && (
-              <InfoItem
-                icon={<Mail size={16} />}
-                label="Email"
-                value={garage.contactEmail}
-              />
-            )}
+            <InfoItem
+              icon={<Mail size={16} />}
+              label="Email"
+              value={garage?.contactEmail ?? "—"}
+            />
 
-            {garage.contactPhone && (
-              <InfoItem
-                icon={<Phone size={16} />}
-                label="Phone"
-                value={garage.contactPhone}
-              />
-            )}
+            <InfoItem
+              icon={<Phone size={16} />}
+              label="Phone"
+              value={garage?.contactPhone ?? "—"}
+            />
 
             <InfoItem
               icon={<Layers size={16} />}
               label="Capacity"
-              value={`${garage.capacity}`}
+              value={garage ? String(garage.capacity) : ""}
             />
 
             <InfoItem
               icon={<User size={16} />}
               label="Manager"
-              value={garage.manager?.fullname ?? "Unassigned"}
+              value={garage?.manager?.fullname ?? "Unassigned"}
             />
 
             <InfoItem
               icon={<CheckCircle size={16} />}
               label="Status"
-              value={garage.status}
+              value={garage?.status ?? ""}
               badge
             />
           </div>
 
-          <p className="text-xs text-muted-foreground text-center">
-            Lat: {garage.latitude}, Lng: {garage.longitude}
-          </p>
+          {/* FOOTER */}
+          <div className="text-xs text-muted-foreground pt-4 border-t">
+            Lat: {garage?.latitude ?? ""}
+            Lng: {garage?.longitude ?? ""}
+          </div>
         </div>
-      ) : (
-        <p className="text-sm text-muted-foreground">No data</p>
-      )}
-    </Modal>
+      </div>
+    </>
   );
 }
+
+/* ================= INFO ITEM ================= */
 
 function InfoItem({
   icon,
@@ -208,16 +245,18 @@ function InfoItem({
   badge?: boolean;
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-lg border p-3">
-      <div className="mt-0.5 text-muted-foreground">{icon}</div>
-      <div className="flex flex-col">
-        <span className="text-xs text-muted-foreground">{label}</span>
+    <div className="flex gap-3 border rounded-lg p-3">
+      <div className="text-muted-foreground">{icon}</div>
+
+      <div>
+        <p className="text-xs text-muted-foreground">{label}</p>
+
         {badge ? (
-          <span className="mt-1 inline-block rounded-full bg-yellow-100 px-3 py-0.5 text-xs font-medium text-yellow-800">
+          <span className="px-3 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-800">
             {value}
           </span>
         ) : (
-          <span className="font-medium">{value}</span>
+          <p className="font-medium">{value}</p>
         )}
       </div>
     </div>

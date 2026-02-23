@@ -3,6 +3,7 @@ import { AppDataSource } from "../../../db/data-source";
 import { Company, CompanyStatus } from "../entities/company.entity";
 import { CreateCompanyInput } from "@autospace/shared";
 import { Garage } from "../../garage/entities/garage.entity";
+import { ILike } from "typeorm";
 
 export const createCompany = async (
   ownerUserId: string,
@@ -129,12 +130,23 @@ export const getAllCompanies = async (
   page = 1,
   limit = 10,
   search?: string,
+  status?: string,
 ) => {
   const companyRepo = AppDataSource.getRepository(Company);
   const garageRepo = AppDataSource.getRepository(Garage);
 
+  const where: any = {};
+
+  if (search) {
+    where.companyName = ILike(`%${search}%`);
+  }
+
+  if (status) {
+    where.status = status.toLowerCase();
+  }
+
   const [companies, total] = await companyRepo.findAndCount({
-    where: search ? { companyName: search } : {},
+    where,
     order: { createdAt: "DESC" },
     skip: (page - 1) * limit,
     take: limit,
@@ -177,12 +189,8 @@ export const getAllCompanies = async (
 
         garagesCount,
 
-        status:
-          company.status === "active"
-            ? "ACTIVE"
-            : company.status === "pending"
-              ? "PENDING"
-              : "REJECTED",
+        status: company.status.toUpperCase(),
+
         createdAt: company.createdAt,
       };
     }),

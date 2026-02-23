@@ -1,7 +1,7 @@
 import axios from "axios";
 import { AppDataSource } from "../data-source.js";
 import { Booking, BookingValetStatus } from "../entities/booking.entity.js";
-import { EntityManager, In, LessThan, MoreThan } from "typeorm";
+import { EntityManager, In, IsNull, LessThan, MoreThan } from "typeorm";
 
 const bookingRepo = AppDataSource.getRepository(Booking);
 
@@ -49,7 +49,6 @@ export class BookingService {
     );
   }
 
-  // KEEP THIS (from shri branch)
   async releaseValet(valetId: string) {
     await axios.patch(
       `${process.env.RESOURCE_SERVICE_URL}/internal/valets/${valetId}/release`,
@@ -64,7 +63,6 @@ export class BookingService {
     );
   }
 
-  // MERGED createBooking (HEAD + shri)
   async createBooking(bookingData: {
     userId: string;
     garageId: string;
@@ -174,7 +172,9 @@ export class BookingService {
 
     const rejected = booking.rejectedValetIds || [];
 
-    rejected.push(valetId);
+    if (!rejected.includes(valetId)) {
+      rejected.push(valetId);
+    }
 
     booking.rejectedValetIds = rejected;
 
@@ -184,7 +184,6 @@ export class BookingService {
         headers: {
           "x-user-id": "booking-service",
           "x-user-role": "SERVICE",
-          "x-user-email": "service@internal",
         },
         params: {
           exclude: rejected.join(","),
@@ -194,19 +193,22 @@ export class BookingService {
 
     const nextValet = response.data?.data;
 
+    // NO MORE VALETS → MANAGER MANUAL ASSIGN REQUIRED
     if (!nextValet) {
       booking.currentValetRequestId = null;
+
       booking.valetStatus = BookingValetStatus.NONE;
 
       return await bookingRepo.save(booking);
     }
 
+    // REQUEST NEXT VALET
     booking.currentValetRequestId = nextValet.id;
+
     booking.valetStatus = BookingValetStatus.REQUESTED;
 
     return await bookingRepo.save(booking);
   }
-
   async updateBookingWithValet(booking: Booking) {
     return await bookingRepo.save(booking);
   }
@@ -219,6 +221,113 @@ export class BookingService {
     if (!booking) throw new Error("Booking not found");
 
     return booking;
+  }
+
+  async getManualAssignments(managerId: string) {
+    // STEP 1: get manager garage
+    const garageRes = await axios.get(
+      `${process.env.RESOURCE_SERVICE_URL}/internal/garages/manager/${managerId}`,
+      {
+        headers: {
+          "x-user-id": managerId,
+          "x-user-role": "SERVICE",
+          "x-user-email": "service@internal",
+        },
+      },
+    );
+
+    const garage = garageRes.data?.data;
+
+    if (!garage) throw new Error("Garage not found");
+
+    const garageId = garage.id;
+
+    // STEP 2: get bookings needing manual assign
+
+    const bookings = await bookingRepo.find({
+      where: {
+        garageId,
+        valetRequested: true,
+        valetStatus: BookingValetStatus.NONE,
+        currentValetRequestId: IsNull(),
+      },
+      order: {
+        createdAt: "ASC",
+      },
+    });
+
+    const result = [];
+
+    for (const booking of bookings) {
+      const availableValetsRes = await axios.get(
+        `${process.env.RESOURCE_SERVICE_URL}/internal/valets/available/${garageId}`,
+        {
+          headers: {
+            "x-user-id": "booking-service",
+            "x-user-role": "SERVICE",
+          },
+        },
+      );
+
+      const availableValets = availableValetsRes.data?.data
+        ? [availableValetsRes.data.data]
+        : [];
+
+      const userRes = await axios.get(
+        `${process.env.AUTH_SERVICE_URL}/internal/users/${booking.userId}`,
+        {
+          headers: {
+            "x-user-id": "booking-service",
+            "x-user-role": "SERVICE",
+          },
+        },
+      );
+
+      const slotRes = await axios.get(
+        `${process.env.RESOURCE_SERVICE_URL}/internal/slots/${booking.slotId}`,
+        {
+          headers: {
+            "x-user-id": "booking-service",
+            "x-user-role": "SERVICE",
+          },
+        },
+      );
+
+      result.push({
+        bookingId: booking.id,
+
+        customer: {
+          id: booking.userId,
+          name: userRes.data.data.fullname,
+          phone: userRes.data.data.phone,
+        },
+
+        garage: {
+          id: garage.id,
+          name: garage.name,
+          location: garage.locationName,
+        },
+
+        slot: {
+          id: slotRes.data.data.id,
+          slotNumber: slotRes.data.data.slotNumber,
+          slotType: slotRes.data.data.slotSize,
+        },
+
+        timing: {
+          startTime: booking.startTime,
+          endTime: booking.endTime,
+        },
+
+        rejectedValetIds: booking.rejectedValetIds || [],
+
+        availableValets,
+
+        createdAt: booking.createdAt,
+      });
+    }
+
+    return result;
   }
 
   async getUserBookings(userId: string) {
@@ -305,16 +414,25 @@ export class BookingService {
     const enrichedBookings = await Promise.all(
       bookings.map(async (booking) => {
         try {
+          const headers = {
+            "x-user-id": "booking-service",
+            "x-user-role": "SERVICE",
+            "x-user-email": "service@internal",
+          };
+
           const userRes = await axios.get(
             `${process.env.AUTH_SERVICE_URL}/internal/users/${booking.userId}`,
+            { headers },
           );
 
           const garageRes = await axios.get(
             `${process.env.RESOURCE_SERVICE_URL}/internal/garages/${booking.garageId}`,
+            { headers },
           );
 
           const slotRes = await axios.get(
             `${process.env.RESOURCE_SERVICE_URL}/internal/slots/${booking.slotId}`,
+            { headers },
           );
 
           const user = userRes.data.data;
@@ -333,7 +451,8 @@ export class BookingService {
             dropTime: booking.endTime,
             createdAt: booking.createdAt,
           };
-        } catch {
+        } catch (err) {
+          console.log("Enrich failed:", err);
           return null;
         }
       }),
@@ -349,6 +468,8 @@ export class BookingService {
         valetStatus: BookingValetStatus.REQUESTED,
       },
     });
+
+    console.log("DB returned:", bookings);
 
     return await this.enrichBookings(bookings);
   }

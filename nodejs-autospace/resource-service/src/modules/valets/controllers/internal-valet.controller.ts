@@ -8,6 +8,7 @@ import {
   getAvailableValetService,
   releaseValetService,
   markValetBusyService,
+  getAllActiveValetsService,
 } from "../services/valet.service";
 
 export const resolveGarage = async (req: Request, res: Response) => {
@@ -97,6 +98,78 @@ export const assignValetController = async (req: Request, res: Response) => {
     return res.status(400).json({
       success: false,
       message: error.response?.data?.message || error.message,
+    });
+  }
+};
+
+export const rejectBookingController = async (req: Request, res: Response) => {
+  try {
+    const valetId = req.params.valetId as string;
+    const { bookingId } = req.body;
+
+    if (!bookingId) {
+      return res.status(400).json({
+        success: false,
+        message: "bookingId required",
+      });
+    }
+
+    // STEP 1: tell booking-service to reject
+    await axios.patch(
+      `${process.env.BOOKING_SERVICE_URL}/bookings/internal/${bookingId}/reject`,
+      { valetId },
+      {
+        headers: {
+          "x-user-id": valetId,
+          "x-user-role": "SERVICE",
+          "x-user-email": "service@internal",
+        },
+      },
+    );
+
+    // 🚨 DO NOT release valet here
+    // Because valet was never BUSY
+
+    return res.status(200).json({
+      success: true,
+      message: "Booking rejected successfully",
+    });
+  } catch (error: any) {
+    console.error("Reject valet error:", error.response?.data || error.message);
+
+    return res.status(400).json({
+      success: false,
+      message: error.response?.data?.message || error.message,
+    });
+  }
+};
+
+export const getAllActiveValetsController = async (
+  req: Request,
+  res: Response,
+): Promise<Response> => {
+  try {
+    const garageId = req.params.garageId as string;
+
+    if (!garageId) {
+      return res.status(400).json({
+        success: false,
+        message: "garageId required",
+      });
+    }
+
+    const valets = await getAllActiveValetsService(garageId);
+
+    return res.status(200).json({
+      success: true,
+      data: valets,
+    });
+  } catch (error) {
+    console.error("Get active valets error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch active valets",
     });
   }
 };

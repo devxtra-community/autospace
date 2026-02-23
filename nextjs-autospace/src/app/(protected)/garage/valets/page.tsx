@@ -1,7 +1,6 @@
 "use client";
 
 import { ValetsGrid } from "@/components/garage/valets/ValetsGrid";
-import { ValetsFilters } from "@/components/garage/valets/ValetsFilters";
 
 export default function GarageValetsPage() {
   return (
@@ -11,10 +10,6 @@ export default function GarageValetsPage() {
         <p className="text-muted-foreground">
           Manage valet availability for today
         </p>
-      </div>
-
-      <div className="mb-6">
-        <ValetsFilters />
       </div>
 
       <ValetsGrid />
