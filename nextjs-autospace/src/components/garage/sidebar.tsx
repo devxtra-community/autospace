@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { logoutUser } from "@/lib/auth.api";
 
 const navItems = [
   { label: "Dashboard", href: "/garage/dashboard", icon: LayoutDashboard },
@@ -73,7 +74,10 @@ export function Sidebar() {
 
         {/* Logout */}
         <div className="p-4 border-t">
-          <button className="flex items-center gap-2 px-4 py-2 rounded-sm text-md text-muted hover:bg-secondary hover:text-foreground w-full">
+          <button
+            className="flex items-center gap-2 px-4 py-2 rounded-sm text-md text-muted hover:bg-secondary hover:text-foreground w-full"
+            onClick={() => logoutUser()}
+          >
             <LogOut size={16} /> Logout
           </button>
         </div>

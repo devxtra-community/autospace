@@ -5,6 +5,9 @@ import {
   getGarageSlotsByFloor,
   getPublicAvailableSlotsService,
 } from "../services/garage-slot.service";
+import { AppDataSource } from "../../../db/data-source";
+import { Garage } from "../entities/garage.entity";
+import { GarageSlot } from "../entities/garage-slot.entity";
 
 export const createGarageSlotController = async (
   req: Request,
@@ -130,6 +133,61 @@ export const getPublicAvailableSlotsController = async (
     return res.status(500).json({
       success: false,
       message: error.message || "Failed to fetch available slots",
+    });
+  }
+};
+
+export async function getGarageByManager(req: Request, res: Response) {
+  const { managerId } = req.params;
+
+  const garage = await AppDataSource.getRepository(Garage)
+    .createQueryBuilder("g")
+    .where("g.managerId = :managerId", { managerId })
+    .select(["g.id"])
+    .getOne();
+
+  console.log("reosurce garageid", garage?.id);
+
+  if (!garage) {
+    return res.status(404).json({
+      success: false,
+      message: "Garage not found for this manager",
+    });
+  }
+
+  return res.json({
+    success: true,
+    data: { garageId: garage.id },
+  });
+}
+
+const slotRepo = AppDataSource.getRepository(GarageSlot);
+
+export const getSlotByIdInternal = async (req: Request, res: Response) => {
+  try {
+    const slotId = String(req.params.slotId);
+
+    const slot = await slotRepo.findOne({
+      where: { id: slotId },
+      select: ["id", "slotNumber", "slotSize", "status"],
+    });
+
+    if (!slot) {
+      return res.status(404).json({
+        success: false,
+        message: "Slot not found",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: slot,
+    });
+  } catch (err) {
+    console.error("Internal slot fetch error", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch slot",
     });
   }
 };

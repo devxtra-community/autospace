@@ -1,6 +1,7 @@
 "use client";
+import Navbar from "@/components/landing/Navbar";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getMyBookings, Booking } from "@/services/booking.service";
 import { getGarageById } from "@/services/garage.service";
 import {
@@ -34,40 +35,61 @@ export default function MyBookingsPage() {
   const [bookings, setBookings] = useState<BookingWithGarage[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await getMyBookings();
-        // For each booking, we ideally want garage details.
-        // For now, let's just fetch the bookings and we'll handle garage details.
-        // In a real app, the backend should return this joined.
-        const bookingsWithDetails = await Promise.all(
-          data.map(async (b) => {
-            try {
-              const garage = await getGarageById(b.garageId);
-              return { ...b, garage };
-            } catch {
-              return b;
-            }
-          }),
-        );
-        console.log("booking details", bookingsWithDetails);
-
-        setBookings(bookingsWithDetails);
-      } catch (err) {
-        console.error("Failed to fetch bookings", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+  const fetchData = useCallback(async (isPolling = false) => {
+    try {
+      const data = await getMyBookings();
+      const bookingsWithDetails = await Promise.all(
+        data.map(async (b) => {
+          try {
+            const garage = await getGarageById(b.garageId);
+            return { ...b, garage };
+          } catch {
+            return b;
+          }
+        }),
+      );
+      console.log(
+        isPolling ? "Polling bookings..." : "Initial booking fetch",
+        bookingsWithDetails,
+      );
+      setBookings(bookingsWithDetails);
+    } catch (err) {
+      console.error("Failed to fetch bookings", err);
+    } finally {
+      if (!isPolling) setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    // Only poll for updates if the active tab is visible
+    if (activeTab !== "active") return;
+
+    // Check if there are any bookings that might change status
+    const hasTransitionableBookings = bookings.some(
+      (b) =>
+        b.status === "confirmed" ||
+        b.status === "pending" ||
+        b.status === "occupied",
+    );
+
+    if (!hasTransitionableBookings && bookings.length > 0) return;
+
+    const interval = setInterval(() => {
+      fetchData(true);
+    }, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [fetchData, activeTab, bookings]);
 
   const activeBookings = bookings.filter(
     (b) =>
       b.status === "confirmed" ||
       b.status === "pending" ||
-      b.status === "active",
+      b.status === "occupied",
   );
   const historyBookings = bookings.filter(
     (b) => b.status === "completed" || b.status === "cancelled",
@@ -82,58 +104,61 @@ export default function MyBookingsPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">My Bookings</h1>
+    <main className="min-h-screen bg-white pt-32 pb-12 px-4 md:px-8">
+      <Navbar />
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8">My Bookings</h1>
 
-      {/* Tabs */}
-      <div className="flex  mb-8 bg-[#F5F1E6] rounded-sm p-1">
-        <button
-          onClick={() => setActiveTab("active")}
-          className={cn(
-            "flex-1 py-3 text-sm font-bold transition-all rounded-sm",
-            activeTab === "active"
-              ? "bg-white text-black border border-black"
-              : "text-gray-500 hover:text-black",
-          )}
-        >
-          Active Bookings
-        </button>
-        <button
-          onClick={() => setActiveTab("history")}
-          className={cn(
-            "flex-1 py-3 text-sm font-bold transition-all rounded-sm",
-            activeTab === "history"
-              ? "bg-white text-black border border-black"
-              : "text-gray-500 hover:text-black",
-          )}
-        >
-          Booking History
-        </button>
-      </div>
+        {/* Tabs */}
+        <div className="flex  mb-8 bg-[#F5F1E6] rounded-sm p-1">
+          <button
+            onClick={() => setActiveTab("active")}
+            className={cn(
+              "flex-1 py-3 text-sm font-bold transition-all rounded-sm",
+              activeTab === "active"
+                ? "bg-white text-black border border-black"
+                : "text-gray-500 hover:text-black",
+            )}
+          >
+            Active Bookings
+          </button>
+          <button
+            onClick={() => setActiveTab("history")}
+            className={cn(
+              "flex-1 py-3 text-sm font-bold transition-all rounded-sm",
+              activeTab === "history"
+                ? "bg-white text-black border border-black"
+                : "text-gray-500 hover:text-black",
+            )}
+          >
+            Booking History
+          </button>
+        </div>
 
-      {/* Content */}
-      <div className="space-y-6">
-        {activeTab === "active" ? (
-          activeBookings.length > 0 ? (
-            activeBookings.map((booking) => (
-              <ActiveBookingCard key={booking.id} booking={booking} />
+        {/* Content */}
+        <div className="space-y-6">
+          {activeTab === "active" ? (
+            activeBookings.length > 0 ? (
+              activeBookings.map((booking) => (
+                <ActiveBookingCard key={booking.id} booking={booking} />
+              ))
+            ) : (
+              <div className="text-center py-12 bg-gray-50 border border-dashed border-black/20 rounded-sm">
+                <p className="text-gray-500">No active bookings found.</p>
+              </div>
+            )
+          ) : historyBookings.length > 0 ? (
+            historyBookings.map((booking) => (
+              <HistoryBookingCard key={booking.id} booking={booking} />
             ))
           ) : (
             <div className="text-center py-12 bg-gray-50 border border-dashed border-black/20 rounded-sm">
-              <p className="text-gray-500">No active bookings found.</p>
+              <p className="text-gray-500">No booking history found.</p>
             </div>
-          )
-        ) : historyBookings.length > 0 ? (
-          historyBookings.map((booking) => (
-            <HistoryBookingCard key={booking.id} booking={booking} />
-          ))
-        ) : (
-          <div className="text-center py-12 bg-gray-50 border border-dashed border-black/20 rounded-sm">
-            <p className="text-gray-500">No booking history found.</p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+    </main>
   );
 }
 
@@ -294,8 +319,12 @@ function ActiveBookingCard({ booking }: { booking: BookingWithGarage }) {
 
         <div className="space-y-3">
           <button className="w-full flex items-center justify-center gap-2 py-3 border border-black rounded-sm text-sm font-bold hover:bg-gray-50 transition-colors">
-            ENTRY PIN :{" "}
-            <span className="text-green-800">{booking.entryPin}</span>
+            {booking.status === "confirmed" ? "ENTRY PIN :" : "EXIT PIN :"}{" "}
+            {booking.status === "confirmed" ? (
+              <span className="text-green-800">{booking.entryPin}</span>
+            ) : (
+              <span className="text-green-800">{booking.exitPin}</span>
+            )}
           </button>
           <button className="w-full flex items-center justify-center gap-2 py-3 bg-[#C5E4FD] border border-black rounded-sm text-sm font-bold hover:bg-[#b0dcfd] transition-colors">
             Track your Valet <Wifi size={18} className="rotate-90" />

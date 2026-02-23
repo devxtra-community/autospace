@@ -25,6 +25,8 @@ export interface Booking {
   entryUsed: boolean;
   exitUsedd: boolean;
   vehicleType: string;
+  slotNumber: string;
+  slotSize: string;
   // These might be needed if we want to store additional info
   garageName?: string;
   garageAddress?: string;

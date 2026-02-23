@@ -1,12 +1,14 @@
 "use client";
-export const dynamic = "force-dynamic";
+// export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
-import { MapPin, Star, ChevronDown, ChevronUp, ArrowLeft } from "lucide-react";
+import { MapPin, Star, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 
 import { useSearchParams } from "next/navigation";
 import apiClient from "@/lib/apiClient";
+// import dynamic from "next/dynamic";
+import SearchMap from "@/components/map/SearchMap";
 // import GarageDetails from "@/components/garage/GarageDetails";
 
 interface PublicGarage {
@@ -41,7 +43,7 @@ export default function SearchPage() {
       );
 
       setGarages(res.data.data);
-      console.log("garages", res.data);
+      // console.log("garages", res.data);
     } catch (error) {
       console.log(error);
     } finally {
@@ -188,59 +190,14 @@ export default function SearchPage() {
         </div>
       </div>
 
-      <div className="hidden md:flex flex-1 relative bg-[#E5E7EB] overflow-hidden">
-        <div
-          className="absolute inset-0 opacity-20 pointer-events-none"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle, #000 1px, transparent 1px)",
-            backgroundSize: "20px 20px",
-          }}
-        />
-
-        <Link
-          href="/"
-          className="absolute top-6 left-6 z-20 bg-white p-2.5 shadow-md border border-gray-200 hover:bg-gray-50 transition-all flex items-center justify-center"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-800" />
-        </Link>
-
-        <svg
-          className="absolute inset-0 w-full h-full pointer-events-none"
-          viewBox="0 0 1000 1000"
-        >
-          <path
-            d="M0 200 Q 300 150 500 400 T 1000 300"
-            stroke="#888"
-            strokeWidth="4"
-            fill="none"
-            opacity="0.3"
+      <div className="hidden md:flex flex-1 relative overflow-hidden">
+        {!loading && lat && lng && (
+          <SearchMap
+            garages={garages}
+            userLat={Number(lat)}
+            userLng={Number(lng)}
           />
-          <path
-            d="M200 0 Q 350 400 300 600 T 500 1000"
-            stroke="#888"
-            strokeWidth="3"
-            fill="none"
-            opacity="0.3"
-          />
-          <path
-            d="M1000 100 Q 700 300 800 500 T 600 1000"
-            stroke="#888"
-            strokeWidth="5"
-            fill="none"
-            opacity="0.3"
-          />
-        </svg>
-
-        {/* Custom Pin Markers */}
-        <MapMarker top="20%" left="35%" showPrice />
-        <MapMarker top="55%" left="75%" showPrice />
-        <MapMarker top="85%" left="65%" showPrice />
-        <MapMarker top="45%" left="15%" />
-        <MapMarker top="15%" left="85%" />
-
-        {/* Small Detail: Gray path from image */}
-        <div className="absolute top-[40%] right-[10%] w-24 h-24 border-2 border-gray-400/20" />
+        )}
       </div>
 
       <style jsx global>{`
@@ -268,7 +225,7 @@ export default function SearchPage() {
   );
 }
 
-function MapMarker({
+export function MapMarker({
   top,
   left,
   showPrice = false,

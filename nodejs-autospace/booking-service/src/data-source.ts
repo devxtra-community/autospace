@@ -12,7 +12,7 @@ export const AppDataSource = new DataSource({
     rejectUnauthorized: false,
   },
   // schema: "booking_db",
-  synchronize: true,
+  synchronize: false,
   entities: [Booking],
 });
 
