@@ -23,6 +23,9 @@ export const getPublicGarageController = async (
 
     console.log("lat and long", latitude, longitude);
 
+    console.log("RAW QUERY:", req.query);
+    console.log("VALIDATED QUERY:", req.validateQuery);
+
     if (
       (latitude !== undefined && isNaN(latitude)) ||
       (longitude !== undefined && isNaN(longitude))
@@ -33,6 +36,12 @@ export const getPublicGarageController = async (
       });
     }
 
+    const valetAvailable = query.valetAvailable;
+
+    // let valetAvailable = query.valetAvailable
+
+    console.log("valetavailable", valetAvailable);
+
     const radius = query.radius ? Number(query.radius) : 25;
     const limit = query.limit ? Number(query.limit) : 10;
     const page = query.page ? Number(query.page) : 1;
@@ -41,7 +50,7 @@ export const getPublicGarageController = async (
       latitude,
       longitude,
       radius,
-      valetAvailable: query.valetAvailable,
+      valetAvailable,
       limit,
       page,
     });

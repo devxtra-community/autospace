@@ -60,6 +60,6 @@ export const redirectByRole = async (role: string) => {
     }
 
     default:
-      window.location.href = "/dashboard";
+      window.location.href = "/";
   }
 };

@@ -123,13 +123,15 @@ async function getGaragesWithProximity(
         "valetAvailable",
         status,
         "createdAt",
-        (
-          6371 * acos(
-            cos(radians($1)) * cos(radians(latitude)) *
-            cos(radians(longitude::double precision) - radians($2)) +
-            sin(radians($1)) * sin(radians(latitude))
-          )
-        ) AS distance
+      (
+ 6371 * acos(
+  LEAST(1.0, GREATEST(-1.0,
+    cos(radians($1::double precision)) * cos(radians(latitude)) *
+    cos(radians(longitude::double precision) - radians($2::double precision)) +
+    sin(radians($1::double precision)) * sin(radians(latitude))
+  ))
+ )
+) AS distance
       FROM garages
       WHERE status = $3
       ${valetFilter}

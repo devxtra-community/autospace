@@ -68,8 +68,10 @@ export default function CreateGaragePage() {
         capacity: data.capacity,
       });
 
+      console.log("create garage is called");
+
       setCurrentStep(3);
-      setTimeout(() => router.push("/company/dashboard"), 1500);
+      setTimeout(() => router.push("/company/garages"), 1500);
     } catch {
       setError("Garage creation failed");
     }

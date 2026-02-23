@@ -134,7 +134,7 @@ export default function GarageForm({
 
           <Button
             type="submit"
-            className="bg-black text-yellow-400"
+            className="bg-black text-yellow-400 hover:bg-gray-800"
             disabled={!allFilled || isLoading}
           >
             {isLoading ? (

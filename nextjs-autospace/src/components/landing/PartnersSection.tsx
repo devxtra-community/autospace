@@ -7,14 +7,14 @@ const partners = [
   { name: "Kross", src: "/company3.jpg" },
   { name: "Fact", src: "/company4.jpg" },
   { name: "Trek", src: "/company5.jpg" },
-  { name: "X", src: "/company6.jpg" },
+  { name: "X", src: "/comapany6.jpg" },
 
   // duplicate for seamless loop
   { name: "Nova", src: "/company1.jpg" },
   { name: "Kross", src: "/company3.jpg" },
   { name: "Fact", src: "/company4.jpg" },
   { name: "Trek", src: "/company5.jpg" },
-  { name: "X", src: "/company6.jpg" },
+  { name: "X", src: "/comapany6.jpg" },
 ];
 
 export default function PartnersSection() {
