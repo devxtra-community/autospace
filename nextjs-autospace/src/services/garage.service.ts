@@ -1,7 +1,4 @@
 import apiClient from "@/lib/apiClient";
-
-/* ================= TYPES ================= */
-
 export interface GetMyGaragesParams {
   page?: number;
   limit?: number;
@@ -9,8 +6,6 @@ export interface GetMyGaragesParams {
   status?: string;
   managerFilter?: "assigned" | "unassigned";
 }
-
-/* ================= CREATE GARAGE ================= */
 
 export const createGarage = async (payload: {
   name: string;
@@ -26,8 +21,6 @@ export const createGarage = async (payload: {
   return res.data.data;
 };
 
-/* ================= GET COMPANY GARAGES ================= */
-
 export const getMyGarages = async (
   companyId: string,
   page = 1,
@@ -36,7 +29,6 @@ export const getMyGarages = async (
   status?: string,
   managerFilter?: "assigned" | "unassigned",
 ) => {
-  // ✅ FIX: use proper type instead of any
   const params: GetMyGaragesParams = {
     page,
     limit,
@@ -55,23 +47,17 @@ export const getMyGarages = async (
   return res.data;
 };
 
-/* ================= MANAGER GARAGE ================= */
-
 export const getMyManagerGarage = async () => {
   const res = await apiClient.get("/api/garages/manager/my");
 
   return res.data.data;
 };
 
-/* ================= GARAGE BY ID ================= */
-
 export const getGarageById = async (garageId: string) => {
   const res = await apiClient.get(`/api/garages/${garageId}`);
 
   return res.data.data;
 };
-
-/* ================= UPDATE GARAGE ================= */
 
 export const updateGarageProfile = async (
   garageId: string,
@@ -88,8 +74,6 @@ export const updateGarageProfile = async (
   return res.data.data;
 };
 
-/* ================= ASSIGN MANAGER ================= */
-
 export const assignManagerToGarage = async (payload: {
   garageCode: string;
   managerId: string;
@@ -98,8 +82,6 @@ export const assignManagerToGarage = async (payload: {
 
   return res.data.data;
 };
-
-/* ================= FLOORS ================= */
 
 export const createGarageFloor = async (payload: { floorNumber: number }) => {
   const res = await apiClient.post("/api/garages/floors", payload);
@@ -112,8 +94,6 @@ export const getMyGarageFloors = async () => {
 
   return res.data.data;
 };
-
-/* ================= SLOTS ================= */
 
 export const createGarageSlot = async (payload: {
   floorNumber: number;

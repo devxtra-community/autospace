@@ -1,6 +1,7 @@
 import { FindOptionsWhere } from "typeorm";
 import { AppDataSource } from "../../../db/data-source";
 import { Garage, GarageStatus } from "../entities/garage.entity";
+import redisClient from "../../../config/redis";
 
 interface GetPublicGaragesFilters {
   latitude?: number;
@@ -45,8 +46,20 @@ export const getPublicGarages = async (filters: GetPublicGaragesFilters) => {
 export const getGarageByIdService = async (garageId: string) => {
   const garagesRepo = AppDataSource.getRepository(Garage);
 
+  const cacheKey = `garage:${garageId}`;
+
+  const cachedGarage = await redisClient.get(cacheKey);
+
+  if (cachedGarage) {
+    console.log("Garage fetched from Redis");
+    return JSON.parse(cachedGarage);
+  }
+
   const garage = await garagesRepo.findOne({
-    where: { id: garageId, status: GarageStatus.ACTIVE },
+    where: {
+      id: garageId,
+      status: GarageStatus.ACTIVE,
+    },
     select: [
       "id",
       "name",
@@ -61,6 +74,14 @@ export const getGarageByIdService = async (garageId: string) => {
       "createdAt",
     ],
   });
+
+  if (!garage) return null;
+
+  await redisClient.set(cacheKey, JSON.stringify(garage), {
+    EX: 600,
+  });
+
+  console.log("Garage fetched from DB and cached");
 
   return garage;
 };

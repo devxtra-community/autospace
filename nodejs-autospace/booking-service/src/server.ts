@@ -7,6 +7,7 @@ import { AppDataSource } from "./data-source.js";
 import { startPendingExpiryJob } from "./jobs/pendingExpiry.jobs.js";
 import { startBookingLifecycleJob } from "./jobs/bookingLifeCycle.job.js";
 import { startNoShowExpiryJob } from "./jobs/noShowExpiry.job.js";
+import { connectRedis } from "./config/redis.js";
 
 dotenv.config();
 
@@ -18,7 +19,9 @@ const startServer = async () => {
   try {
     await AppDataSource.initialize();
     logger.info("database connected");
-    // await connectRedis();
+
+    await connectRedis();
+    logger.info("redis connected");
 
     startPendingExpiryJob();
     startBookingLifecycleJob();

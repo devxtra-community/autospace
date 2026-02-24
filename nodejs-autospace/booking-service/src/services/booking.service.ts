@@ -2,6 +2,7 @@ import axios from "axios";
 import { AppDataSource } from "../data-source.js";
 import { Booking, BookingValetStatus } from "../entities/booking.entity.js";
 import { EntityManager, In, IsNull, LessThan, MoreThan } from "typeorm";
+import redisClient from "../config/redis.js";
 
 const bookingRepo = AppDataSource.getRepository(Booking);
 
@@ -73,65 +74,99 @@ export class BookingService {
     status?: string;
     valetRequested: boolean;
   }) {
-    return await AppDataSource.transaction(async (manager: EntityManager) => {
-      const repo = manager.getRepository(Booking);
+    const idempotencyKey = `booking:idemp:${bookingData.userId}:${bookingData.slotId}:${bookingData.startTime.toISOString()}`;
 
-      const overlap = await repo.findOne({
-        where: {
-          slotId: bookingData.slotId,
-          status: In(["pending", "confirmed"]),
-          startTime: LessThan(bookingData.endTime),
-          endTime: MoreThan(bookingData.startTime),
+    const idempotencyResult = await redisClient.set(
+      idempotencyKey,
+      "processing",
+      {
+        NX: true,
+        EX: 60,
+      },
+    );
+
+    if (!idempotencyResult) {
+      const err = new Error("Duplicate booking request");
+      (err as Error & { statusCode?: number }).statusCode = 409;
+      throw err;
+    }
+
+    const lockKey = `lock:slot:${bookingData.slotId}`;
+
+    const lock = await redisClient.set(lockKey, "locked", {
+      NX: true,
+      EX: 30,
+    });
+
+    if (!lock) {
+      const err = new Error("Slot is being booked by another request");
+      (err as Error & { statusCode?: number }).statusCode = 409;
+      throw err;
+    }
+
+    try {
+      const result = await AppDataSource.transaction(
+        async (manager: EntityManager) => {
+          const repo = manager.getRepository(Booking);
+
+          // existing overlap check
+          const overlap = await repo.findOne({
+            where: {
+              slotId: bookingData.slotId,
+              status: In(["pending", "confirmed"]),
+              startTime: LessThan(bookingData.endTime),
+              endTime: MoreThan(bookingData.startTime),
+            },
+          });
+
+          if (overlap) {
+            throw new Error("Slot already booked");
+          }
+
+          function generatePin(): string {
+            return Math.floor(1000 + Math.random() * 9000).toString();
+          }
+
+          const booking = repo.create({
+            userId: bookingData.userId,
+            garageId: bookingData.garageId,
+            slotId: bookingData.slotId,
+            startTime: bookingData.startTime,
+            endTime: bookingData.endTime,
+            vehicleType: bookingData.vehicleType,
+            status: bookingData.status || "pending",
+            valetRequested: bookingData.valetRequested,
+            valetStatus: bookingData.valetRequested
+              ? BookingValetStatus.REQUESTED
+              : BookingValetStatus.NONE,
+            entryPin: generatePin(),
+            entryUsed: false,
+            exitUsed: false,
+          });
+
+          const savedBooking = await repo.save(booking);
+
+          if (savedBooking.valetRequested) {
+            await this.assignFirstValetRequest(savedBooking, manager);
+          }
+
+          return savedBooking;
         },
+      );
+
+      // delete idempotency key
+      await redisClient.set(idempotencyKey, "completed", {
+        EX: 300,
       });
 
-      if (overlap) {
-        throw new Error("Slot already booked");
-      }
+      await redisClient.del(`userBookings:${bookingData.userId}`);
 
-      const locked = await this.lockSlot(bookingData.slotId);
-
-      if (!locked) {
-        throw new Error("Slot lock failed");
-      }
-
-      try {
-        function generatePin(): string {
-          return Math.floor(1000 + Math.random() * 9000).toString();
-        }
-
-        const booking = repo.create({
-          userId: bookingData.userId,
-          garageId: bookingData.garageId,
-          slotId: bookingData.slotId,
-          startTime: bookingData.startTime,
-          endTime: bookingData.endTime,
-          vehicleType: bookingData.vehicleType,
-          status: bookingData.status || "pending",
-          valetRequested: bookingData.valetRequested,
-          valetStatus: bookingData.valetRequested
-            ? BookingValetStatus.REQUESTED
-            : BookingValetStatus.NONE,
-
-          entryPin: generatePin(),
-          entryUsed: false,
-          exitUsed: false,
-        });
-
-        const savedBooking = await repo.save(booking);
-
-        if (savedBooking.valetRequested) {
-          await this.assignFirstValetRequest(savedBooking, manager);
-        }
-
-        return savedBooking;
-      } catch (err) {
-        await this.releaseSlot(bookingData.slotId);
-        throw err;
-      }
-    });
+      return result;
+    } finally {
+      // always release Redis lock
+      await redisClient.del(lockKey);
+    }
   }
-
   async assignFirstValetRequest(booking: Booking, manager: EntityManager) {
     try {
       const response = await axios.get(
@@ -214,11 +249,27 @@ export class BookingService {
   }
 
   async getBookingById(id: string) {
+    const cacheKey = `booking:${id}`;
+
+    //check Redis
+    const cached = await redisClient.get(cacheKey);
+
+    if (cached) {
+      console.log("Booking from Redis");
+      return JSON.parse(cached);
+    }
+
+    //fetch from DB
     const booking = await bookingRepo.findOne({
       where: { id },
     });
 
     if (!booking) throw new Error("Booking not found");
+
+    //store in Redis
+    await redisClient.set(cacheKey, JSON.stringify(booking), { EX: 300 });
+
+    console.log("Booking from DB");
 
     return booking;
   }
@@ -331,10 +382,23 @@ export class BookingService {
   }
 
   async getUserBookings(userId: string) {
-    return await bookingRepo.find({
+    const cacheKey = `userBookings:${userId}`;
+
+    const cached = await redisClient.get(cacheKey);
+
+    if (cached) {
+      console.log("User bookings from Redis");
+      return JSON.parse(cached);
+    }
+
+    const bookings = await bookingRepo.find({
       where: { userId },
       order: { createdAt: "DESC" },
     });
+
+    await redisClient.set(cacheKey, JSON.stringify(bookings), { EX: 300 });
+
+    return bookings;
   }
 
   async updateBookingStatus(bookingId: string, status: string) {
@@ -378,7 +442,11 @@ export class BookingService {
       );
     }
 
-    return await bookingRepo.save(booking);
+    const updated = await bookingRepo.save(booking);
+    await redisClient.del(`booking:${bookingId}`);
+    await redisClient.del(`userBookings:${booking.userId}`);
+
+    return updated;
   }
 
   async deleteBooking(bookingId: string) {
@@ -393,6 +461,9 @@ export class BookingService {
     if (booking.valetId) await this.releaseValet(booking.valetId);
 
     await bookingRepo.delete(bookingId);
+
+    await redisClient.del(`booking:${bookingId}`);
+    await redisClient.del(`userBookings:${booking.userId}`);
 
     return true;
   }
