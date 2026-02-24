@@ -3,6 +3,7 @@ import { AppDataSource } from "../data-source.js";
 import { Booking, BookingValetStatus } from "../entities/booking.entity.js";
 import { EntityManager, In, IsNull, LessThan, MoreThan } from "typeorm";
 import redisClient from "../config/redis.js";
+import { publishEvent } from "../config/rabbitmq.js";
 
 const bookingRepo = AppDataSource.getRepository(Booking);
 
@@ -105,7 +106,7 @@ export class BookingService {
     }
 
     try {
-      const result = await AppDataSource.transaction(
+      const savedBooking = await AppDataSource.transaction(
         async (manager: EntityManager) => {
           const repo = manager.getRepository(Booking);
 
@@ -146,8 +147,13 @@ export class BookingService {
 
           const savedBooking = await repo.save(booking);
 
+          await this.lockSlot(savedBooking.slotId);
+
           if (savedBooking.valetRequested) {
-            await this.assignFirstValetRequest(savedBooking, manager);
+            await publishEvent("valet.requested", {
+              bookingId: savedBooking.id,
+              garageId: savedBooking.garageId,
+            });
           }
 
           return savedBooking;
@@ -161,7 +167,16 @@ export class BookingService {
 
       await redisClient.del(`userBookings:${bookingData.userId}`);
 
-      return result;
+      await publishEvent("booking.created", {
+        bookingId: savedBooking.id,
+        userId: savedBooking.userId,
+        garageId: savedBooking.garageId,
+        slotId: savedBooking.slotId,
+        startTime: savedBooking.startTime,
+        endTime: savedBooking.endTime,
+      });
+
+      return savedBooking;
     } finally {
       // always release Redis lock
       await redisClient.del(lockKey);

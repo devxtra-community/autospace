@@ -6,6 +6,7 @@ import {
 } from "../entities/valets.entity";
 import { Garage } from "../../garage/entities/garage.entity";
 import axios from "axios";
+import { publishEvent } from "../../../config/rabbitmq";
 
 export const approveValetService = async (
   valetId: string,
@@ -307,4 +308,28 @@ export const releaseValetService = async (valetId: string) => {
   valet.currentBookingId = null;
 
   return await valetRepo.save(valet);
+};
+
+export const assignValetToBooking = async (
+  bookingId: string,
+  garageId: string,
+) => {
+  const valets = await getAvailableValetService(garageId);
+
+  if (!valets.length) {
+    console.log("No available valet");
+    return;
+  }
+
+  const valetId = valets[0].id;
+
+  await publishEvent("valet.request.created", {
+    bookingId,
+    valetId,
+  });
+
+  console.log("Valet request created and event published:", {
+    bookingId,
+    valetId,
+  });
 };
