@@ -54,29 +54,22 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
   const [valetEnabled, setValetEnabled] = useState(false);
   const [duration, setDuration] = useState(2);
   const [isBooking, setIsBooking] = useState(false);
-  const [bookingId, setBookingId] = useState<string | null>(null);
-  const [showPayment, setShowPayment] = useState(false);
+  // const [bookingId, setBookingId] = useState<string | null>(null);
+  // const [showPayment, setShowPayment] = useState(false);
   const [isSlotModalOpen, setIsSlotModalOpen] = useState(false);
-  const [isConfirming, setIsConfirming] = useState(false);
+  // const [isConfirming, setIsConfirming] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{
     floor: number;
     slotId: string;
   } | null>(null);
+
   const [swiped, setSwiped] = useState(false);
 
   const [valetState, setValetState] = useState<
     "IDLE" | "AVAILABLE" | "REQUESTED" | "ASSIGNED" | "NONE"
   >("IDLE");
 
-  interface Valet {
-    id: string;
-    name: string;
-    phone: string;
-    rating?: number;
-    avatar?: string;
-  }
-
-  const [assignedValet, setAssignedValet] = useState<Valet | null>(null);
+  // const [assignedValet, setAssignedValet] = useState<Valet | null>(null);
 
   const [images, setImages] = useState<string[]>([]);
   const [imgLoading, setImgLoading] = useState(true);
@@ -100,6 +93,14 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
       setDuration(diff);
     }
   }, [selectedDate, startTime, endTime]);
+
+  //   useEffect(() => {
+  //   const id = localStorage.getItem("START_VALET_POLLING");
+  //   if (!id) return;
+
+  //   startValetPolling(id);
+  //   localStorage.removeItem("START_VALET_POLLING");
+  // }, []);
 
   useEffect(() => {
     const loadImages = async () => {
@@ -150,40 +151,6 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
     );
   };
 
-  const startValetPolling = (bookingIdParam?: string | null) => {
-    const id = bookingIdParam || bookingId;
-    if (!id) return;
-
-    const interval = setInterval(async () => {
-      try {
-        const res = await apiClient.get(`/api/bookings/${id}`);
-        const booking = res.data?.data;
-
-        if (!booking) return;
-
-        // valet accepted
-        if (booking.valetStatus === "ASSIGNED") {
-          setValetState("ASSIGNED");
-          setAssignedValet(booking.valet);
-          setValetEnabled(true);
-          clearInterval(interval);
-        }
-
-        // no valet found / stopped
-        if (
-          booking.valetStatus === "NONE" ||
-          booking.valetStatus === "COMPLETED"
-        ) {
-          setValetState("NONE");
-          clearInterval(interval);
-        }
-      } catch (err) {
-        console.error("Valet polling failed", err);
-        clearInterval(interval);
-      }
-    }, 3000); // check every 3 sec
-  };
-
   const handleBooking = async () => {
     if (!selectedSlot) {
       alert("Please select a parking slot");
@@ -204,8 +171,8 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
         return;
       }
 
-      if (duration <= 0) {
-        alert("End time must be after start time");
+      if (duration < 0.5) {
+        alert("Minimum booking duration is 30 minutes");
         setIsBooking(false);
         return;
       }
@@ -216,7 +183,8 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
         startTime: startISO,
         endTime: endISO,
         vehicleType,
-        valetRequired: valetEnabled,
+        amount: total,
+        valetRequested: valetEnabled,
       };
 
       const response = await apiClient.post("/api/bookings", payload);
@@ -224,13 +192,20 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
       console.log("booking", response.data);
 
       const newBookingId = response.data.data.id;
-      setBookingId(newBookingId);
-      setShowPayment(true);
+      // setBookingId(newBookingId);
+      // setIsBooking(true);
 
-      if (valetEnabled) {
-        setValetState("REQUESTED");
-        startValetPolling(newBookingId);
-      }
+      const checkoutRes = await apiClient.post("/api/payment/create-checkout", {
+        bookingId: newBookingId,
+      });
+
+      window.location.href = checkoutRes.data.url;
+      // setShowPayment(true);
+
+      // if (valetEnabled) {
+      //   setValetState("REQUESTED");
+      //   startValetPolling(newBookingId);
+      // }
     } catch (err) {
       const error = err as {
         response?: {
@@ -250,21 +225,6 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
       alert(error?.response?.data?.message || "Booking failed");
     } finally {
       setIsBooking(false);
-    }
-  };
-
-  const handlePaymentSuccess = async () => {
-    if (!bookingId || isConfirming) return;
-
-    try {
-      setIsConfirming(true);
-      await apiClient.patch(`/api/bookings/${bookingId}/confirm`);
-      alert("payment success");
-      setShowPayment(false);
-    } catch {
-      alert("Payment confirmed but booking update failed");
-    } finally {
-      setIsConfirming(false);
     }
   };
 
@@ -530,7 +490,7 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                     )}
                   </div>
                   <div className="text-2xl font-black text-gray-900">
-                    ${sedanPrice}{" "}
+                    ₹{sedanPrice}{" "}
                     <span className="text-sm font-normal text-gray-500">
                       / hour
                     </span>
@@ -548,7 +508,7 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                     )}
                   </div>
                   <div className="text-2xl font-black text-gray-900">
-                    ${suvPrice}{" "}
+                    ₹{suvPrice}{" "}
                     <span className="text-sm font-normal text-gray-500">
                       / hour
                     </span>
@@ -573,7 +533,7 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                         {hr} Hour
                       </span>
                       <span className="text-sm font-black text-gray-900">
-                        ${sedanPrice * hr}
+                        ₹{sedanPrice * hr}
                       </span>
                     </div>
                   ))}
@@ -755,7 +715,7 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                   )}
 
                   {/* Assigned */}
-                  {valetState === "ASSIGNED" && assignedValet && (
+                  {/* {valetState === "ASSIGNED" && assignedValet && (
                     <div className="mt-4 p-3 border rounded bg-green-50">
                       <p className="text-sm font-bold text-green-700">
                         ✔ Valet Assigned: {assignedValet.name}
@@ -764,7 +724,7 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                         Phone: {assignedValet.phone}
                       </p>
                     </div>
-                  )}
+                  )} */}
                 </div>
 
                 {/* Slot Selection Integration */}
@@ -801,7 +761,7 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                       {vehicleType === "sedan" ? "Sedan" : "SUV"} Rate
                     </span>
                     <span className="text-sm font-bold text-gray-900">
-                      ${currentPrice}/hr
+                      ₹{currentPrice}/hr
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -817,7 +777,7 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                       Subtotal
                     </span>
                     <span className="text-sm font-black text-gray-900">
-                      ${subtotal.toFixed(2)}
+                      ₹{subtotal.toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -827,7 +787,7 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                     <span
                       className={`${valetEnabled ? "text-gray-900 font-bold" : "text-gray-300"}`}
                     >
-                      +${valetTotal.toFixed(2)}
+                      +₹{valetTotal.toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -837,7 +797,7 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                       Total Price
                     </span>
                     <span className="text-2xl font-black text-gray-900 tracking-tight">
-                      ${total.toFixed(2)}
+                      ₹{total.toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -867,36 +827,6 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
           </div>
         </div>
       </div>
-
-      {showPayment && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[100]">
-          <div className="bg-white p-6 w-[380px] shadow-xl border">
-            <h3 className="text-lg font-bold mb-4">Dummy Payment</h3>
-
-            <div className="text-sm mb-6">
-              Booking ID: <b>{bookingId}</b> <br />
-              Amount: <b>${total.toFixed(2)}</b>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                disabled={isConfirming}
-                className="flex-1 bg-green-500 text-white py-2"
-                onClick={handlePaymentSuccess}
-              >
-                {isConfirming ? "Processing..." : "Pay Success"}
-              </button>
-
-              <button
-                className="flex-1 bg-gray-200 py-2"
-                onClick={() => setShowPayment(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <ParkingSlotSelectionModal
         isOpen={isSlotModalOpen}

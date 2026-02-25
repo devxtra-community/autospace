@@ -3,10 +3,11 @@ import { AppDataSource } from "../data-source.js";
 import { Booking, BookingValetStatus } from "../entities/booking.entity.js";
 import { EntityManager, In, LessThan, MoreThan } from "typeorm";
 
-const bookingRepo = AppDataSource.getRepository(Booking);
+// Repositories are obtained inside methods to ensure AppDataSource is initialized
 
 export class BookingService {
   async checkOverlap(slotId: string, start: Date, end: Date): Promise<boolean> {
+    const bookingRepo = AppDataSource.getRepository(Booking);
     const overlap = await bookingRepo.findOne({
       where: {
         slotId,
@@ -37,7 +38,7 @@ export class BookingService {
 
   async releaseSlot(slotId: string) {
     await axios.post(
-      `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${slotId}/free`,
+      `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${slotId}/release`,
       {},
       {
         headers: {
@@ -71,6 +72,7 @@ export class BookingService {
     slotId: string;
     startTime: Date;
     endTime: Date;
+    amount: number;
     vehicleType: "sedan" | "suv";
     status?: string;
     valetRequested: boolean;
@@ -81,7 +83,7 @@ export class BookingService {
       const overlap = await repo.findOne({
         where: {
           slotId: bookingData.slotId,
-          status: In(["pending", "confirmed"]),
+          status: In(["confirmed"]),
           startTime: LessThan(bookingData.endTime),
           endTime: MoreThan(bookingData.startTime),
         },
@@ -109,7 +111,8 @@ export class BookingService {
           startTime: bookingData.startTime,
           endTime: bookingData.endTime,
           vehicleType: bookingData.vehicleType,
-          status: bookingData.status || "pending",
+          amount: bookingData.amount,
+          status: "payment_pending",
           valetRequested: bookingData.valetRequested,
           valetStatus: bookingData.valetRequested
             ? BookingValetStatus.REQUESTED
@@ -122,9 +125,9 @@ export class BookingService {
 
         const savedBooking = await repo.save(booking);
 
-        if (savedBooking.valetRequested) {
-          await this.assignFirstValetRequest(savedBooking, manager);
-        }
+        // if (savedBooking.valetRequested) {
+        //   await this.assignFirstValetRequest(savedBooking, manager);
+        // }
 
         return savedBooking;
       } catch (err) {
@@ -163,6 +166,7 @@ export class BookingService {
   }
 
   async rejectValetRequest(bookingId: string, valetId: string) {
+    const bookingRepo = AppDataSource.getRepository(Booking);
     const booking = await bookingRepo.findOne({
       where: { id: bookingId },
     });
@@ -208,10 +212,12 @@ export class BookingService {
   }
 
   async updateBookingWithValet(booking: Booking) {
+    const bookingRepo = AppDataSource.getRepository(Booking);
     return await bookingRepo.save(booking);
   }
 
   async getBookingById(id: string) {
+    const bookingRepo = AppDataSource.getRepository(Booking);
     const booking = await bookingRepo.findOne({
       where: { id },
     });
@@ -222,6 +228,7 @@ export class BookingService {
   }
 
   async getUserBookings(userId: string) {
+    const bookingRepo = AppDataSource.getRepository(Booking);
     return await bookingRepo.find({
       where: { userId },
       order: { createdAt: "DESC" },
@@ -229,15 +236,24 @@ export class BookingService {
   }
 
   async updateBookingStatus(bookingId: string, status: string) {
+    const bookingRepo = AppDataSource.getRepository(Booking);
     const booking = await bookingRepo.findOne({
       where: { id: bookingId },
     });
 
     if (!booking) throw new Error("Booking not found");
 
+    if (booking.status !== "payment_pending" && status === "confirmed") {
+      console.log(
+        "Skip status update — booking already finalized:",
+        booking.id,
+      );
+      return booking;
+    }
+
     booking.status = status;
 
-    if (status === "confirmed") {
+    if (status === "occupied") {
       await axios.post(
         `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}/occupy`,
         {},
@@ -273,6 +289,7 @@ export class BookingService {
   }
 
   async deleteBooking(bookingId: string) {
+    const bookingRepo = AppDataSource.getRepository(Booking);
     const booking = await bookingRepo.findOne({
       where: { id: bookingId },
     });
@@ -289,6 +306,7 @@ export class BookingService {
   }
 
   async verifyOwnership(bookingId: string, userId: string) {
+    const bookingRepo = AppDataSource.getRepository(Booking);
     const booking = await bookingRepo.findOne({
       where: { id: bookingId },
     });
@@ -343,6 +361,7 @@ export class BookingService {
   }
 
   async getValetRequests(valetId: string) {
+    const bookingRepo = AppDataSource.getRepository(Booking);
     const bookings = await bookingRepo.find({
       where: {
         currentValetRequestId: valetId,
@@ -354,6 +373,7 @@ export class BookingService {
   }
 
   async getActiveJobs(valetId: string) {
+    const bookingRepo = AppDataSource.getRepository(Booking);
     const bookings = await bookingRepo.find({
       where: {
         valetId,
@@ -365,6 +385,7 @@ export class BookingService {
   }
 
   async getCompletedJobs(valetId: string) {
+    const bookingRepo = AppDataSource.getRepository(Booking);
     const bookings = await bookingRepo.find({
       where: {
         valetId,

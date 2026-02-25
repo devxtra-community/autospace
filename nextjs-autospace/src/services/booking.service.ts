@@ -27,6 +27,7 @@ export interface Booking {
   vehicleType: string;
   slotNumber: string;
   slotSize: string;
+  amount: number;
   // These might be needed if we want to store additional info
   garageName?: string;
   garageAddress?: string;

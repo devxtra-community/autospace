@@ -25,6 +25,7 @@ export function validateBookingInput(data: {
   startTime?: string | Date;
   endTime?: string | Date;
   vehicleType: string;
+  amount?: number;
   status?: string;
 }) {
   const { slotId, userId, garageId, startTime, endTime, status } = data;
@@ -52,11 +53,11 @@ export function validateBookingInput(data: {
     throw new ValidationError("startTime cannot be in the past");
   }
 
-  // Duration check (15 min → 24 hours)
+  // Duration check (30 min → 24 hours)
   const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
 
-  if (durationMinutes < 15) {
-    throw new ValidationError("Minimum booking duration is 15 minutes");
+  if (durationMinutes < 30) {
+    throw new ValidationError("Minimum booking duration is 30 minutes");
   }
 
   if (durationMinutes > 1440) {
