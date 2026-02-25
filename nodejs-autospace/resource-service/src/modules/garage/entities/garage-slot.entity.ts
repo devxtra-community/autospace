@@ -7,6 +7,7 @@ import {
   JoinColumn,
   Unique,
 } from "typeorm";
+
 import { GarageFloor } from "./garage-floor.entity";
 
 export enum SlotSize {
@@ -23,11 +24,17 @@ export class GarageSlot {
   @Column({ type: "uuid", name: "floor_id" })
   floorId!: string;
 
-  @ManyToOne(() => GarageFloor, { onDelete: "CASCADE" })
+  @ManyToOne(() => GarageFloor, (floor) => floor.slots, {
+    onDelete: "CASCADE",
+  })
   @JoinColumn({ name: "floor_id" })
   floor!: GarageFloor;
 
-  @Column({ type: "varchar", length: 10, name: "slot_number" })
+  @Column({
+    type: "varchar",
+    length: 10,
+    name: "slot_number",
+  })
   slotNumber!: string;
 
   @Column({
@@ -38,7 +45,12 @@ export class GarageSlot {
   })
   slotSize!: SlotSize;
 
-  @Column({ type: "numeric", precision: 10, scale: 2, name: "price_per_hour" })
+  @Column({
+    type: "numeric",
+    precision: 10,
+    scale: 2,
+    name: "price_per_hour",
+  })
   pricePerHour!: number;
 
   @Column({
@@ -48,6 +60,8 @@ export class GarageSlot {
   })
   status!: "AVAILABLE" | "RESERVED" | "OCCUPIED";
 
-  @CreateDateColumn({ name: "created_at" })
+  @CreateDateColumn({
+    name: "created_at",
+  })
   createdAt!: Date;
 }

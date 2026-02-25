@@ -167,10 +167,19 @@ export const getSlotByIdInternal = async (req: Request, res: Response) => {
   try {
     const slotId = String(req.params.slotId);
 
-    const slot = await slotRepo.findOne({
-      where: { id: slotId },
-      select: ["id", "slotNumber", "slotSize", "status"],
-    });
+    const slot = await slotRepo
+      .createQueryBuilder("slot")
+      .leftJoinAndSelect("slot.floor", "floor")
+      .where("slot.id = :slotId", { slotId })
+      .select([
+        "slot.id",
+        "slot.slotNumber",
+        "slot.slotSize",
+        "slot.status",
+        "floor.id",
+        "floor.floorNumber",
+      ])
+      .getOne();
 
     if (!slot) {
       return res.status(404).json({
@@ -181,10 +190,18 @@ export const getSlotByIdInternal = async (req: Request, res: Response) => {
 
     return res.json({
       success: true,
-      data: slot,
+      data: {
+        id: slot.id,
+        slotNumber: slot.slotNumber,
+        slotSize: slot.slotSize,
+        status: slot.status,
+        floorNumber: slot.floor.floorNumber,
+        floorId: slot.floor.id,
+      },
     });
   } catch (err) {
     console.error("Internal slot fetch error", err);
+
     return res.status(500).json({
       success: false,
       message: "Failed to fetch slot",

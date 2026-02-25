@@ -4,6 +4,7 @@ import { Booking, BookingValetStatus } from "../entities/booking.entity.js";
 import { EntityManager, In, IsNull, LessThan, MoreThan } from "typeorm";
 import redisClient from "../config/redis.js";
 import { publishEvent } from "../config/rabbitmq.js";
+import { sendMail } from "../config/mail.js";
 
 const bookingRepo = AppDataSource.getRepository(Booking);
 
@@ -176,7 +177,87 @@ export class BookingService {
         endTime: savedBooking.endTime,
       });
 
+      // fetch user email from auth-service
+      const userRes = await axios.get(
+        `${process.env.AUTH_SERVICE_URL}/internal/users/${savedBooking.userId}`,
+        {
+          headers: {
+            "x-user-id": "booking-service",
+            "x-user-role": "SERVICE",
+          },
+        },
+      );
+
+      const user = userRes.data.data;
+
+      // fetch garage details
+      const garageRes = await axios.get(
+        `${process.env.RESOURCE_SERVICE_URL}/internal/garages/${savedBooking.garageId}`,
+        {
+          headers: {
+            "x-user-id": "booking-service",
+            "x-user-role": "SERVICE",
+          },
+        },
+      );
+
+      const garage = garageRes.data.data;
+
+      // fetch slot details
+      const slotRes = await axios.get(
+        `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${savedBooking.slotId}`,
+        {
+          headers: {
+            "x-user-id": "booking-service",
+            "x-user-role": "SERVICE",
+          },
+        },
+      );
+
+      const slot = slotRes.data.data;
+
+      // send professional email
+      const startTime = new Date(savedBooking.startTime).toLocaleString();
+      const endTime = new Date(savedBooking.endTime).toLocaleString();
+
+      const valetLine = savedBooking.valetRequested
+        ? `
+Valet Service: Requested
+You will be notified once a valet is assigned to your booking.
+`
+        : `
+Valet Service: Not requested
+You may access your parking slot directly at the scheduled time.
+`;
+
+      await sendMail(
+        user.email,
+        "Booking Confirmation – Autospace",
+        `Dear ${user.fullname},
+
+Your parking booking has been successfully created. Below are the booking details:
+
+Booking ID: ${savedBooking.id}
+Garage: ${garage.name}
+Location: ${garage.locationName}
+Floor: ${slot.floorNumber}
+Slot Number: ${slot.slotNumber}
+Vehicle Type: ${savedBooking.vehicleType}
+Start Time: ${startTime}
+End Time: ${endTime}
+${valetLine}
+If you have any questions or need assistance, please contact Autospace support.
+
+Thank you for choosing Autospace.
+
+Sincerely,  
+Autospace Team`,
+      );
+
       return savedBooking;
+    } catch (err) {
+      await redisClient.del(idempotencyKey);
+      throw err;
     } finally {
       // always release Redis lock
       await redisClient.del(lockKey);
