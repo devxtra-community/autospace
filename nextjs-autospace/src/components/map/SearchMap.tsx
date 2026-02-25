@@ -46,7 +46,7 @@ export default function SearchMap({
 
       const popup = new maplibregl.Popup({ offset: 25 }).setHTML(`
         <div style="font-weight:bold">Garage</div>
-        <div>$${g.standard_slot_price ?? 0} / hour</div>
+        <div>₹${g.standard_slot_price ?? 0} / hour</div>
       `);
 
       new maplibregl.Marker({ color: "red" })

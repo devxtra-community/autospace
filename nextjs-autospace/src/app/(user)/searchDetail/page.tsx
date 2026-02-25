@@ -102,13 +102,13 @@ export default function SearchPage() {
 
             {isFilterOpen && (
               <div className="grid grid-cols-3 gap-3">
-                <button className="flex items-center justify-between px-3 py-2 border border-black text-xs font-medium text-gray-800 bg-white">
+                <button className="flex items-center justify-between px-3 py-1.5 rounded-sm border border-black text-xs font-medium text-gray-800 bg-foreground text-white">
                   Price <ChevronDown className="w-3.5 h-3.5" />
                 </button>
-                <button className="flex items-center justify-between px-3 py-2 border border-black text-xs font-medium text-gray-800 bg-white">
+                <button className="flex items-center justify-between px-3 py-1.5 rounded-sm border border-black text-xs font-medium text-gray-800 bg-foreground text-white">
                   Availability <ChevronDown className="w-3.5 h-3.5" />
                 </button>
-                <button className="flex items-center justify-between px-3 py-2 border border-black text-xs font-medium text-gray-800 bg-white">
+                <button className="flex items-center justify-between px-3 py-1.5 rounded-sm border border-black text-xs font-medium text-gray-800 bg-foreground text-white">
                   Distance <ChevronDown className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -124,14 +124,14 @@ export default function SearchPage() {
               <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">
                 Sort by:
               </span>
-              <button className="flex items-center gap-2 px-3 py-1.5 border border-black text-xs font-medium bg-white">
+              <button className="flex items-center gap-2 px-3 py-1.5 rounded-sm border border-black text-xs font-medium bg-foreground text-white">
                 Recommended <ChevronDown className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-4 no-scrollbar">
+        <div className="flex flex-col   overflow-y-auto px-6 pb-6 space-y-4 no-scrollbar">
           {loading && (
             <div className="text-sm text-gray-500 py-6 text-center">
               Searching nearby garages…
@@ -140,11 +140,11 @@ export default function SearchPage() {
 
           {garages.map((garage) => (
             <Link key={garage.id} href={`/garages/${garage.id}`}>
-              <div className="border border-black p-4 flex flex-col gap-3 relative bg-white cursor-pointer hover:bg-gray-50 transition-colors shadow-sm active:translate-y-0.5">
+              <div className=" p-4 flex flex-col gap-3 rounded-lg relative bg-search-card cursor-pointer  transition-colors shadow-sm active:translate-y-0.5">
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
-                    <h3 className="text-sm font-bold text-gray-900 uppercase">
-                      # {garage.name}
+                    <h3 className="text-sm font-extrabold text-gray-900 uppercase">
+                      {garage.name}
                     </h3>
                     <div className="flex items-center gap-1 bg-[#F4DA71]/10 px-2 py-0.5 w-fit border border-[#F4DA71]/30">
                       <span className="text-xs font-bold">{garage.rating}</span>
@@ -169,19 +169,13 @@ export default function SearchPage() {
 
                 <div className="flex items-center justify-between mt-1">
                   <div className="text-sm font-bold text-gray-900 flex flex-col">
-                    <p>$ {garage.standard_slot_price} / Hour - standard </p>
-                    <p>$ {garage.large_slot_price} / Hour - Large</p>
+                    <p>₹ {garage.standard_slot_price} / Hour - standard </p>
+                    <p>₹ {garage.large_slot_price} / Hour - Large</p>
                   </div>
 
                   {garage.status === "active" ? (
                     // <Link href={`/garage/${garage.id}`}>
-                    <button
-                      // onClick={() => {
-                      //   // e.stopPropagation();
-
-                      // }}
-                      className="px-4 py-1.5 bg-[#B7F4D8] text-gray-900 text-xs font-bold border border-black/10 shadow-sm hover:brightness-95 transition-all outline-none"
-                    >
+                    <button className="px-4 py-1.5 bg-gray-800 rounded-sm text-white text-xs font-bold border border-black/10 shadow-sm hover:brightness-95 transition-all outline-none">
                       Book now
                     </button>
                   ) : (
@@ -200,7 +194,7 @@ export default function SearchPage() {
           ))}
         </div>
       </div>
-
+      8ip
       <div className="hidden md:flex flex-1 relative overflow-hidden">
         {!loading && lat && lng && (
           <SearchMap
@@ -210,7 +204,6 @@ export default function SearchPage() {
           />
         )}
       </div>
-
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 5px;
@@ -252,7 +245,7 @@ export function MapMarker({
     >
       {showPrice && (
         <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white px-3 py-1.5 shadow-lg text-[10px] font-bold whitespace-nowrap border border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity">
-          $ 999 / Hour
+          ₹ 999 / Hour
         </div>
       )}
       <div className="flex flex-col items-center">

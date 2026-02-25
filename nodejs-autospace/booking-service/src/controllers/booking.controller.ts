@@ -19,6 +19,7 @@ export class BookingController {
       startTime,
       endTime,
       vehicleType,
+      amount,
       valetRequested,
     } = req.body;
 
@@ -26,7 +27,14 @@ export class BookingController {
     const userId = req.user?.id;
 
     try {
-      if (!slotId || !garageId || !startTime || !endTime || !vehicleType) {
+      if (
+        !slotId ||
+        !garageId ||
+        !startTime ||
+        !endTime ||
+        !vehicleType ||
+        !amount
+      ) {
         return res.status(400).json({
           success: false,
           message:
@@ -47,6 +55,7 @@ export class BookingController {
         garageId,
         startTime,
         endTime,
+        amount,
         vehicleType,
         status: "pending",
       });
@@ -71,6 +80,7 @@ export class BookingController {
         startTime: new Date(startTime),
         endTime: new Date(endTime),
         vehicleType,
+        amount,
         status: "pending",
         valetRequested: valetRequested || false,
       });

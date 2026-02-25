@@ -4,6 +4,8 @@ import type { Express } from "express";
 import bookingRoutes from "./routes/booking.routes.js";
 import morgan from "morgan";
 import { errorHandler } from "./middleware/error.middleware.js";
+import paymentRouter from "./routes/payment.routes.js";
+import { stripeWebhookController } from "./controllers/webhook.controller.js";
 
 const app: Express = express();
 
@@ -14,6 +16,12 @@ app.use(
   }),
 );
 
+app.post(
+  "/payments/webhook",
+  express.raw({ type: "application/json" }),
+  stripeWebhookController,
+);
+
 app.use(express.json());
 app.use(morgan("dev"));
 
@@ -22,6 +30,7 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/bookings", bookingRoutes);
+app.use("/payment", paymentRouter);
 app.use(errorHandler);
 
 export default app;
