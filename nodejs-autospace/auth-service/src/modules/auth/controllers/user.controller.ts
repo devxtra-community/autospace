@@ -2,9 +2,11 @@ import { Request, Response } from "express";
 import {
   getAllUsersService,
   updateUserProfile,
+  updateUserStatus,
 } from "../services/auth.service";
 import { getUserProfile } from "../services/auth.service";
 import { UserStatus, UserRole } from "../constants";
+import { success } from "zod";
 
 export const getMyProfileController = async (req: Request, res: Response) => {
   try {
@@ -95,6 +97,46 @@ export const getAllUsers = async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       message: "Failed to get users",
+    });
+  }
+};
+
+export const updateAmdinUsers = async (req: Request, res: Response) => {
+  try {
+    const userId = req.params.userId as string;
+    const adminUserId = req.headers["x-user-id"] as string;
+
+    const { status } = req.body;
+
+    console.log("status", status);
+
+    if (!adminUserId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const updated = await updateUserStatus(userId, status);
+
+    return res.status(200).json({
+      success: true,
+      message: "updated successfully",
+      data: updated.data,
+    });
+  } catch (error: unknown) {
+    //  Proper Type Narrowing
+    let message = "Failed to update user status";
+
+    if (error instanceof Error) {
+      message = error.message;
+    }
+
+    console.error("UPDATE USER ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message,
     });
   }
 };

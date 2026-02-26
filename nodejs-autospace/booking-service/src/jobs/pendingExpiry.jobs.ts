@@ -6,6 +6,7 @@ import { Booking } from "../entities/booking.entity.js";
 import { Payment } from "../entities/payment.entity.js";
 import { logger } from "../utils/logger.js";
 import Stripe from "stripe";
+// import { BookingService } from "../services/booking.service.js";
 
 const bookingRepo = AppDataSource.getRepository(Booking);
 const paymentRepo = AppDataSource.getRepository(Payment);
@@ -18,6 +19,7 @@ export function startPendingExpiryJob() {
   cron.schedule("* * * * *", async () => {
     try {
       const expiryTime = new Date(Date.now() - EXPIRY_MINUTES * 60 * 1000);
+      // const bookingService = new BookingService();
 
       const expiredBookings = await bookingRepo.find({
         where: {
@@ -35,7 +37,7 @@ export function startPendingExpiryJob() {
 
       for (const booking of expiredBookings) {
         try {
-          // 🔎 Find payment record
+          //  Find payment record
           const payment = await paymentRepo.findOne({
             where: { bookingId: booking.id },
           });

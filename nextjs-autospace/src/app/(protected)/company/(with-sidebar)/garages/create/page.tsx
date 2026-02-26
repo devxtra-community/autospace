@@ -19,7 +19,6 @@ const garageSchema = z.object({
   name: z.string().min(2),
   phone: z.string().min(10),
   email: z.string().email(),
-  description: z.string().min(10),
   locationName: z.string().min(3),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
@@ -52,9 +51,10 @@ export default function CreateGaragePage() {
   const formData = watch();
 
   const onSubmit = async (data: GarageFormValues) => {
+    console.log("FORM SUBMITTED", data);
     setError("");
 
-    if (!data.latitude || !data.longitude) {
+    if (data.latitude == null || data.longitude == null) {
       setError("Please select garage location on map");
       return;
     }
@@ -107,7 +107,7 @@ export default function CreateGaragePage() {
                   currentStep={currentStep}
                   setValue={setValue}
                   onBack={() => setCurrentStep(1)}
-                  onSubmit={() => handleSubmit(onSubmit)()}
+                  onSubmit={handleSubmit(onSubmit)}
                   isSubmitting={isSubmitting}
                 />
               )}

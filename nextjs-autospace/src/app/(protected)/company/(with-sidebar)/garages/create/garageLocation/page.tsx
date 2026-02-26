@@ -12,7 +12,6 @@ import { GarageFormValues } from "../page";
 interface GarageLocationProps {
   formData: {
     name: string;
-    description: string;
     locationName: string;
     latitude?: number;
     longitude?: number;
@@ -151,7 +150,10 @@ export default function GarageLocation({
             <Button
               type="button"
               className="flex-1 h-11 bg-black text-yellow-400 hover:bg-gray-800"
-              onClick={() => onSubmit()}
+              onClick={() => {
+                console.log("CLICK WORKED");
+                onSubmit();
+              }}
               disabled={isSubmitting}
             >
               Create Garage

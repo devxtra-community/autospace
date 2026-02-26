@@ -136,7 +136,7 @@ export class BookingService {
               ? BookingValetStatus.REQUESTED
               : BookingValetStatus.NONE,
             entryPin: generatePin(),
-            exitPin: generatePin(),
+            exitPin: null,
             entryUsed: false,
             exitUsed: false,
           });
@@ -178,6 +178,8 @@ export class BookingService {
           },
         },
       );
+
+      // console.log("auth url",process.env.AUTH_SERVICE_URL);
 
       const user = userRes.data.data;
 
@@ -240,6 +242,7 @@ Autospace Team`,
       await redisClient.del(lockKey);
     }
   }
+
   async assignFirstValetRequest(booking: Booking, manager: EntityManager) {
     try {
       const response = await axios.get(

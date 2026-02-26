@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { UserData } from "./UserTable";
+import { updateUserStatus } from "@/services/admin.service";
 
 interface UserProfilePanelProps {
   user: UserData | null;
@@ -43,13 +44,37 @@ const statusStyles: Record<string, string> = {
   ACTIVE: "bg-[#E7F7EF] text-[#0D9488]",
   SUSPENDED: "bg-[#FEE2E2] text-[#EF4444]",
   PENDING: "bg-[#FEF3C7] text-[#D97706]",
+  REJECTED: "bg-red-100 text-red-700",
   active: "bg-[#E7F7EF] text-[#0D9488]",
   suspended: "bg-[#FEE2E2] text-[#EF4444]",
   pending: "bg-[#FEF3C7] text-[#D97706]",
+  rejected: "bg-red-100 text-red-700",
 };
 
 export function UserProfilePanel({ user, onClose }: UserProfilePanelProps) {
   if (!user) return null;
+
+  const handleActivate = async () => {
+    if (!user) return;
+
+    try {
+      await updateUserStatus(user?.userId, "ACTIVE");
+      window.location.reload(); // quick refresh (or update state properly)
+    } catch (err) {
+      console.error("Failed to activate user", err);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!user) return;
+
+    try {
+      await updateUserStatus(user.userId, "REJECTED");
+      window.location.reload();
+    } catch (err) {
+      console.error("Failed to reject user", err);
+    }
+  };
 
   console.log("user", user);
 
@@ -66,7 +91,7 @@ export function UserProfilePanel({ user, onClose }: UserProfilePanelProps) {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-8">
+      <div className="flex-1 overflow-y-auto scrollbar-hide p-8 ">
         {/* User Basic Info */}
         <div className="flex flex-col items-center text-center mb-8">
           <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border-4 border-[#FFFAE8] shadow-sm mb-4">
@@ -223,18 +248,22 @@ export function UserProfilePanel({ user, onClose }: UserProfilePanelProps) {
 
       {/* Actions */}
       <div className="p-6 border-t border-black/5 space-y-3 bg-gray-50/50">
-        <Button
-          variant="destructive"
-          className="w-full rounded-2xl h-12 font-bold shadow-lg shadow-rose-500/10"
-        >
-          Block User
-        </Button>
-        <Button
-          variant="outline"
-          className="w-full rounded-2xl h-12 font-bold border-black/5 hover:bg-black/5"
-        >
-          Suspend User
-        </Button>
+        {user.status?.toUpperCase() === "REJECTED" ? (
+          <Button
+            onClick={handleActivate}
+            className="w-full rounded-2xl h-12 font-bold shadow-lg bg-blue-600 hover:bg-blue-700 text-white transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+          >
+            Activate User
+          </Button>
+        ) : (
+          <Button
+            onClick={handleReject}
+            variant="destructive"
+            className="w-full rounded-2xl h-12 font-bold shadow-lg shadow-rose-500/10 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+          >
+            Block User
+          </Button>
+        )}
         <button className="w-full py-2 text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors">
           View Full Activity
         </button>

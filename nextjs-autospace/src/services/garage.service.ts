@@ -1,4 +1,5 @@
 import apiClient from "@/lib/apiClient";
+
 export interface GetMyGaragesParams {
   page?: number;
   limit?: number;
@@ -14,7 +15,6 @@ export const createGarage = async (payload: {
   longitude: number;
   capacity: number;
   images?: string[];
-  description?: string;
 }) => {
   const res = await apiClient.post("/api/garages/register", payload);
 

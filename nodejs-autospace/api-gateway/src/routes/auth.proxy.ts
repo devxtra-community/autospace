@@ -102,6 +102,49 @@ router.get(
   createAuthProxy("/api/admin/allusers"),
 );
 
+router.patch(
+  "/admin/update/user/:userId",
+  authMiddleware,
+  rbac(UserRole.ADMIN),
+  async (req, res) => {
+    try {
+      const targetUrl =
+        AUTH_SERVICE_URL + req.originalUrl.replace("/api/auth", "/api");
+
+      const response = await axios({
+        method: req.method,
+        url: targetUrl,
+        data: req.body,
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: req.headers.cookie || "",
+
+          ...(req.user && {
+            "x-user-id": req.user.id,
+            "x-user-role": req.user.role,
+            "x-user-email": req.user.email,
+          }),
+        },
+
+        timeout: 10000,
+        validateStatus: () => true,
+      });
+
+      if (response.headers["set-cookie"]) {
+        res.setHeader("Set-Cookie", response.headers["set-cookie"]);
+      }
+
+      res.status(response.status).json(response.data);
+    } catch (error: unknown) {
+      console.error("Admin update user proxy error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Gateway admin update user proxy error",
+      });
+    }
+  },
+);
+
 router.get("/profile/my", authMiddleware, createAuthProxy("/api/profile/my"));
 router.patch("/profile/my", authMiddleware, createAuthProxy("/api/profile/my"));
 router.use("/manager", authMiddleware, async (req: Request, res: Response) => {

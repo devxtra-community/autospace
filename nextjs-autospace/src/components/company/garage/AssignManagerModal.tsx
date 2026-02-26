@@ -46,7 +46,7 @@ export function AssignManagerModal({
 
   return (
     <Modal open={open} onClose={onClose} title="Assign Manager">
-      <div className="space-y-4">
+      <div className="space-y-4 ">
         <select
           className="w-full rounded-md border p-2"
           value={selectedManager}
@@ -61,7 +61,7 @@ export function AssignManagerModal({
         </select>
 
         <Button
-          className="w-full"
+          className="w-full bg-black"
           disabled={!selectedManager}
           onClick={handleAssign}
         >

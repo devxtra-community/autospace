@@ -31,4 +31,5 @@ app.use("/api/manager", managerRoutes);
 app.use("/api", authRoutes);
 app.use("/internal/users", internalUserRoutes);
 app.use(globalErrorHandler);
+
 export default app;

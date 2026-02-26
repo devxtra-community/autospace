@@ -126,7 +126,6 @@ router.use(
 
       // internal routes (used by booking-service / auth-service)
       if (
-        original.includes("/active") ||
         original.includes("/assign") ||
         original.includes("/release") ||
         original.includes("/available") ||

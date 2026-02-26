@@ -12,7 +12,8 @@ import {
 export const createGarageController = async (req: Request, res: Response) => {
   console.log("RESOURCE BODY:", req.body);
   try {
-    const ownerUserId = req.headers["x-user-id"] as string;
+    const ownerUserId = req.user.id;
+    console.log("user ith", ownerUserId);
 
     if (!ownerUserId) {
       return res.status(401).json({

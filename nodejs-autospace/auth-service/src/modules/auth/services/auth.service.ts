@@ -18,6 +18,8 @@ import { UpdateProfileInput } from "@autospace/shared";
 import { UserRole, UserStatus } from "../constants";
 import redisClient from "../../../config/redis";
 
+const repo = AppDataSource.getRepository(User);
+
 export const getUserProfile = async (userId: string) => {
   const cacheKey = `user:${userId}`;
 
@@ -27,8 +29,6 @@ export const getUserProfile = async (userId: string) => {
     console.log("User from Redis");
     return JSON.parse(cached);
   }
-
-  const repo = AppDataSource.getRepository(User);
 
   const user = await repo.findOne({
     where: { id: userId },
@@ -67,8 +67,6 @@ export const updateUserProfile = async (
   userId: string,
   data: UpdateProfileInput,
 ) => {
-  const repo = AppDataSource.getRepository(User);
-
   const user = await repo.findOne({ where: { id: userId } });
   if (!user) throw new Error("User not found");
 
@@ -95,8 +93,6 @@ export const getAllUsersService = async (filters: {
   role?: UserRole;
   status?: UserStatus;
 }) => {
-  const repo = AppDataSource.getRepository(User);
-
   const page = filters.page || 1;
   const limit = filters.limit || 10;
   const skip = (page - 1) * limit;
@@ -159,5 +155,28 @@ export const getAllUsersService = async (filters: {
       total,
       totalPages: Math.ceil(total / limit),
     },
+  };
+};
+
+export const updateUserStatus = async (userId: string, status: string) => {
+  console.log("TYPE:", typeof status);
+  console.log("VALUE:", JSON.stringify(status));
+
+  const normalizedStatus = status?.trim().toLowerCase();
+
+  if (!["active", "rejected"].includes(normalizedStatus)) {
+    throw new Error("Invalid status value");
+  }
+
+  const user = await repo.findOne({ where: { id: userId } });
+  if (!user) throw new Error("User not found");
+
+  user.status = normalizedStatus as UserStatus;
+
+  const updatedUser = await repo.save(user);
+
+  return {
+    success: true,
+    data: updatedUser,
   };
 };

@@ -67,5 +67,16 @@ export const getAllUsersService = async (params?: {
 }) => {
   const res = await apiClient.get("api/auth/admin/allusers", { params });
   return res.data;
-  console.log("users", res.data);
+  // console.log("users", res.data);
+};
+
+export const updateUserStatus = async (
+  userId: string,
+  status: "ACTIVE" | "REJECTED",
+) => {
+  const res = await apiClient.patch(`/api/auth/admin/update/user/${userId}`, {
+    status,
+  });
+
+  return res.data;
 };

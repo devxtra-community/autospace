@@ -10,6 +10,7 @@ import { validateUpdateProfile } from "../validators/auth.validator";
 import {
   getAllUsers,
   getMyProfileController,
+  updateAmdinUsers,
   updateProfileController,
 } from "../controllers/user.controller";
 import { validateGetAllUsersQuery } from "../validators/user.validator";
@@ -30,5 +31,6 @@ router.post("/valet/register", registerValet);
 router.get("/profile/my", getMyProfileController);
 router.patch("/profile/my", validateUpdateProfile, updateProfileController);
 router.get("/admin/allusers", validateGetAllUsersQuery, getAllUsers);
+router.patch("/admin/update/user/:userId", updateAmdinUsers);
 
 export default router;
