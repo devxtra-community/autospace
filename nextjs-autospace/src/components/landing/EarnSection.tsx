@@ -116,7 +116,7 @@ export default function EarnSection() {
   return (
     <section className="max-w-7xl mx-auto px-4 py-16">
       {/* Hero Banner — two-column layout */}
-      <div className="flex flex-col lg:flex-row items-stretch gap-6 mb-10 rounded-3xl overflow-hidden bg-white shadow-sm">
+      <div className="flex flex-col lg:flex-row h-[60vh] items-stretch gap-6 mb-10 rounded-2xl overflow-hidden bg-white shadow-sm">
         {/* Left: Text */}
         <div className="flex flex-col justify-center gap-6 px-12 py-14 lg:w-5/12">
           <h2 className="text-4xl font-extrabold text-gray-900 leading-snug">
