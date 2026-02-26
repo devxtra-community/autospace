@@ -25,12 +25,12 @@ import {
   getGarageImagesController,
 } from "../controllers/garage-image.controller";
 import {
-  createGarageSlotController,
   getGarageByManager,
   getPublicAvailableSlotsController,
   getSlotByIdInternal,
   getSlotController,
   getSlotsByFloorController,
+  createGarageSlotController,
 } from "../controllers/garage-slot.controller";
 import {
   createGarageFloorController,
@@ -54,6 +54,32 @@ router.use((req, _res, next) => {
   next();
 });
 
+router.get("/internal/slots/:slotId/status", internalAuth, getSingleSlotStatus);
+
+router.post("/internal/slots/:slotId/lock", internalAuth, lockSlot);
+router.post("/internal/slots/:slotId/release", internalAuth, releaseSlot);
+router.post("/internal/slots/:slotId/occupy", internalAuth, occupySlot);
+router.post("/internal/slots/:slotId/free", internalAuth, freeSlot);
+router.get(
+  "/internal/garages/:garageId/slots",
+  internalAuth,
+  listSlotsByGarage,
+);
+
+router.get(
+  "/internal/slots/:slotId",
+  internalAuth,
+  (req, res, next) => {
+    console.log("CORRECT INTERNAL SLOT ROUTE HIT");
+    next();
+  },
+  getSlotByIdInternal,
+);
+
+// manager garageid for booking service
+
+router.get("/internal/:managerId/garageId", internalAuth, getGarageByManager);
+
 router.post(
   "/register",
   internalAuth,
@@ -73,12 +99,12 @@ router.get(
   internalAuth,
   getGaragesByCompanyController,
 );
-router.get("/:id", internalAuth, getGarageByIdController);
 router.put("/:id", internalAuth, updateGarageProfileController);
 router.post("/:garageId/images", internalAuth, addGarageImageController);
 router.get("/:garageId/images", internalAuth, getGarageImagesController);
 router.get("/manager/my", internalAuth, getMyManagerGarageController);
 
+router.get("/:id", internalAuth, getGarageByIdController);
 // slots
 router.post(
   "/slots",
@@ -97,20 +123,6 @@ router.get(
   getAvailableSlots,
 );
 
-router.get("/internal/slots/:slotId/status", internalAuth, getSingleSlotStatus);
-
-router.post("/internal/slots/:slotId/lock", internalAuth, lockSlot);
-router.post("/internal/slots/:slotId/release", internalAuth, releaseSlot);
-router.post("/internal/slots/:slotId/occupy", internalAuth, occupySlot);
-router.post("/internal/slots/:slotId/free", internalAuth, freeSlot);
-router.get(
-  "/internal/garages/:garageId/slots",
-  internalAuth,
-  listSlotsByGarage,
-);
-
-router.get("/internal/slots/:slotId", internalAuth, getSlotByIdInternal);
-
 //floor
 router.post(
   "/floors",
@@ -124,9 +136,5 @@ router.get("/floors/:floorId/slots", internalAuth, getSlotsByFloorController);
 // user side
 
 router.get("/:garageId/slots", internalAuth, getPublicAvailableSlotsController);
-
-// manager garageid for booking service
-
-router.get("/internal/:managerId/garageId", getGarageByManager);
 
 export default router;

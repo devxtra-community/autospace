@@ -3,6 +3,7 @@ import { GarageSlot, SlotSize } from "../entities/garage-slot.entity";
 import { GarageFloor } from "../entities/garage-floor.entity";
 import { Garage } from "../entities/garage.entity";
 import { In, Like } from "typeorm";
+import redisClient from "../../../config/redis";
 
 export interface PublicSlotQuery {
   garageId: string;
@@ -86,6 +87,7 @@ export const createGarageSlot = async (
   });
 
   await slotRepo.save(slot);
+  await redisClient.del(`slots:available:${garage.id}`);
   return slot;
 };
 export const getGarageSlots = async (
@@ -132,6 +134,15 @@ export const getPublicAvailableSlotsService = async ({
 }: PublicSlotQuery) => {
   const slotRepo = AppDataSource.getRepository(GarageSlot);
 
+  const cacheKey = `slots:available:${garageId}`;
+
+  const cached = await redisClient.get(cacheKey);
+
+  if (cached) {
+    console.log("Slots from Redis cache");
+    return JSON.parse(cached);
+  }
+
   const slots = await slotRepo.find({
     where: {
       floor: {
@@ -149,7 +160,7 @@ export const getPublicAvailableSlotsService = async ({
     },
   });
 
-  return slots.map((slot) => ({
+  const result = slots.map((slot) => ({
     id: slot.id,
     slotNumber: slot.slotNumber,
     floor: slot.floor.floorNumber,
@@ -161,4 +172,10 @@ export const getPublicAvailableSlotsService = async ({
           ? "booked"
           : "disabled",
   }));
+
+  await redisClient.set(cacheKey, JSON.stringify(result), { EX: 60 });
+
+  console.log("Slots from DB and cached");
+
+  return result;
 };

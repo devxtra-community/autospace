@@ -579,6 +579,59 @@ export class BookingController {
       });
     }
   }
+
+  async updateValetStatus(req: Request, res: Response) {
+    try {
+      const bookingId = req.params.bookingId as string;
+      const { valetStatus } = req.body;
+
+      const valetId = req.user?.id;
+
+      if (!bookingId || !valetStatus) {
+        return res.status(400).json({
+          success: false,
+          message: "bookingId and valetStatus required",
+        });
+      }
+
+      if (!valetId) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
+
+      const booking = await bookingService.getBookingById(bookingId);
+
+      if (!booking)
+        return res.status(404).json({
+          success: false,
+          message: "Booking not found",
+        });
+
+      if (booking.valetId !== valetId)
+        return res.status(403).json({
+          success: false,
+          message: "Not your assigned job",
+        });
+
+      const updated = await bookingService.updateValetStatus(
+        bookingId,
+        valetStatus,
+      );
+
+      return res.json({
+        success: true,
+        data: updated,
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to update valet status",
+        err,
+      });
+    }
+  }
 }
 
 export const bookingController = new BookingController();

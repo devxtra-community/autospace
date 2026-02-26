@@ -82,4 +82,10 @@ router.get("/manager/bookings", internalAuth, listManagerBookings);
 
 router.get("/:bookingId", internalAuth, bookingController.getBooking);
 
+router.patch(
+  "/:bookingId/valet-status",
+  internalAuth,
+  bookingController.updateValetStatus,
+);
+
 export default router;

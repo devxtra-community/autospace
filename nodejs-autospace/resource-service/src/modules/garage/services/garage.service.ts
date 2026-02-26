@@ -2,6 +2,7 @@ import { AppDataSource } from "../../../db/data-source";
 import { Garage, GarageStatus } from "../entities/garage.entity";
 import { CreateGarageInput } from "@autospace/shared";
 import { Company, CompanyStatus } from "../../company/entities/company.entity";
+import redisClient from "../../../config/redis";
 
 export const createGarage = async (
   ownerUserId: string,
@@ -114,7 +115,10 @@ export const updateGarageStatus = async (
   }
 
   garage.status = status;
+
   await repo.save(garage);
+
+  await redisClient.del(`garage:${companyId}`);
 
   console.log(
     `[AUDIT] Admin ${adminUserId} set company ${companyId} to ${status}`,

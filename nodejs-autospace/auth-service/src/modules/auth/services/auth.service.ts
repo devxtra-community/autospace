@@ -16,8 +16,18 @@ import { AppDataSource } from "../../../db/data-source";
 import { User } from "../entities/user.entity";
 import { UpdateProfileInput } from "@autospace/shared";
 import { UserRole, UserStatus } from "../constants";
+import redisClient from "../../../config/redis";
 
 export const getUserProfile = async (userId: string) => {
+  const cacheKey = `user:${userId}`;
+
+  // Check Redis
+  const cached = await redisClient.get(cacheKey);
+  if (cached) {
+    console.log("User from Redis");
+    return JSON.parse(cached);
+  }
+
   const repo = AppDataSource.getRepository(User);
 
   const user = await repo.findOne({
@@ -36,7 +46,7 @@ export const getUserProfile = async (userId: string) => {
 
   if (!user) throw new Error("User not found");
 
-  return {
+  const result = {
     id: user.id,
     name: user.fullname,
     email: user.email,
@@ -46,6 +56,11 @@ export const getUserProfile = async (userId: string) => {
     companyId: user.companyId,
     createdAt: user.created_at,
   };
+
+  // Store in Redis (10 min)
+  await redisClient.set(cacheKey, JSON.stringify(result), { EX: 600 });
+
+  return result;
 };
 
 export const updateUserProfile = async (
@@ -62,6 +77,7 @@ export const updateUserProfile = async (
   if (data.phone !== undefined) user.phone = data.phone;
 
   await repo.save(user);
+  await redisClient.del(`user:${userId}`);
 
   return {
     id: user.id,

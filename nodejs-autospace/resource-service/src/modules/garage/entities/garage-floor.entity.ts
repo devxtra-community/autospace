@@ -1,4 +1,3 @@
-// entities/garage-floor.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -6,8 +5,11 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from "typeorm";
+
 import { Garage } from "./garage.entity";
+import { GarageSlot } from "./garage-slot.entity";
 
 @Entity("garage_floors")
 export class GarageFloor {
@@ -17,12 +19,17 @@ export class GarageFloor {
   @Column({ type: "uuid", name: "garage_id" })
   garageId!: string;
 
-  @ManyToOne(() => Garage, { onDelete: "CASCADE" })
+  @ManyToOne(() => Garage, (garage) => garage.floors, {
+    onDelete: "CASCADE",
+  })
   @JoinColumn({ name: "garage_id" })
   garage!: Garage;
 
   @Column({ type: "int", name: "floor_number" })
   floorNumber!: number;
+
+  @OneToMany(() => GarageSlot, (slot) => slot.floor)
+  slots!: GarageSlot[];
 
   @CreateDateColumn({ name: "created_at" })
   createdAt!: Date;

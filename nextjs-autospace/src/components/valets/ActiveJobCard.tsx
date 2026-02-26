@@ -6,24 +6,106 @@ import { Button } from "@/components/ui/button";
 
 import { Car, User, Phone, MapPin, Clock, Calendar } from "lucide-react";
 
-type ActiveJobCardProps = {
-  req: {
-    id: string;
-    car: string;
-    customer: string;
-    phone: string;
-    location: string;
-    time: string;
-    date: string;
-  };
-  onComplete?: () => void;
-  completed?: boolean;
+export type ValetStatus =
+  | "ASSIGNED"
+  | "ON_THE_WAY_PICKUP"
+  | "PICKED_UP"
+  | "PARKED"
+  | "ON_THE_WAY_DROP"
+  | "COMPLETED";
+
+export type ActiveJob = {
+  id: string;
+  car: string;
+  customer: string;
+  phone: string;
+  location: string;
+  time: string;
+  date: string;
+  valetStatus: ValetStatus;
 };
+
+type Props = {
+  req?: ActiveJob;
+  onStartPickup?: () => void;
+  onPickedUp?: () => void;
+  onParked?: () => void;
+  onStartDrop?: () => void;
+  onComplete?: () => void;
+};
+
 export default function ActiveJobCard({
   req,
+  onStartPickup,
+  onPickedUp,
+  onParked,
+  onStartDrop,
   onComplete,
-  completed,
-}: ActiveJobCardProps) {
+}: Props) {
+  if (!req) return null;
+
+  const status = req.valetStatus || "ASSIGNED";
+
+  const statusColor: Record<string, string> = {
+    ASSIGNED: "bg-blue-500",
+    ON_THE_WAY_PICKUP: "bg-yellow-500",
+    PICKED_UP: "bg-purple-500",
+    PARKED: "bg-indigo-500",
+    ON_THE_WAY_DROP: "bg-orange-500",
+    COMPLETED: "bg-green-500",
+  };
+
+  const statusText: Record<string, string> = {
+    ASSIGNED: "Assigned",
+    ON_THE_WAY_PICKUP: "On the way to pickup",
+    PICKED_UP: "Picked up",
+    PARKED: "Parked",
+    ON_THE_WAY_DROP: "On the way to drop",
+    COMPLETED: "Completed",
+  };
+
+  const renderButton = () => {
+    switch (status) {
+      case "ASSIGNED":
+        return (
+          <Button className="w-full" onClick={onStartPickup}>
+            Start Pickup
+          </Button>
+        );
+
+      case "ON_THE_WAY_PICKUP":
+        return (
+          <Button className="w-full" onClick={onPickedUp}>
+            Mark Picked Up
+          </Button>
+        );
+
+      case "PICKED_UP":
+        return (
+          <Button className="w-full" onClick={onParked}>
+            Mark Parked
+          </Button>
+        );
+
+      case "PARKED":
+        return (
+          <Button className="w-full" onClick={onStartDrop}>
+            Start Drop
+          </Button>
+        );
+
+      case "ON_THE_WAY_DROP":
+        return (
+          <Button className="w-full" onClick={onComplete}>
+            Complete Job
+          </Button>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
     <Card className="rounded-xl">
       <CardContent className="p-4 space-y-3">
@@ -34,12 +116,8 @@ export default function ActiveJobCard({
             {req.car}
           </div>
 
-          <Badge
-            className={
-              completed ? "bg-green-500 text-white" : "bg-blue-500 text-white"
-            }
-          >
-            {completed ? "COMPLETED" : "IN PROGRESS"}
+          <Badge className={`${statusColor[status]} text-white`}>
+            {statusText[status]}
           </Badge>
         </div>
 
@@ -73,12 +151,7 @@ export default function ActiveJobCard({
           {req.date}
         </div>
 
-        {/* COMPLETE BUTTON */}
-        {!completed && (
-          <Button className="w-full" onClick={onComplete}>
-            Complete Job
-          </Button>
-        )}
+        {renderButton()}
       </CardContent>
     </Card>
   );

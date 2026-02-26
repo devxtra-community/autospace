@@ -5,10 +5,12 @@ import { useEffect, useState } from "react";
 import ValetHeader from "@/components/valets/ValetHeader";
 import StatusCard from "@/components/valets/StatusCard";
 import RequestCard from "@/components/valets/RequestCard";
-import ActiveJobCard from "@/components/valets/ActiveJobCard";
+import ActiveJobCard, {
+  ActiveJob,
+  ValetStatus,
+} from "@/components/valets/ActiveJobCard";
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -18,20 +20,8 @@ import {
   rejectBooking,
   getActiveJobs,
   getCompletedJobs,
-  completeBooking,
+  updateValetStatus,
 } from "@/services/valet.service";
-
-/* ================= TYPES ================= */
-
-type BookingRequest = {
-  id: string;
-  car: string;
-  customer: string;
-  phone: string;
-  location: string;
-  time: string;
-  date: string;
-};
 
 type BackendBooking = {
   id: string;
@@ -43,136 +33,85 @@ type BackendBooking = {
   garageLocation: string;
   pickupTime: string;
   dropTime: string;
+  valetStatus: ValetStatus;
 };
 
-const transformBooking = (b: BackendBooking): BookingRequest => ({
-  id: b.id,
-
-  car: `Slot ${b.slotNumber} (${b.slotType})`,
-
-  customer: b.customerName,
-
-  phone: b.customerPhone,
-
-  location: `${b.garageName}, ${b.garageLocation}`,
-
-  time: `${new Date(b.pickupTime).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  })} → ${new Date(b.dropTime).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  })}`,
-
-  date: new Date(b.pickupTime).toLocaleDateString([], {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }),
-});
-
-/* ================= COMPONENT ================= */
+function transformBooking(b: BackendBooking): ActiveJob {
+  return {
+    id: b.id,
+    car: `Slot ${b.slotNumber} (${b.slotType})`,
+    customer: b.customerName,
+    phone: b.customerPhone,
+    location: `${b.garageName}, ${b.garageLocation}`,
+    time: `${new Date(b.pickupTime).toLocaleTimeString()} → ${new Date(
+      b.dropTime,
+    ).toLocaleTimeString()}`,
+    date: new Date(b.pickupTime).toLocaleDateString(),
+    valetStatus: b.valetStatus || "ASSIGNED",
+  };
+}
 
 export default function ValetDashboard() {
-  const [requests, setRequests] = useState<BookingRequest[]>([]);
-  const [active, setActive] = useState<BookingRequest[]>([]);
-  const [completed, setCompleted] = useState<BookingRequest[]>([]);
-
-  /* ================= LOAD ALL DATA ================= */
+  const [requests, setRequests] = useState<ActiveJob[]>([]);
+  const [active, setActive] = useState<ActiveJob[]>([]);
+  const [completed, setCompleted] = useState<ActiveJob[]>([]);
 
   useEffect(() => {
-    loadRequests();
-    loadActiveJobs();
-    loadCompletedJobs();
+    loadAll();
   }, []);
 
-  const loadRequests = async () => {
+  async function loadAll() {
     try {
-      const data = await getValetRequests();
+      const req = await getValetRequests();
+      const act = await getActiveJobs();
+      const comp = await getCompletedJobs();
 
-      const formatted = data.map(transformBooking);
-
-      setRequests(formatted);
+      setRequests(req.map(transformBooking));
+      setActive(act.map(transformBooking));
+      setCompleted(comp.map(transformBooking));
     } catch (err) {
-      console.error("Failed to load requests", err);
+      console.error(err);
     }
-  };
+  }
 
-  const loadActiveJobs = async () => {
-    try {
-      const data = await getActiveJobs();
+  async function updateStatus(id: string, status: ValetStatus) {
+    await updateValetStatus(id, status);
 
-      const formatted = data.map(transformBooking);
+    setActive((prev) =>
+      prev.map((job) =>
+        job.id === id ? { ...job, valetStatus: status } : job,
+      ),
+    );
 
-      setActive(formatted);
-    } catch (err) {
-      console.error("Failed to load active jobs", err);
+    if (status === "COMPLETED") {
+      const job = active.find((j) => j.id === id);
+      if (job) {
+        setCompleted((prev) => [...prev, { ...job, valetStatus: status }]);
+        setActive((prev) => prev.filter((j) => j.id !== id));
+      }
     }
-  };
+  }
 
-  const loadCompletedJobs = async () => {
-    try {
-      const data = await getCompletedJobs();
+  async function accept(id: string) {
+    await acceptBooking(id);
+    loadAll();
+  }
 
-      const formatted = data.map(transformBooking);
-
-      setCompleted(formatted);
-    } catch (err) {
-      console.error("Failed to load completed jobs", err);
-    }
-  };
-
-  /* ================= ACTIONS ================= */
-
-  const accept = async (req: BookingRequest) => {
-    try {
-      await acceptBooking(req.id);
-
-      // move UI
-      setRequests((prev) => prev.filter((r) => r.id !== req.id));
-      setActive((prev) => [...prev, req]);
-    } catch (err) {
-      console.error("Accept failed", err);
-    }
-  };
-
-  const reject = async (req: BookingRequest) => {
-    try {
-      await rejectBooking(req.id);
-
-      setRequests((prev) => prev.filter((r) => r.id !== req.id));
-    } catch (err) {
-      console.error("Reject failed", err);
-    }
-  };
-
-  const complete = async (req: BookingRequest) => {
-    try {
-      await completeBooking(req.id);
-
-      setActive((prev) => prev.filter((r) => r.id !== req.id));
-
-      setCompleted((prev) => [...prev, req]);
-    } catch (err) {
-      console.error("Complete failed", err);
-    }
-  };
-
-  /* ================= UI ================= */
+  async function reject(id: string) {
+    await rejectBooking(id);
+    loadAll();
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <ValetHeader />
-
       <StatusCard status="Available" />
 
       <Tabs defaultValue="requests" className="px-4">
         <TabsList className="grid grid-cols-3 mb-4">
           <TabsTrigger value="requests">
             Requests
-            <Badge className="ml-2 bg-primary text-black">
-              {requests.length}
-            </Badge>
+            <Badge className="ml-2">{requests.length}</Badge>
           </TabsTrigger>
 
           <TabsTrigger value="active">
@@ -186,41 +125,42 @@ export default function ValetDashboard() {
           </TabsTrigger>
         </TabsList>
 
-        {/* REQUESTS TAB */}
-
+        {/* REQUESTS */}
         <TabsContent value="requests">
           <ScrollArea className="h-[60vh] space-y-3">
-            {requests.map((req) => (
+            {requests.map((job) => (
               <RequestCard
-                key={req.id}
-                req={req}
-                onAccept={() => accept(req)}
-                onReject={() => reject(req)}
+                key={job.id}
+                req={job}
+                onAccept={() => accept(job.id)}
+                onReject={() => reject(job.id)}
               />
             ))}
           </ScrollArea>
         </TabsContent>
 
-        {/* ACTIVE TAB */}
-
+        {/* ACTIVE */}
         <TabsContent value="active">
           <ScrollArea className="h-[60vh] space-y-3">
-            {active.map((req) => (
+            {active.map((job) => (
               <ActiveJobCard
-                key={req.id}
-                req={req}
-                onComplete={() => complete(req)}
+                key={job.id}
+                req={job}
+                onStartPickup={() => updateStatus(job.id, "ON_THE_WAY_PICKUP")}
+                onPickedUp={() => updateStatus(job.id, "PICKED_UP")}
+                onParked={() => updateStatus(job.id, "PARKED")}
+                onStartDrop={() => updateStatus(job.id, "ON_THE_WAY_DROP")}
+                onComplete={() => updateStatus(job.id, "COMPLETED")}
               />
             ))}
           </ScrollArea>
         </TabsContent>
 
-        {/* COMPLETED TAB */}
-
+        {/* COMPLETED */}
         <TabsContent value="completed">
           <ScrollArea className="h-[60vh] space-y-3">
-            {completed.map((req) => (
-              <ActiveJobCard key={req.id} req={req} completed />
+            {completed.map((job) => (
+              <ActiveJobCard key={job.id} req={job} />
             ))}
           </ScrollArea>
         </TabsContent>

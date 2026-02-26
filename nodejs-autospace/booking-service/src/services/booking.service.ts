@@ -2,6 +2,9 @@ import axios from "axios";
 import { AppDataSource } from "../data-source.js";
 import { Booking, BookingValetStatus } from "../entities/booking.entity.js";
 import { EntityManager, In, IsNull, LessThan, MoreThan } from "typeorm";
+import redisClient from "../config/redis.js";
+import { publishEvent } from "../config/rabbitmq.js";
+import { sendMail } from "../config/mail.js";
 
 // Repositories are obtained inside methods to ensure AppDataSource is initialized
 
@@ -75,66 +78,168 @@ export class BookingService {
     status?: string;
     valetRequested: boolean;
   }) {
-    return await AppDataSource.transaction(async (manager: EntityManager) => {
-      const repo = manager.getRepository(Booking);
+    const idempotencyKey = `booking:idemp:${bookingData.userId}:${bookingData.slotId}:${bookingData.startTime.toISOString()}`;
 
-      const overlap = await repo.findOne({
-        where: {
-          slotId: bookingData.slotId,
-          status: In(["confirmed"]),
-          startTime: LessThan(bookingData.endTime),
-          endTime: MoreThan(bookingData.startTime),
+    const idempotencyResult = await redisClient.set(
+      idempotencyKey,
+      "processing",
+      { NX: true, EX: 60 },
+    );
+
+    if (!idempotencyResult) {
+      const err = new Error("Duplicate booking request");
+      (err as Error & { statusCode?: number }).statusCode = 409;
+      throw err;
+    }
+
+    const lockKey = `lock:slot:${bookingData.slotId}`;
+
+    const lock = await redisClient.set(lockKey, "locked", { NX: true, EX: 30 });
+
+    if (!lock) {
+      const err = new Error("Slot is being booked by another request");
+      (err as Error & { statusCode?: number }).statusCode = 409;
+      throw err;
+    }
+
+    try {
+      const savedBooking = await AppDataSource.transaction(
+        async (manager: EntityManager) => {
+          const repo = manager.getRepository(Booking);
+
+          const overlap = await repo.findOne({
+            where: {
+              slotId: bookingData.slotId,
+              status: In(["pending", "confirmed", "payment_pending"]),
+              startTime: LessThan(bookingData.endTime),
+              endTime: MoreThan(bookingData.startTime),
+            },
+          });
+
+          if (overlap) throw new Error("Slot already booked");
+
+          function generatePin(): string {
+            return Math.floor(1000 + Math.random() * 9000).toString();
+          }
+
+          const booking = repo.create({
+            userId: bookingData.userId,
+            garageId: bookingData.garageId,
+            slotId: bookingData.slotId,
+            startTime: bookingData.startTime,
+            endTime: bookingData.endTime,
+            amount: bookingData.amount,
+            vehicleType: bookingData.vehicleType,
+            status: "payment_pending",
+            valetRequested: bookingData.valetRequested,
+            valetStatus: bookingData.valetRequested
+              ? BookingValetStatus.REQUESTED
+              : BookingValetStatus.NONE,
+            entryPin: generatePin(),
+            exitPin: generatePin(),
+            entryUsed: false,
+            exitUsed: false,
+          });
+
+          const saved = await repo.save(booking);
+
+          await this.lockSlot(saved.slotId);
+
+          if (saved.valetRequested) {
+            await publishEvent("valet.requested", {
+              bookingId: saved.id,
+              garageId: saved.garageId,
+            });
+          }
+
+          return saved;
         },
+      );
+
+      await redisClient.set(idempotencyKey, "completed", { EX: 300 });
+
+      await redisClient.del(`userBookings:${bookingData.userId}`);
+
+      await publishEvent("booking.created", {
+        bookingId: savedBooking.id,
+        userId: savedBooking.userId,
+        garageId: savedBooking.garageId,
+        slotId: savedBooking.slotId,
+        startTime: savedBooking.startTime,
+        endTime: savedBooking.endTime,
       });
 
-      if (overlap) {
-        throw new Error("Slot already booked");
-      }
+      const userRes = await axios.get(
+        `${process.env.AUTH_SERVICE_URL}/internal/users/${savedBooking.userId}`,
+        {
+          headers: {
+            "x-user-id": "booking-service",
+            "x-user-role": "SERVICE",
+          },
+        },
+      );
 
-      const locked = await this.lockSlot(bookingData.slotId);
+      const user = userRes.data.data;
 
-      if (!locked) {
-        throw new Error("Slot lock failed");
-      }
+      const garageRes = await axios.get(
+        `${process.env.RESOURCE_SERVICE_URL}/internal/garages/${savedBooking.garageId}`,
+        {
+          headers: {
+            "x-user-id": "booking-service",
+            "x-user-role": "SERVICE",
+          },
+        },
+      );
 
-      try {
-        function generatePin(): string {
-          return Math.floor(1000 + Math.random() * 9000).toString();
-        }
+      const garage = garageRes.data.data;
 
-        const booking = repo.create({
-          userId: bookingData.userId,
-          garageId: bookingData.garageId,
-          slotId: bookingData.slotId,
-          startTime: bookingData.startTime,
-          endTime: bookingData.endTime,
-          vehicleType: bookingData.vehicleType,
-          amount: bookingData.amount,
-          status: "payment_pending",
-          valetRequested: bookingData.valetRequested,
-          valetStatus: bookingData.valetRequested
-            ? BookingValetStatus.REQUESTED
-            : BookingValetStatus.NONE,
+      const slotRes = await axios.get(
+        `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${savedBooking.slotId}`,
+        {
+          headers: {
+            "x-user-id": "booking-service",
+            "x-user-role": "SERVICE",
+          },
+        },
+      );
 
-          entryPin: generatePin(),
-          entryUsed: false,
-          exitUsed: false,
-        });
+      const slot = slotRes.data.data;
 
-        const savedBooking = await repo.save(booking);
+      const startTime = new Date(savedBooking.startTime).toLocaleString();
+      const endTime = new Date(savedBooking.endTime).toLocaleString();
 
-        // if (savedBooking.valetRequested) {
-        //   await this.assignFirstValetRequest(savedBooking, manager);
-        // }
+      const valetLine = savedBooking.valetRequested
+        ? `Valet Service: Requested`
+        : `Valet Service: Not requested`;
 
-        return savedBooking;
-      } catch (err) {
-        await this.releaseSlot(bookingData.slotId);
-        throw err;
-      }
-    });
+      await sendMail(
+        user.email,
+        "Booking Confirmation – Autospace",
+        `Dear ${user.fullname},
+
+Booking ID: ${savedBooking.id}
+Garage: ${garage.name}
+Location: ${garage.locationName}
+Floor: ${slot.floorNumber}
+Slot: ${slot.slotNumber}
+Vehicle Type: ${savedBooking.vehicleType}
+Start Time: ${startTime}
+End Time: ${endTime}
+Amount: $${savedBooking.amount}
+
+${valetLine}
+
+Autospace Team`,
+      );
+
+      return savedBooking;
+    } catch (err) {
+      await redisClient.del(idempotencyKey);
+      throw err;
+    } finally {
+      await redisClient.del(lockKey);
+    }
   }
-
   async assignFirstValetRequest(booking: Booking, manager: EntityManager) {
     try {
       const response = await axios.get(
@@ -219,6 +324,17 @@ export class BookingService {
   }
 
   async getBookingById(id: string) {
+    const cacheKey = `booking:${id}`;
+
+    //check Redis
+    const cached = await redisClient.get(cacheKey);
+
+    if (cached) {
+      console.log("Booking from Redis");
+      return JSON.parse(cached);
+    }
+
+    //fetch from DB
     const bookingRepo = AppDataSource.getRepository(Booking);
     const booking = await bookingRepo.findOne({
       where: { id },
@@ -226,11 +342,17 @@ export class BookingService {
 
     if (!booking) throw new Error("Booking not found");
 
+    //store in Redis
+    await redisClient.set(cacheKey, JSON.stringify(booking), { EX: 300 });
+
+    console.log("Booking from DB");
+
     return booking;
   }
 
   async getManualAssignments(managerId: string) {
-    // STEP 1: get manager garage
+    const bookingRepo = AppDataSource.getRepository(Booking);
+
     const garageRes = await axios.get(
       `${process.env.RESOURCE_SERVICE_URL}/internal/garages/manager/${managerId}`,
       {
@@ -248,8 +370,6 @@ export class BookingService {
 
     const garageId = garage.id;
 
-    // STEP 2: get bookings needing manual assign
-
     const bookings = await bookingRepo.find({
       where: {
         garageId,
@@ -262,86 +382,29 @@ export class BookingService {
       },
     });
 
-    const result = [];
-
-    for (const booking of bookings) {
-      const availableValetsRes = await axios.get(
-        `${process.env.RESOURCE_SERVICE_URL}/internal/valets/available/${garageId}`,
-        {
-          headers: {
-            "x-user-id": "booking-service",
-            "x-user-role": "SERVICE",
-          },
-        },
-      );
-
-      const availableValets = availableValetsRes.data?.data
-        ? [availableValetsRes.data.data]
-        : [];
-
-      const userRes = await axios.get(
-        `${process.env.AUTH_SERVICE_URL}/internal/users/${booking.userId}`,
-        {
-          headers: {
-            "x-user-id": "booking-service",
-            "x-user-role": "SERVICE",
-          },
-        },
-      );
-
-      const slotRes = await axios.get(
-        `${process.env.RESOURCE_SERVICE_URL}/internal/slots/${booking.slotId}`,
-        {
-          headers: {
-            "x-user-id": "booking-service",
-            "x-user-role": "SERVICE",
-          },
-        },
-      );
-
-      result.push({
-        bookingId: booking.id,
-
-        customer: {
-          id: booking.userId,
-          name: userRes.data.data.fullname,
-          phone: userRes.data.data.phone,
-        },
-
-        garage: {
-          id: garage.id,
-          name: garage.name,
-          location: garage.locationName,
-        },
-
-        slot: {
-          id: slotRes.data.data.id,
-          slotNumber: slotRes.data.data.slotNumber,
-          slotType: slotRes.data.data.slotSize,
-        },
-
-        timing: {
-          startTime: booking.startTime,
-          endTime: booking.endTime,
-        },
-
-        rejectedValetIds: booking.rejectedValetIds || [],
-
-        availableValets,
-
-        createdAt: booking.createdAt,
-      });
-    }
-
-    return result;
+    return bookings;
   }
 
   async getUserBookings(userId: string) {
     const bookingRepo = AppDataSource.getRepository(Booking);
-    return await bookingRepo.find({
+
+    const cacheKey = `userBookings:${userId}`;
+
+    const cached = await redisClient.get(cacheKey);
+
+    if (cached) {
+      console.log("User bookings from Redis");
+      return JSON.parse(cached);
+    }
+
+    const bookings = await bookingRepo.find({
       where: { userId },
       order: { createdAt: "DESC" },
     });
+
+    await redisClient.set(cacheKey, JSON.stringify(bookings), { EX: 300 });
+
+    return bookings;
   }
 
   async updateBookingStatus(bookingId: string, status: string) {
@@ -394,7 +457,11 @@ export class BookingService {
       );
     }
 
-    return await bookingRepo.save(booking);
+    const updated = await bookingRepo.save(booking);
+    await redisClient.del(`booking:${bookingId}`);
+    await redisClient.del(`userBookings:${booking.userId}`);
+
+    return updated;
   }
 
   async deleteBooking(bookingId: string) {
@@ -410,6 +477,9 @@ export class BookingService {
     if (booking.valetId) await this.releaseValet(booking.valetId);
 
     await bookingRepo.delete(bookingId);
+
+    await redisClient.del(`booking:${bookingId}`);
+    await redisClient.del(`userBookings:${booking.userId}`);
 
     return true;
   }
@@ -515,6 +585,84 @@ export class BookingService {
     });
 
     return await this.enrichBookings(bookings);
+  }
+
+  private async sendValetStatusEmail(booking: Booking) {
+    const userRes = await axios.get(
+      `${process.env.AUTH_SERVICE_URL}/internal/users/${booking.userId}`,
+      {
+        headers: {
+          "x-user-id": "booking-service",
+          "x-user-role": "SERVICE",
+        },
+      },
+    );
+
+    const user = userRes.data.data;
+
+    let msg = "";
+
+    switch (booking.valetStatus) {
+      case BookingValetStatus.ASSIGNED:
+        msg = "Your valet has been assigned.";
+        break;
+
+      case BookingValetStatus.ON_THE_WAY_TO_PICKUP:
+        msg = "Your valet is on the way to pick up your vehicle.";
+        break;
+
+      case BookingValetStatus.PICKED_UP:
+        msg = "Your vehicle has been picked up.";
+        break;
+
+      case BookingValetStatus.PARKED:
+        msg = "Your vehicle has been parked safely.";
+        break;
+
+      case BookingValetStatus.ON_THE_WAY_TO_DROP:
+        msg = "Your valet is returning your vehicle.";
+        break;
+
+      case BookingValetStatus.COMPLETED:
+        msg = "Valet service completed.";
+        break;
+
+      default:
+        return;
+    }
+
+    await sendMail(
+      user.email,
+      "Autospace Valet Update",
+      `Dear ${user.fullname},
+
+${msg}
+
+Booking ID: ${booking.id}
+
+Autospace Team`,
+    );
+  }
+
+  async updateValetStatus(bookingId: string, valetStatus: BookingValetStatus) {
+    const bookingRepo = AppDataSource.getRepository(Booking);
+
+    const booking = await bookingRepo.findOne({
+      where: { id: bookingId },
+    });
+
+    if (!booking) throw new Error("Booking not found");
+
+    booking.valetStatus = valetStatus;
+
+    const updated = await bookingRepo.save(booking);
+
+    await redisClient.del(`booking:${bookingId}`);
+    await redisClient.del(`userBookings:${booking.userId}`);
+
+    await this.sendValetStatusEmail(updated);
+
+    return updated;
   }
 }
 

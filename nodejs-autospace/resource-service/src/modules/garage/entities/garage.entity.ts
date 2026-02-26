@@ -5,7 +5,10 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  OneToMany,
 } from "typeorm";
+
+import { GarageFloor } from "./garage-floor.entity";
 
 export enum GarageStatus {
   PENDING = "pending",
@@ -96,4 +99,7 @@ export class Garage {
 
   @UpdateDateColumn()
   updatedAt!: Date;
+
+  @OneToMany(() => GarageFloor, (floor) => floor.garage)
+  floors!: GarageFloor[];
 }

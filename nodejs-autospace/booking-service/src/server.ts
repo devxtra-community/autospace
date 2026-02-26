@@ -7,6 +7,9 @@ import { AppDataSource } from "./data-source.js";
 import { startPendingExpiryJob } from "./jobs/pendingExpiry.jobs.js";
 import { startBookingLifecycleJob } from "./jobs/bookingLifeCycle.job.js";
 import { startNoShowExpiryJob } from "./jobs/noShowExpiry.job.js";
+import { connectRedis } from "./config/redis.js";
+import { connectRabbit } from "./config/rabbitmq.js";
+import { startValetAssignedConsumer } from "./config/valet.consumer.js";
 
 dotenv.config();
 
@@ -18,7 +21,15 @@ const startServer = async () => {
   try {
     await AppDataSource.initialize();
     logger.info("database connected");
-    // await connectRedis();
+
+    await connectRedis();
+    logger.info("redis connected");
+
+    await connectRabbit();
+    logger.info("rabbitmq connected");
+
+    await startValetAssignedConsumer();
+    logger.info("valet assigned consumer started");
 
     startPendingExpiryJob();
     startBookingLifecycleJob();

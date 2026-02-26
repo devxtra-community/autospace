@@ -43,3 +43,14 @@ export const getCompletedJobs = async () => {
   const res = await apiClient.get("/api/bookings/valet/completed");
   return res.data.data;
 };
+
+export const updateValetStatus = async (
+  bookingId: string,
+  valetStatus: string,
+) => {
+  const res = await apiClient.patch(`/api/bookings/${bookingId}/valet-status`, {
+    valetStatus,
+  });
+
+  return res.data;
+};

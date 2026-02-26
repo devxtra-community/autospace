@@ -127,9 +127,6 @@ export const rejectBookingController = async (req: Request, res: Response) => {
       },
     );
 
-    // 🚨 DO NOT release valet here
-    // Because valet was never BUSY
-
     return res.status(200).json({
       success: true,
       message: "Booking rejected successfully",
