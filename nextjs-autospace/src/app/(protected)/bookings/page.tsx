@@ -27,6 +27,7 @@ type BookingWithGarage = Booking & {
     contactPhone?: string;
     standardSlotPrice?: number;
     largeSlotPrice?: number;
+    amount?: number;
   };
 };
 
@@ -166,16 +167,25 @@ function ActiveBookingCard({ booking }: { booking: BookingWithGarage }) {
   const start = new Date(booking.startTime);
   const end = new Date(booking.endTime);
 
-  const durationHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+  const durationMs = end.getTime() - start.getTime();
+  const durationHours = durationMs / (1000 * 60 * 60);
 
-  const pricePerHour =
-    booking.vehicleType === "suv"
-      ? (booking.garage?.largeSlotPrice ?? 15)
-      : (booking.garage?.standardSlotPrice ?? 10);
+  // const pricePerHour =
+  //   booking.vehicleType === "suv"
+  //     ? (booking.garage?.largeSlotPrice ?? 15)
+  //     : (booking.garage?.standardSlotPrice ?? 10);
 
-  const subtotal = durationHours * pricePerHour;
+  // const subtotal = total - valetCharge;
+  // const valetCharge = booking.valetRequested ? 5 : 0;
+  // const total = subtotal + valetCharge;
+
+  const total = Number(booking.amount ?? 0);
+
+  // If valet is fixed ₹5
   const valetCharge = booking.valetRequested ? 5 : 0;
-  const total = subtotal + valetCharge;
+
+  // parking amount = total - valet
+  const subtotal = Math.max(total - valetCharge, 0);
 
   return (
     <div className="bg-white border border-black rounded-sm overflow-hidden flex flex-col md:flex-row">
@@ -271,7 +281,7 @@ function ActiveBookingCard({ booking }: { booking: BookingWithGarage }) {
 
         <div className="mb-6">
           <span className="px-6 py-1 border border-black text-xs font-bold rounded-sm bg-white">
-            sedan
+            {booking.vehicleType?.toUpperCase() || "N/A"}
           </span>
         </div>
 
@@ -285,9 +295,10 @@ function ActiveBookingCard({ booking }: { booking: BookingWithGarage }) {
               )}
             </div>
             <div className="text-xs">
-              <p className="font-bold text-green-800">Valet assigned</p>
-              <p className="text-green-600 flex items-center gap-1">
-                Rajesh kumar | <Star size={10} fill="currentColor" /> 4.8
+              <p className="font-bold text-green-800">
+                {booking.valetStatus === "ASSIGNED"
+                  ? "Valet Assigned"
+                  : "Searching for valet..."}
               </p>
             </div>
           </div>
@@ -298,22 +309,22 @@ function ActiveBookingCard({ booking }: { booking: BookingWithGarage }) {
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Subtotal</span>
             <div className="flex-1 border-b border-dotted border-gray-300 mx-2 mb-1"></div>
-            <span className="font-bold">${subtotal}</span>
+            <span className="font-bold">₹{subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600 italic text-[11px]">
-              Parking time {durationHours} hour
+              Parking time {durationHours.toFixed(1)} hour
             </span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Valet Charge</span>
             <div className="flex-1 border-b border-dotted border-gray-300 mx-2 mb-1"></div>
-            <span className="font-bold">$00.00</span>
+            <span className="font-bold">₹00.00</span>
           </div>
           <div className="flex justify-between items-center pt-2 text-lg font-bold border-t border-black mt-2">
             <span>Total</span>
             <div className="flex-1 border-b border-dotted border-gray-300 mx-2 mb-1"></div>
-            <span>${total}</span>
+            <span>₹{total.toFixed(2)}</span>
           </div>
         </div>
 
@@ -396,7 +407,7 @@ function HistoryBookingCard({ booking }: { booking: BookingWithGarage }) {
         </div>
 
         <div className="flex flex-col items-end gap-3">
-          <p className="text-2xl font-bold">${isCancelled ? "0" : "40"}</p>
+          <p className="text-2xl font-bold">₹{isCancelled ? "0" : "40"}</p>
           {!isCancelled && (
             <button className="flex items-center gap-2 px-3 py-1.5 border border-black rounded-sm text-xs font-bold hover:bg-gray-50 transition-colors">
               <RotateCcw size={14} /> try again

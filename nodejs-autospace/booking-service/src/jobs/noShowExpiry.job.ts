@@ -12,7 +12,12 @@ const GRACE_MINUTES = 20;
 export function startNoShowExpiryJob() {
   cron.schedule("* * * * *", async () => {
     try {
-      const cutoff = new Date(Date.now() - GRACE_MINUTES * 60 * 1000);
+      const now = new Date();
+      const cutoff = new Date(now.getTime() - GRACE_MINUTES * 60 * 1000);
+
+      logger.info(
+        `NoShow Check | now=${now.toISOString()} cutoff=${cutoff.toISOString()}`,
+      );
 
       const noShows = await bookingRepo.find({
         where: {
@@ -24,14 +29,17 @@ export function startNoShowExpiryJob() {
 
       if (!noShows.length) return;
 
-      logger.info(`No‑show cancelling ${noShows.length} bookings`);
+      logger.warn(`No‑show cancelling ${noShows.length} bookings`);
 
       for (const booking of noShows) {
         try {
+          logger.warn(`Cancelling no‑show booking ${booking.id}`);
+
           booking.status = "cancelled";
+          booking.paymentStatus = "failed";
           await bookingRepo.save(booking);
 
-          await axios.post(
+          const res = await axios.post(
             `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}/release`,
             {},
             {
@@ -39,12 +47,11 @@ export function startNoShowExpiryJob() {
                 Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
                 "x-user-id": "booking-service",
                 "x-user-role": "SERVICE",
-                "x-user-email": "service@internal",
               },
             },
           );
 
-          logger.info(`No‑show cancelled booking ${booking.id}`);
+          logger.info(`Slot released for ${booking.id} status=${res.status}`);
         } catch (err) {
           logger.error(`Failed cancelling no‑show ${booking.id}`, err);
         }

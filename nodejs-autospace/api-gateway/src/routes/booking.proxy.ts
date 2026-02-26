@@ -60,4 +60,41 @@ router.use(
   }),
 );
 
+router.use(
+  "/payment",
+  authMiddleware,
+  createProxyMiddleware({
+    target: BOOKING_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: (path) => `/payment${path}`,
+    on: {
+      proxyReq: (proxyReq, req) => {
+        attachUserHeaders(proxyReq, req);
+
+        if (
+          req.body &&
+          Object.keys(req.body).length > 0 &&
+          ["POST", "PUT", "PATCH"].includes(req.method)
+        ) {
+          const bodyData = JSON.stringify(req.body);
+          proxyReq.setHeader("Content-Type", "application/json");
+          proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
+          proxyReq.write(bodyData);
+        }
+      },
+    },
+  }),
+);
+
+router.use(
+  "/payments/webhook",
+  createProxyMiddleware({
+    target: BOOKING_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: {
+      "^/payments/webhook": "/payments/webhook",
+    },
+  }),
+);
+
 export default router;

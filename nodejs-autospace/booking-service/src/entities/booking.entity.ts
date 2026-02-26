@@ -75,6 +75,16 @@ export class Booking {
   @Column({ name: "rejected_valet_ids", type: "json", nullable: true })
   rejectedValetIds!: string[] | null;
 
+  @Column({ type: "decimal", precision: 10, scale: 2 })
+  amount!: number;
+
+  @Column({
+    type: "varchar",
+    length: 20,
+    default: "unpaid",
+  })
+  paymentStatus!: "unpaid" | "paid" | "failed";
+
   @CreateDateColumn()
   createdAt!: Date;
 

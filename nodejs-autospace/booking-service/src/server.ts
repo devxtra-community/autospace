@@ -15,7 +15,7 @@ dotenv.config();
 
 const PORT = process.env.PORT || 4002;
 
-app.use(express.json());
+// app.use(express.json());
 
 const startServer = async () => {
   try {
