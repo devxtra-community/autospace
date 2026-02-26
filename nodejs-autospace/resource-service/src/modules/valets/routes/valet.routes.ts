@@ -48,6 +48,6 @@ router.get(
 
 router.get("/:id", validateValetIdParam, getValetByIdController);
 
-router.get("/active/:garageId", getAllActiveValetsController);
+router.get("/all-active/:garageId", getAllActiveValetsController);
 
 export default router;

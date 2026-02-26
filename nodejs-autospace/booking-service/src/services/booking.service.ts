@@ -407,7 +407,7 @@ Autospace Team`,
 
     for (const booking of bookings) {
       const availableValetsRes = await axios.get(
-        `${process.env.RESOURCE_SERVICE_URL}/internal/valets/available/${garageId}`,
+        `${process.env.RESOURCE_SERVICE_URL}/valets/all-active/${garageId}`,
         {
           headers: {
             "x-user-id": "booking-service",
@@ -416,9 +416,7 @@ Autospace Team`,
         },
       );
 
-      const availableValets = availableValetsRes.data?.data
-        ? [availableValetsRes.data.data]
-        : [];
+      const availableValets = availableValetsRes.data?.data || [];
 
       const userRes = await axios.get(
         `${process.env.AUTH_SERVICE_URL}/internal/users/${booking.userId}`,
@@ -661,6 +659,82 @@ Autospace Team`,
     });
 
     return await this.enrichBookings(bookings);
+  }
+
+  private async sendValetStatusEmail(booking: Booking) {
+    const userRes = await axios.get(
+      `${process.env.AUTH_SERVICE_URL}/internal/users/${booking.userId}`,
+      {
+        headers: {
+          "x-user-id": "booking-service",
+          "x-user-role": "SERVICE",
+        },
+      },
+    );
+
+    const user = userRes.data.data;
+
+    let msg = "";
+
+    switch (booking.valetStatus) {
+      case BookingValetStatus.ASSIGNED:
+        msg = "Your valet has been assigned.";
+        break;
+
+      case BookingValetStatus.ON_THE_WAY_TO_PICKUP:
+        msg = "Your valet is on the way to pick up your vehicle.";
+        break;
+
+      case BookingValetStatus.PICKED_UP:
+        msg = "Your vehicle has been picked up.";
+        break;
+
+      case BookingValetStatus.PARKED:
+        msg = "Your vehicle has been parked safely.";
+        break;
+
+      case BookingValetStatus.ON_THE_WAY_TO_DROP:
+        msg = "Your valet is returning your vehicle.";
+        break;
+
+      case BookingValetStatus.COMPLETED:
+        msg = "Valet service completed.";
+        break;
+
+      default:
+        return;
+    }
+
+    await sendMail(
+      user.email,
+      "Autospace Valet Update",
+      `Dear ${user.fullname},
+
+${msg}
+
+Booking ID: ${booking.id}
+
+Autospace Team`,
+    );
+  }
+
+  async updateValetStatus(bookingId: string, valetStatus: BookingValetStatus) {
+    const booking = await bookingRepo.findOne({
+      where: { id: bookingId },
+    });
+
+    if (!booking) throw new Error("Booking not found");
+
+    booking.valetStatus = valetStatus;
+
+    const updated = await bookingRepo.save(booking);
+
+    await redisClient.del(`booking:${bookingId}`);
+    await redisClient.del(`userBookings:${booking.userId}`);
+
+    await this.sendValetStatusEmail(updated);
+
+    return updated;
   }
 }
 
