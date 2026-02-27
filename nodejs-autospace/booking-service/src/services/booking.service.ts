@@ -180,6 +180,10 @@ export class BookingService {
       );
 
       // console.log("auth url",process.env.AUTH_SERVICE_URL);
+      console.log(
+        "url:",
+        `${process.env.AUTH_SERVICE_URL}/internal/users/${savedBooking.userId}`,
+      );
 
       const user = userRes.data.data;
 
@@ -195,6 +199,30 @@ export class BookingService {
 
       const garage = garageRes.data.data;
 
+      if (!garage.openingTime || !garage.closingTime) {
+        throw new Error("Garage working hours not configured");
+      }
+
+      const start = new Date(bookingData.startTime);
+      const end = new Date(bookingData.endTime);
+
+      // Convert garage opening time into Date of same day
+      const [openHour, openMin] = garage.openingTime.split(":").map(Number);
+      const [closeHour, closeMin] = garage.closingTime.split(":").map(Number);
+
+      const openingDateTime = new Date(start);
+      openingDateTime.setHours(openHour, openMin, 0, 0);
+
+      const closingDateTime = new Date(start);
+      closingDateTime.setHours(closeHour, closeMin, 0, 0);
+
+      if (start < openingDateTime || end > closingDateTime) {
+        throw new Error("Garage is closed at this time");
+      }
+
+      if (start >= end) {
+        throw new Error("Invalid booking time range");
+      }
       const slotRes = await axios.get(
         `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${savedBooking.slotId}`,
         {
@@ -206,32 +234,64 @@ export class BookingService {
       );
 
       const slot = slotRes.data.data;
-
+      console.log("SLOT RESPONSE:", slotRes.data);
       const startTime = new Date(savedBooking.startTime).toLocaleString();
       const endTime = new Date(savedBooking.endTime).toLocaleString();
 
       const valetLine = savedBooking.valetRequested
-        ? `Valet Service: Requested`
-        : `Valet Service: Not requested`;
+        ? `Valet Service: Requested
+Our valet partner will handle your vehicle pickup and parking. You will receive live status updates throughout the process.`
+        : `Valet Service: Not requested
+You may access your parking slot directly using your secure Entry PIN at the scheduled time.`;
 
       await sendMail(
         user.email,
-        "Booking Confirmation – Autospace",
+        "Your Autospace Booking is Confirmed",
         `Dear ${user.fullname},
 
+Thank you for choosing Autospace. Your parking reservation has been successfully confirmed. Below are your booking details:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BOOKING DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Booking ID: ${savedBooking.id}
+
 Garage: ${garage.name}
 Location: ${garage.locationName}
+
 Floor: ${slot.floorNumber}
-Slot: ${slot.slotNumber}
+Slot Number: ${slot.slotNumber}
+
 Vehicle Type: ${savedBooking.vehicleType}
+
 Start Time: ${startTime}
 End Time: ${endTime}
-Amount: $${savedBooking.amount}
 
+Amount Paid: ₹${savedBooking.amount}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECURE ACCESS INFORMATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Entry PIN: ${savedBooking.entryPin}
+Exit PIN: ${savedBooking.exitPin}
+
+Please keep these PINs confidential. They are required to access and exit your parking slot.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VALET SERVICE STATUS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${valetLine}
 
-Autospace Team`,
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If you need any assistance, our support team is available to help you at any time.
+
+Thank you for trusting Autospace for your parking needs.
+
+Warm regards,  
+Autospace Team  
+Smart Parking. Seamless Experience.
+`,
       );
 
       return savedBooking;
@@ -323,7 +383,14 @@ Autospace Team`,
   }
   async updateBookingWithValet(booking: Booking) {
     const bookingRepo = AppDataSource.getRepository(Booking);
-    return await bookingRepo.save(booking);
+
+    const updated = await bookingRepo.save(booking);
+
+    // FIX: clear Redis cache
+    await redisClient.del(`booking:${booking.id}`);
+    await redisClient.del(`userBookings:${booking.userId}`);
+
+    return updated;
   }
 
   async getBookingById(id: string) {
@@ -522,7 +589,7 @@ Autospace Team`,
           );
 
           const slotRes = await axios.get(
-            `${process.env.RESOURCE_SERVICE_URL}/internal/slots/${booking.slotId}`,
+            `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}`,
             { headers },
           );
 
@@ -536,10 +603,14 @@ Autospace Team`,
             customerPhone: user.phone,
             garageName: garage.name,
             garageLocation: garage.locationName,
+            floorNumber: slot.floorNumber,
             slotNumber: slot.slotNumber,
             slotType: slot.slotSize,
+            entryPin: booking.entryPin,
+            exitPin: booking.exitPin,
             pickupTime: booking.startTime,
             dropTime: booking.endTime,
+            valetStatus: booking.valetStatus,
             createdAt: booking.createdAt,
           };
         } catch (err) {
@@ -591,43 +662,78 @@ Autospace Team`,
   }
 
   private async sendValetStatusEmail(booking: Booking) {
+    const headers = {
+      "x-user-id": "booking-service",
+      "x-user-role": "SERVICE",
+    };
+
+    // fetch user
     const userRes = await axios.get(
       `${process.env.AUTH_SERVICE_URL}/internal/users/${booking.userId}`,
-      {
-        headers: {
-          "x-user-id": "booking-service",
-          "x-user-role": "SERVICE",
-        },
-      },
+      { headers },
     );
 
     const user = userRes.data.data;
 
-    let msg = "";
+    // fetch garage
+    const garageRes = await axios.get(
+      `${process.env.RESOURCE_SERVICE_URL}/internal/garages/${booking.garageId}`,
+      { headers },
+    );
+
+    const garage = garageRes.data.data;
+
+    // fetch slot
+    const slotRes = await axios.get(
+      `${process.env.RESOURCE_SERVICE_URL}/internal/slots/${booking.slotId}`,
+      { headers },
+    );
+
+    const slot = slotRes.data.data;
+
+    // format dates
+    const startTime = new Date(booking.startTime).toLocaleString();
+    const endTime = new Date(booking.endTime).toLocaleString();
+
+    // valet status message
+    let statusTitle = "";
+    let statusDescription = "";
 
     switch (booking.valetStatus) {
       case BookingValetStatus.ASSIGNED:
-        msg = "Your valet has been assigned.";
+        statusTitle = "Valet Assigned";
+        statusDescription =
+          "Your professional Autospace valet has been successfully assigned and will handle your vehicle with utmost care.";
         break;
 
       case BookingValetStatus.ON_THE_WAY_TO_PICKUP:
-        msg = "Your valet is on the way to pick up your vehicle.";
+        statusTitle = "Valet En Route";
+        statusDescription =
+          "Your valet is currently on the way to pick up your vehicle. Please be ready at the scheduled location.";
         break;
 
       case BookingValetStatus.PICKED_UP:
-        msg = "Your vehicle has been picked up.";
+        statusTitle = "Vehicle Picked Up";
+        statusDescription =
+          "Your vehicle has been securely picked up and is being transported to your reserved parking space.";
         break;
 
       case BookingValetStatus.PARKED:
-        msg = "Your vehicle has been parked safely.";
+        statusTitle = "Vehicle Parked Successfully";
+        statusDescription =
+          "Your vehicle has been safely parked at your reserved Autospace slot.";
         break;
 
       case BookingValetStatus.ON_THE_WAY_TO_DROP:
-        msg = "Your valet is returning your vehicle.";
+        statusTitle = "Vehicle Returning";
+        statusDescription =
+          "Your valet is currently returning your vehicle. Please be ready to receive it.";
         break;
 
       case BookingValetStatus.COMPLETED:
-        msg = "Valet service completed.";
+        statusTitle = "Valet Service Completed";
+        statusDescription =
+          "Your valet service has been successfully completed. Thank you for trusting Autospace.";
         break;
 
       default:
@@ -636,14 +742,50 @@ Autospace Team`,
 
     await sendMail(
       user.email,
-      "Autospace Valet Update",
-      `Dear ${user.fullname},
+      `Autospace Update: ${statusTitle}`,
+      `
+Dear ${user.fullname},
 
-${msg}
+We would like to inform you of an update regarding your valet booking with Autospace.
+
+Status: ${statusTitle}
+
+${statusDescription}
+
+────────────────────────────
+BOOKING DETAILS
+────────────────────────────
 
 Booking ID: ${booking.id}
 
-Autospace Team`,
+Garage: ${garage.name}
+Location: ${garage.locationName}
+
+Floor: ${slot.floorNumber}
+Slot Number: ${slot.slotNumber}
+
+Vehicle Type: ${booking.vehicleType}
+
+Start Time: ${startTime}
+End Time: ${endTime}
+
+Amount Paid: ₹${booking.amount}
+
+Entry PIN: ${booking.entryPin ?? "N/A"}
+Exit PIN: ${booking.exitPin ?? "N/A"}
+
+────────────────────────────
+
+You can track your valet and booking status anytime from your Autospace dashboard.
+
+If you need assistance, our support team is always ready to help.
+
+Thank you for choosing Autospace.
+
+Warm regards,  
+Autospace Team  
+Smart Parking. Seamless Experience.
+`,
     );
   }
 

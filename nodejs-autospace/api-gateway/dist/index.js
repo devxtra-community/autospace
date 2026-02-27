@@ -19,6 +19,7 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const auth_proxy_1 = __importDefault(require("./routes/auth.proxy"));
 const healthcheck_1 = require("./utils/healthcheck");
 const resource_proxy_1 = __importDefault(require("./routes/resource.proxy"));
+const booking_proxy_1 = __importDefault(require("./routes/booking.proxy"));
 const app = (0, express_1.default)();
 const port = process.env.GATEWAY_PORT || 4000;
 app.use((0, helmet_1.default)());
@@ -56,7 +57,7 @@ app.get("/health/services", async (req, res) => {
     });
 });
 app.use("/api/auth", auth_proxy_1.default);
-app.use("/api", resource_proxy_1.default);
+app.use("/api", resource_proxy_1.default, booking_proxy_1.default);
 app.use((req, res) => {
     res.status(404).json({
         success: false,

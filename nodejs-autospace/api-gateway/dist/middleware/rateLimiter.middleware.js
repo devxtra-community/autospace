@@ -5,8 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authRateLimiter = exports.checkAllServices = exports.checkHealth = void 0;
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
-const error_1 = require("../utils/error");
-const error_2 = require("../utils/error");
 const axios_1 = __importDefault(require("axios"));
 const service_config_1 = require("../config/service.config");
 const checkHealth = async (serviceName, serviceUrl) => {
@@ -41,7 +39,10 @@ exports.authRateLimiter = (0, express_rate_limit_1.default)({
     standardHeaders: true,
     legacyHeaders: false,
     handler: (_req, res) => {
-        return (0, error_1.sendAuthError)(res, error_2.AuthErrorCode.RATE_LIMITED, "Too many authentication requests , please try again later.", 429);
+        res.status(429).json({
+            success: false,
+            message: "Too many requests, please try again later",
+        });
     },
 });
-// add limiting asper project moves like password reset limit //
+// add cheyyannam limiting asper project big like password reset limit //

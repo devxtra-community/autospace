@@ -13,6 +13,8 @@ exports.CreateGarageSchema = zod_1.z.object({
         .string()
         .regex(/^\+?[0-9]{7,15}$/, "Invalid phone number")
         .optional(),
+    openingTime: zod_1.z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
+    closingTime: zod_1.z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
 });
 exports.CreateFloorSchema = zod_1.z.object({
     floorNumber: zod_1.z.number().int().nonnegative(),

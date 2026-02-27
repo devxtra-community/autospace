@@ -90,6 +90,20 @@ export class Garage {
   })
   largeSlotPrice!: number;
 
+  @Column({
+    type: "time",
+    name: "opening_time",
+    nullable: true,
+  })
+  openingTime!: string | null;
+
+  @Column({
+    type: "time",
+    name: "closing_time",
+    nullable: true,
+  })
+  closingTime!: string | null;
+
   @Index()
   @Column("uuid")
   createdBy!: string;

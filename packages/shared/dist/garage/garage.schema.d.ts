@@ -7,6 +7,8 @@ export declare const CreateGarageSchema: z.ZodObject<{
     capacity: z.ZodNumber;
     contactEmail: z.ZodOptional<z.ZodString>;
     contactPhone: z.ZodOptional<z.ZodString>;
+    openingTime: z.ZodString;
+    closingTime: z.ZodString;
 }, z.core.$strip>;
 export declare const CreateFloorSchema: z.ZodObject<{
     floorNumber: z.ZodNumber;

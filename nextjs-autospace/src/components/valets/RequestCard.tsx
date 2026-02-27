@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-import { Car, Phone, MapPin, Clock, Calendar } from "lucide-react";
+import { Car, Phone, MapPin, Clock, Calendar, Hash, Key } from "lucide-react";
 
 type RequestCardProps = {
   req: {
@@ -15,6 +15,9 @@ type RequestCardProps = {
     location: string;
     time: string;
     date: string;
+    floor: string;
+    entryPin: string;
+    exitPin: string;
   };
   onAccept: () => void;
   onReject: () => void;
@@ -27,38 +30,63 @@ export default function RequestCard({
 }: RequestCardProps) {
   return (
     <Card className="rounded-xl">
-      <CardContent className="p-4 space-y-2">
+      <CardContent className="p-4 space-y-3">
+        {/* HEADER */}
         <div className="flex justify-between">
           <div className="flex items-center gap-2 font-medium">
             <Car size={16} />
             {req.car}
           </div>
 
-          <Badge className="bg-yellow-200 text-black">NEW</Badge>
+          <Badge className="bg-yellow-400 text-black">NEW REQUEST</Badge>
         </div>
 
-        <div className="text-sm text-muted-foreground">{req.customer}</div>
+        {/* CUSTOMER */}
+        <div className="text-sm font-medium">{req.customer}</div>
 
+        {/* PHONE */}
         <div className="flex items-center gap-2 text-sm">
           <Phone size={14} />
           {req.phone}
         </div>
 
+        {/* LOCATION */}
         <div className="flex items-center gap-2 text-sm">
           <MapPin size={14} />
           {req.location}
         </div>
 
+        {/* FLOOR */}
+        <div className="flex items-center gap-2 text-sm">
+          <Hash size={14} />
+          {req.floor}
+        </div>
+
+        {/* ENTRY PIN */}
+        <div className="flex items-center gap-2 text-sm">
+          <Key size={14} />
+          Entry PIN: <span className="font-semibold">{req.entryPin}</span>
+        </div>
+
+        {/* EXIT PIN */}
+        <div className="flex items-center gap-2 text-sm">
+          <Key size={14} />
+          Exit PIN: <span className="font-semibold">{req.exitPin}</span>
+        </div>
+
+        {/* TIME */}
         <div className="flex items-center gap-2 text-sm">
           <Clock size={14} />
           {req.time}
         </div>
 
+        {/* DATE */}
         <div className="flex items-center gap-2 text-sm">
           <Calendar size={14} />
           {req.date}
         </div>
 
+        {/* ACTION BUTTONS */}
         <div className="flex gap-2 pt-2">
           <Button
             className="flex-1 bg-primary text-black hover:bg-secondary"

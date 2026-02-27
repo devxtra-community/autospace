@@ -11,7 +11,7 @@ import ActiveJobCard, {
 } from "@/components/valets/ActiveJobCard";
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import {
@@ -21,12 +21,16 @@ import {
   getActiveJobs,
   getCompletedJobs,
   updateValetStatus,
+  completeBooking,
 } from "@/services/valet.service";
 
 type BackendBooking = {
   id: string;
   slotNumber: string;
   slotType: string;
+  floorNumber: number;
+  entryPin: string;
+  exitPin: string;
   customerName: string;
   customerPhone: string;
   garageName: string;
@@ -40,6 +44,9 @@ function transformBooking(b: BackendBooking): ActiveJob {
   return {
     id: b.id,
     car: `Slot ${b.slotNumber} (${b.slotType})`,
+    floor: `Floor ${b.floorNumber}`,
+    entryPin: b.entryPin,
+    exitPin: b.exitPin,
     customer: b.customerName,
     phone: b.customerPhone,
     location: `${b.garageName}, ${b.garageLocation}`,
@@ -47,11 +54,13 @@ function transformBooking(b: BackendBooking): ActiveJob {
       b.dropTime,
     ).toLocaleTimeString()}`,
     date: new Date(b.pickupTime).toLocaleDateString(),
-    valetStatus: b.valetStatus || "ASSIGNED",
+    valetStatus: b.valetStatus,
   };
 }
 
 export default function ValetDashboard() {
+  const [tab, setTab] = useState("requests");
+
   const [requests, setRequests] = useState<ActiveJob[]>([]);
   const [active, setActive] = useState<ActiveJob[]>([]);
   const [completed, setCompleted] = useState<ActiveJob[]>([]);
@@ -75,59 +84,73 @@ export default function ValetDashboard() {
   }
 
   async function updateStatus(id: string, status: ValetStatus) {
-    await updateValetStatus(id, status);
-
-    setActive((prev) =>
-      prev.map((job) =>
-        job.id === id ? { ...job, valetStatus: status } : job,
-      ),
-    );
-
     if (status === "COMPLETED") {
-      const job = active.find((j) => j.id === id);
-      if (job) {
-        setCompleted((prev) => [...prev, { ...job, valetStatus: status }]);
-        setActive((prev) => prev.filter((j) => j.id !== id));
-      }
+      await completeBooking(id);
+    } else {
+      await updateValetStatus(id, status);
     }
+
+    await loadAll();
   }
 
   async function accept(id: string) {
     await acceptBooking(id);
-    loadAll();
+    await loadAll();
   }
 
   async function reject(id: string) {
     await rejectBooking(id);
-    loadAll();
+    await loadAll();
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-16">
       <ValetHeader />
-      <StatusCard status="Available" />
+      <StatusCard />
 
-      <Tabs defaultValue="requests" className="px-4">
-        <TabsList className="grid grid-cols-3 mb-4">
-          <TabsTrigger value="requests">
+      <Tabs value={tab} onValueChange={setTab} className="mt-4">
+        {/* Modern Production Tabs */}
+        <TabsList className="mx-4 grid grid-cols-3 rounded-xl bg-muted p-1 h-10">
+          <TabsTrigger
+            value="requests"
+            className="rounded-lg text-xs font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
             Requests
-            <Badge className="ml-2">{requests.length}</Badge>
+            {requests.length > 0 && (
+              <span className="ml-1 text-[10px] opacity-80">
+                {requests.length}
+              </span>
+            )}
           </TabsTrigger>
 
-          <TabsTrigger value="active">
-            Active
-            <Badge className="ml-2">{active.length}</Badge>
+          <TabsTrigger
+            value="active"
+            className="rounded-lg text-xs font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            In‑Progress
+            {active.length > 0 && (
+              <span className="ml-1 text-[10px] opacity-80">
+                {active.length}
+              </span>
+            )}
           </TabsTrigger>
 
-          <TabsTrigger value="completed">
+          <TabsTrigger
+            value="completed"
+            className="rounded-lg text-xs font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
             Completed
-            <Badge className="ml-2">{completed.length}</Badge>
+            {completed.length > 0 && (
+              <span className="ml-1 text-[10px] opacity-80">
+                {completed.length}
+              </span>
+            )}
           </TabsTrigger>
         </TabsList>
 
         {/* REQUESTS */}
         <TabsContent value="requests">
-          <ScrollArea className="h-[60vh] space-y-3">
+          <ScrollArea className="h-[60vh] px-4 mt-3 space-y-3">
             {requests.map((job) => (
               <RequestCard
                 key={job.id}
@@ -141,15 +164,17 @@ export default function ValetDashboard() {
 
         {/* ACTIVE */}
         <TabsContent value="active">
-          <ScrollArea className="h-[60vh] space-y-3">
+          <ScrollArea className="h-[60vh] px-4 mt-3 space-y-3">
             {active.map((job) => (
               <ActiveJobCard
                 key={job.id}
                 req={job}
-                onStartPickup={() => updateStatus(job.id, "ON_THE_WAY_PICKUP")}
+                onStartPickup={() =>
+                  updateStatus(job.id, "ON_THE_WAY_TO_PICKUP")
+                }
                 onPickedUp={() => updateStatus(job.id, "PICKED_UP")}
                 onParked={() => updateStatus(job.id, "PARKED")}
-                onStartDrop={() => updateStatus(job.id, "ON_THE_WAY_DROP")}
+                onStartDrop={() => updateStatus(job.id, "ON_THE_WAY_TO_DROP")}
                 onComplete={() => updateStatus(job.id, "COMPLETED")}
               />
             ))}
@@ -158,7 +183,7 @@ export default function ValetDashboard() {
 
         {/* COMPLETED */}
         <TabsContent value="completed">
-          <ScrollArea className="h-[60vh] space-y-3">
+          <ScrollArea className="h-[60vh] px-4 mt-3 space-y-3">
             {completed.map((job) => (
               <ActiveJobCard key={job.id} req={job} />
             ))}

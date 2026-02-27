@@ -4,14 +4,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-import { Car, User, Phone, MapPin, Clock, Calendar } from "lucide-react";
+import {
+  Car,
+  User,
+  Phone,
+  MapPin,
+  Clock,
+  Calendar,
+  Hash,
+  Key,
+} from "lucide-react";
 
 export type ValetStatus =
   | "ASSIGNED"
-  | "ON_THE_WAY_PICKUP"
+  | "ON_THE_WAY_TO_PICKUP"
   | "PICKED_UP"
   | "PARKED"
-  | "ON_THE_WAY_DROP"
+  | "ON_THE_WAY_TO_DROP"
   | "COMPLETED";
 
 export type ActiveJob = {
@@ -22,6 +31,9 @@ export type ActiveJob = {
   location: string;
   time: string;
   date: string;
+  floor: string;
+  entryPin: string;
+  exitPin: string;
   valetStatus: ValetStatus;
 };
 
@@ -48,19 +60,19 @@ export default function ActiveJobCard({
 
   const statusColor: Record<string, string> = {
     ASSIGNED: "bg-blue-500",
-    ON_THE_WAY_PICKUP: "bg-yellow-500",
+    ON_THE_WAY_TO_PICKUP: "bg-yellow-500",
     PICKED_UP: "bg-purple-500",
     PARKED: "bg-indigo-500",
-    ON_THE_WAY_DROP: "bg-orange-500",
+    ON_THE_WAY_TO_DROP: "bg-orange-500",
     COMPLETED: "bg-green-500",
   };
 
   const statusText: Record<string, string> = {
     ASSIGNED: "Assigned",
-    ON_THE_WAY_PICKUP: "On the way to pickup",
+    ON_THE_WAY_TO_PICKUP: "On the way to pickup",
     PICKED_UP: "Picked up",
     PARKED: "Parked",
-    ON_THE_WAY_DROP: "On the way to drop",
+    ON_THE_WAY_TO_DROP: "On the way to drop",
     COMPLETED: "Completed",
   };
 
@@ -73,7 +85,7 @@ export default function ActiveJobCard({
           </Button>
         );
 
-      case "ON_THE_WAY_PICKUP":
+      case "ON_THE_WAY_TO_PICKUP":
         return (
           <Button className="w-full" onClick={onPickedUp}>
             Mark Picked Up
@@ -94,7 +106,7 @@ export default function ActiveJobCard({
           </Button>
         );
 
-      case "ON_THE_WAY_DROP":
+      case "ON_THE_WAY_TO_DROP":
         return (
           <Button className="w-full" onClick={onComplete}>
             Complete Job
@@ -139,6 +151,27 @@ export default function ActiveJobCard({
           {req.location}
         </div>
 
+        {/* FLOOR */}
+        <div className="flex items-center gap-2 text-sm">
+          <Hash size={14} />
+          {req.floor}
+        </div>
+        {status !== "COMPLETED" && (
+          <>
+            {/* ENTRY PIN */}
+            <div className="flex items-center gap-2 text-sm">
+              <Key size={14} />
+              Entry PIN: <span className="font-semibold">{req.entryPin}</span>
+            </div>
+
+            {/* EXIT PIN */}
+            <div className="flex items-center gap-2 text-sm">
+              <Key size={14} />
+              Exit PIN: <span className="font-semibold">{req.exitPin}</span>
+            </div>
+          </>
+        )}
+
         {/* TIME */}
         <div className="flex items-center gap-2 text-sm">
           <Clock size={14} />
@@ -151,6 +184,7 @@ export default function ActiveJobCard({
           {req.date}
         </div>
 
+        {/* BUTTON */}
         {renderButton()}
       </CardContent>
     </Card>

@@ -615,6 +615,9 @@ export class BookingController {
           message: "Not your assigned job",
         });
 
+      console.log("Logged in valetId:", valetId);
+      console.log("Booking valetId:", booking.valetId);
+
       const updated = await bookingService.updateValetStatus(
         bookingId,
         valetStatus,

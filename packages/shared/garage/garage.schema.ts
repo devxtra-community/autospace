@@ -13,6 +13,9 @@ export const CreateGarageSchema = z.object({
     .string()
     .regex(/^\+?[0-9]{7,15}$/, "Invalid phone number")
     .optional(),
+
+  openingTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
+  closingTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
 });
 
 export const CreateFloorSchema = z.object({

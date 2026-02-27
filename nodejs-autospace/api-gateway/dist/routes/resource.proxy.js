@@ -35,16 +35,16 @@ router.use("/companies", auth_middleware_1.authMiddleware, (0, rbac_middleware_1
         },
     },
 }));
-router.use("/public/garages", (req, _res, next) => {
+router.use("/public", (req, _res, next) => {
     console.log(" GATEWAY URL:", req.originalUrl);
     console.log(" GATEWAY PATH:", req.url);
     next();
 }, (0, http_proxy_middleware_1.createProxyMiddleware)({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
-    router: () => `${RESOURCE_SERVICE_URL}/garages`,
+    pathRewrite: (path) => `/public${path}`,
 }));
-router.use("/garages", auth_middleware_1.authMiddleware, (0, rbac_middleware_1.rbac)(role_enum_1.UserRole.OWNER, role_enum_1.UserRole.ADMIN, role_enum_1.UserRole.MANAGER), (0, http_proxy_middleware_1.createProxyMiddleware)({
+router.use("/garages", auth_middleware_1.authMiddleware, (0, rbac_middleware_1.rbac)(role_enum_1.UserRole.OWNER, role_enum_1.UserRole.ADMIN, role_enum_1.UserRole.MANAGER, role_enum_1.UserRole.CUSTOMER), (0, http_proxy_middleware_1.createProxyMiddleware)({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
     pathRewrite: (path) => `/garages${path}`,
@@ -74,19 +74,58 @@ router.use("/slots", auth_middleware_1.authMiddleware, (0, rbac_middleware_1.rba
     },
 }));
 // valet routes
-router.use("/valet", auth_middleware_1.authMiddleware, (0, rbac_middleware_1.rbac)(role_enum_1.UserRole.MANAGER, role_enum_1.UserRole.VALET), (0, http_proxy_middleware_1.createProxyMiddleware)({
+router.use("/valets", auth_middleware_1.authMiddleware, (0, rbac_middleware_1.rbac)(role_enum_1.UserRole.MANAGER, role_enum_1.UserRole.VALET, role_enum_1.UserRole.CUSTOMER), (0, http_proxy_middleware_1.createProxyMiddleware)({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
-    pathRewrite: (path) => `/valet${path}`,
+    pathRewrite: (path, req) => {
+        const original = req.originalUrl;
+        console.log("REWRITE ORIGINAL:", original);
+        // internal routes (used by booking-service / auth-service)
+        if (original.includes("/assign") ||
+            original.includes("/release") ||
+            original.includes("/available") ||
+            original.includes("/register") ||
+            original.includes("/resolve-garage") ||
+            original.includes("/reject")) {
+            const newPath = original.replace(/^\/api\/valets/, "/internal/valets");
+            console.log("REWRITE INTERNAL:", newPath);
+            return newPath;
+        }
+        // manager / frontend routes
+        const newPath = original.replace(/^\/api\/valets/, "/valets");
+        console.log("REWRITE PUBLIC:", newPath);
+        return newPath;
+    },
     on: {
         proxyReq: (proxyReq, req) => {
             attachUserHeaders(proxyReq, req);
+            if (req.body &&
+                Object.keys(req.body).length > 0 &&
+                ["POST", "PUT", "PATCH"].includes(req.method)) {
+                const bodyData = JSON.stringify(req.body);
+                proxyReq.setHeader("Content-Type", "application/json");
+                proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
+                proxyReq.write(bodyData);
+            }
         },
     },
 }));
-router.use("/files", (0, http_proxy_middleware_1.createProxyMiddleware)({
+router.use("/files", auth_middleware_1.authMiddleware, (0, http_proxy_middleware_1.createProxyMiddleware)({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
-    pathRewrite: (path) => path,
+    pathRewrite: (path) => `/files${path}`,
+    on: {
+        proxyReq: (proxyReq, req) => {
+            attachUserHeaders(proxyReq, req);
+            if (req.body &&
+                Object.keys(req.body).length > 0 &&
+                ["POST", "PUT", "PATCH"].includes(req.method)) {
+                const bodyData = JSON.stringify(req.body);
+                proxyReq.setHeader("Content-Type", "application/json");
+                proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
+                proxyReq.write(bodyData);
+            }
+        },
+    },
 }));
 exports.default = router;

@@ -33,6 +33,7 @@ const authMiddleware = (req, res, next) => {
         req.headers["x-user-id"] = decoded.id;
         console.log("AUTH USER:", req.user);
         req.headers["x-user-role"] = decoded.role;
+        req.headers["x-user-email"] = decoded.email;
         next();
     }
     catch (error) {
