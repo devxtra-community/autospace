@@ -3,6 +3,10 @@ import { Garage, GarageStatus } from "../entities/garage.entity";
 import { CreateGarageInput } from "@autospace/shared";
 import { Company, CompanyStatus } from "../../company/entities/company.entity";
 import redisClient from "../../../config/redis";
+import {
+  Valet,
+  ValetEmployementStatus,
+} from "../../valets/entities/valets.entity";
 
 export const createGarage = async (
   ownerUserId: string,
@@ -162,9 +166,10 @@ export const updateGarageProfile = async (
 };
 
 export const getMyManagerGarageService = async (managerId: string) => {
-  const repo = AppDataSource.getRepository(Garage);
+  const garageRepo = AppDataSource.getRepository(Garage);
+  const valetRepo = AppDataSource.getRepository(Valet);
 
-  const garage = await repo.findOne({
+  const garage = await garageRepo.findOne({
     where: { managerId },
   });
 
@@ -172,5 +177,15 @@ export const getMyManagerGarageService = async (managerId: string) => {
     throw new Error("Garage not found for this manager");
   }
 
-  return garage;
+  const activeValetCount = await valetRepo.count({
+    where: {
+      garageId: garage.id,
+      employmentStatus: ValetEmployementStatus.ACTIVE,
+    },
+  });
+
+  return {
+    ...garage,
+    activeValetCount,
+  };
 };
