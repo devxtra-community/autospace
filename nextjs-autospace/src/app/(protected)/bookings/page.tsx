@@ -1,90 +1,90 @@
 "use client";
-import Navbar from "@/components/landing/Navbar";
 
+import Navbar from "@/components/landing/Navbar";
 import { useEffect, useState, useCallback } from "react";
-import { getMyBookings, Booking } from "@/services/booking.service";
-import { getGarageById } from "@/services/garage.service";
 import {
-  // CalendarDays,
-  // MapPin,
-  Phone,
-  Navigation,
-  Clock,
-  Edit2,
-  // QrCode,
-  Star,
-  RotateCcw,
-  Loader2,
-  CheckCircle2,
-  Wifi,
-} from "lucide-react";
+  getMyBookings,
+  submitGarageReview,
+  Booking,
+} from "@/services/booking.service";
+
+import { getGarageById } from "@/services/garage.service";
+
+import { Star, Loader2, Clock, X, Building } from "lucide-react";
+
 import { cn } from "@/lib/utils";
+import axios from "axios";
+
+type Valet = {
+  id: string;
+  fullname: string;
+  phone: string;
+  email: string;
+};
+
+type Slot = {
+  slotNumber: string;
+  floorNumber: number;
+};
+
+type Garage = {
+  name: string;
+  locationName: string;
+  contactPhone?: string;
+};
 
 type BookingWithGarage = Booking & {
-  garage?: {
-    name: string;
-    locationName: string;
-    contactPhone?: string;
-    standardSlotPrice?: number;
-    largeSlotPrice?: number;
-    amount?: number;
-  };
+  garage?: Garage;
+  valet?: Valet | null;
+  slot?: Slot | null;
+  reviewSubmitted?: boolean;
+};
+
+type ApiError = {
+  message?: string;
 };
 
 export default function MyBookingsPage() {
   const [activeTab, setActiveTab] = useState<"active" | "history">("active");
+
   const [bookings, setBookings] = useState<BookingWithGarage[]>([]);
+
   const [loading, setLoading] = useState(true);
 
-  const fetchData = useCallback(async (isPolling = false) => {
+  const [selectedBooking, setSelectedBooking] =
+    useState<BookingWithGarage | null>(null);
+
+  const fetchBookings = useCallback(async () => {
     try {
       const data = await getMyBookings();
-      const bookingsWithDetails = await Promise.all(
+
+      const enriched = await Promise.all(
         data.map(async (b) => {
           try {
             const garage = await getGarageById(b.garageId);
-            return { ...b, garage };
+
+            return {
+              ...b,
+              garage,
+              reviewSubmitted: b.reviewSubmitted ?? false,
+            };
           } catch {
             return b;
           }
         }),
       );
-      console.log(
-        isPolling ? "Polling bookings..." : "Initial booking fetch",
-        bookingsWithDetails,
-      );
-      setBookings(bookingsWithDetails);
+
+      setBookings(enriched);
     } catch (err) {
-      console.error("Failed to fetch bookings", err);
+      console.error(err);
     } finally {
-      if (!isPolling) setLoading(false);
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  useEffect(() => {
-    // Only poll for updates if the active tab is visible
-    if (activeTab !== "active") return;
-
-    // Check if there are any bookings that might change status
-    const hasTransitionableBookings = bookings.some(
-      (b) =>
-        b.status === "confirmed" ||
-        b.status === "pending" ||
-        b.status === "occupied",
-    );
-
-    if (!hasTransitionableBookings && bookings.length > 0) return;
-
-    const interval = setInterval(() => {
-      fetchData(true);
-    }, 5000); // Poll every 5 seconds
-
-    return () => clearInterval(interval);
-  }, [fetchData, activeTab, bookings]);
+    fetchBookings();
+  }, [fetchBookings]);
 
   const activeBookings = bookings.filter(
     (b) =>
@@ -92,329 +92,229 @@ export default function MyBookingsPage() {
       b.status === "pending" ||
       b.status === "occupied",
   );
+
   const historyBookings = bookings.filter(
     (b) => b.status === "completed" || b.status === "cancelled",
   );
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="animate-spin text-[var(--primary)]" size={48} />
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="animate-spin" size={40} />
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-white pt-32 pb-12 px-4 md:px-8">
+    <main className="min-h-screen bg-white pb-20">
       <Navbar />
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">My Bookings</h1>
+
+      <div className="pt-24 px-4 max-w-md mx-auto">
+        <h1 className="text-xl font-semibold mb-4">My Bookings</h1>
 
         {/* Tabs */}
-        <div className="flex  mb-8 bg-[#F5F1E6] rounded-sm p-1">
-          <button
+
+        <div className="flex bg-muted rounded-lg p-1 mb-5">
+          <TabButton
+            active={activeTab === "active"}
             onClick={() => setActiveTab("active")}
-            className={cn(
-              "flex-1 py-3 text-sm font-bold transition-all rounded-sm",
-              activeTab === "active"
-                ? "bg-white text-black border border-black"
-                : "text-gray-500 hover:text-black",
-            )}
           >
-            Active Bookings
-          </button>
-          <button
+            Active
+          </TabButton>
+
+          <TabButton
+            active={activeTab === "history"}
             onClick={() => setActiveTab("history")}
-            className={cn(
-              "flex-1 py-3 text-sm font-bold transition-all rounded-sm",
-              activeTab === "history"
-                ? "bg-white text-black border border-black"
-                : "text-gray-500 hover:text-black",
-            )}
           >
-            Booking History
-          </button>
+            History
+          </TabButton>
         </div>
 
-        {/* Content */}
-        <div className="space-y-6">
-          {activeTab === "active" ? (
-            activeBookings.length > 0 ? (
-              activeBookings.map((booking) => (
-                <ActiveBookingCard key={booking.id} booking={booking} />
-              ))
-            ) : (
-              <div className="text-center py-12 bg-gray-50 border border-dashed border-black/20 rounded-sm">
-                <p className="text-gray-500">No active bookings found.</p>
-              </div>
-            )
-          ) : historyBookings.length > 0 ? (
-            historyBookings.map((booking) => (
-              <HistoryBookingCard key={booking.id} booking={booking} />
-            ))
-          ) : (
-            <div className="text-center py-12 bg-gray-50 border border-dashed border-black/20 rounded-sm">
-              <p className="text-gray-500">No booking history found.</p>
-            </div>
+        {/* List */}
+
+        <div className="space-y-4">
+          {(activeTab === "active" ? activeBookings : historyBookings).map(
+            (b) => (
+              <BookingCard
+                key={b.id}
+                booking={b}
+                onClick={() => setSelectedBooking(b)}
+              />
+            ),
           )}
         </div>
       </div>
+
+      {/* Modal */}
+
+      {selectedBooking && (
+        <BookingModal
+          booking={selectedBooking}
+          onClose={() => setSelectedBooking(null)}
+        />
+      )}
     </main>
   );
 }
 
-function ActiveBookingCard({ booking }: { booking: BookingWithGarage }) {
-  const start = new Date(booking.startTime);
-  const end = new Date(booking.endTime);
-
-  const durationMs = end.getTime() - start.getTime();
-  const durationHours = durationMs / (1000 * 60 * 60);
-
-  // const pricePerHour =
-  //   booking.vehicleType === "suv"
-  //     ? (booking.garage?.largeSlotPrice ?? 15)
-  //     : (booking.garage?.standardSlotPrice ?? 10);
-
-  // const subtotal = total - valetCharge;
-  // const valetCharge = booking.valetRequested ? 5 : 0;
-  // const total = subtotal + valetCharge;
-
-  const total = Number(booking.amount ?? 0);
-
-  // If valet is fixed ₹5
-  const valetCharge = booking.valetRequested ? 5 : 0;
-
-  // parking amount = total - valet
-  const subtotal = Math.max(total - valetCharge, 0);
-
+function BookingCard({
+  booking,
+  onClick,
+}: {
+  booking: BookingWithGarage;
+  onClick: () => void;
+}) {
   return (
-    <div className="bg-white border border-black rounded-sm overflow-hidden flex flex-col md:flex-row">
-      {/* Left Portion */}
-      <div className="p-6 md:w-1/2 border-r border-black/10">
-        <div className="flex justify-between items-start mb-4">
-          <h2 className="text-2xl font-bold">
-            {booking.garage?.name || "Garage Name"}
-          </h2>
-          <div className="bg-[#F4DA71] px-2 py-1 border border-black text-xs font-bold flex items-center gap-1">
-            4 <Star size={10} fill="currentColor" />
-          </div>
-        </div>
+    <div
+      onClick={onClick}
+      className="border rounded-xl p-4 space-y-2 cursor-pointer hover:bg-muted/30 transition"
+    >
+      <h2 className="font-semibold">{booking.garage?.name}</h2>
 
-        <div className="space-y-4 mb-6">
-          <div>
-            <p className="text-xs font-bold text-gray-500 uppercase mb-1">
-              Adress:
-            </p>
-            <p className="text-sm">
-              {booking.garage?.locationName ||
-                "ABC nagar , kalamassery , kochi , kerala"}
-            </p>
-          </div>
+      <p className="text-xs text-muted-foreground flex items-center gap-1">
+        <Clock size={12} />
+        {formatDate(booking.startTime)}
+      </p>
 
-          <div className="flex items-center gap-2">
-            <Phone size={16} className="text-gray-400" />
-            <span className="text-sm font-medium">
-              {booking.garage?.contactPhone || "+91 9999000090"}
-            </span>
-          </div>
-        </div>
+      {booking.slot && (
+        <p className="text-xs text-muted-foreground flex items-center gap-1">
+          <Building size={12} />
+          Floor {booking.slot.floorNumber} • Slot {booking.slot.slotNumber}
+        </p>
+      )}
 
-        <button className="flex items-center gap-2 px-4 py-2 bg-[#F4DA71] border border-black rounded-sm text-sm font-bold hover:bg-[#eac855] transition-colors active:translate-y-[1px]">
-          <div className="bg-white/20 p-1 rounded-full border border-black/10">
-            <Navigation size={14} />
-          </div>
-          Get Direction
-        </button>
-      </div>
+      <div className="flex justify-between items-center pt-1">
+        <span className="text-xs uppercase">{booking.vehicleType}</span>
 
-      {/* Right Portion */}
-      <div className="p-6 md:w-1/2 bg-gray-50/30">
-        <div className="flex items-center gap-2 mb-6">
-          <Clock size={18} className="text-gray-400" />
-          <h3 className="text-sm font-bold">Booking Details</h3>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="space-y-1">
-            <p className="text-xs font-bold text-gray-500 uppercase">start</p>
-            <div className="flex items-center gap-2">
-              <p className="text-xs text-gray-500">
-                {new Date(booking.startTime)
-                  .toLocaleString("en-US", {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })
-                  .replace(",", "")}
-              </p>
-              <Edit2
-                size={12}
-                className="text-gray-400 cursor-pointer hover:text-black"
-              />
-            </div>
-          </div>
-          <div className="space-y-1">
-            <p className="text-xs font-bold text-gray-500 uppercase">End</p>
-            <div className="flex items-center gap-2">
-              <p className="text-xs text-gray-500">
-                {new Date(booking.endTime)
-                  .toLocaleString("en-US", {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })
-                  .replace(",", "")}
-              </p>
-              <Edit2
-                size={12}
-                className="text-gray-400 cursor-pointer hover:text-black"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-6">
-          <span className="px-6 py-1 border border-black text-xs font-bold rounded-sm bg-white">
-            {booking.vehicleType?.toUpperCase() || "N/A"}
-          </span>
-        </div>
-
-        {booking.valetRequested && (
-          <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-sm mb-6">
-            <div className="bg-green-100 p-1 rounded-full text-green-600">
-              {booking.valetStatus === "ASSIGNED" ? (
-                <CheckCircle2 size={16} />
-              ) : (
-                <Clock size={16} />
-              )}
-            </div>
-            <div className="text-xs">
-              <p className="font-bold text-green-800">
-                {booking.valetStatus === "ASSIGNED"
-                  ? "Valet Assigned"
-                  : "Searching for valet..."}
-              </p>
-            </div>
-          </div>
-        )}
-
-        <div className="space-y-2 border-t border-black/5 pt-4 mb-6">
-          <p className="text-xs font-bold text-gray-400">Payment summary :</p>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Subtotal</span>
-            <div className="flex-1 border-b border-dotted border-gray-300 mx-2 mb-1"></div>
-            <span className="font-bold">₹{subtotal.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600 italic text-[11px]">
-              Parking time {durationHours.toFixed(1)} hour
-            </span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Valet Charge</span>
-            <div className="flex-1 border-b border-dotted border-gray-300 mx-2 mb-1"></div>
-            <span className="font-bold">₹00.00</span>
-          </div>
-          <div className="flex justify-between items-center pt-2 text-lg font-bold border-t border-black mt-2">
-            <span>Total</span>
-            <div className="flex-1 border-b border-dotted border-gray-300 mx-2 mb-1"></div>
-            <span>₹{total.toFixed(2)}</span>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <button className="w-full flex items-center justify-center gap-2 py-3 border border-black rounded-sm text-sm font-bold hover:bg-gray-50 transition-colors">
-            {booking.status === "confirmed" ? "ENTRY PIN :" : "EXIT PIN :"}{" "}
-            {booking.status === "confirmed" ? (
-              <span className="text-green-800">{booking.entryPin}</span>
-            ) : (
-              <span className="text-green-800">{booking.exitPin}</span>
-            )}
-          </button>
-          <button className="w-full flex items-center justify-center gap-2 py-3 bg-[#C5E4FD] border border-black rounded-sm text-sm font-bold hover:bg-[#b0dcfd] transition-colors">
-            Track your Valet <Wifi size={18} className="rotate-90" />
-          </button>
-        </div>
+        <span className="font-semibold">₹{booking.amount}</span>
       </div>
     </div>
   );
 }
 
-function HistoryBookingCard({ booking }: { booking: BookingWithGarage }) {
-  const isCancelled = booking.status === "cancelled";
+function BookingModal({
+  booking,
+  onClose,
+}: {
+  booking: BookingWithGarage;
+  onClose: () => void;
+}) {
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const canReview = booking.status === "completed" && !booking.reviewSubmitted;
+
+  async function handleSubmitReview() {
+    if (rating === 0) {
+      alert("Please select rating");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      await submitGarageReview({
+        bookingId: booking.id,
+        rating,
+        comment,
+      });
+
+      alert("Review submitted successfully");
+
+      onClose();
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const apiError = err.response?.data as ApiError;
+
+        alert(apiError?.message || "Failed to submit review");
+      } else {
+        alert("Unexpected error");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
-    <div className="bg-white border border-black rounded-sm p-5 relative">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-2 flex-1">
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl font-bold">
-              #{booking.garage?.name || "Garage Name"}
-            </h2>
-            <span
-              className={cn(
-                "px-4 py-0.5 rounded-sm text-[10px] font-bold border border-black/10 uppercase tracking-wider",
-                isCancelled
-                  ? "bg-red-300 text-red-900"
-                  : "bg-green-200 text-green-800",
-              )}
-            >
-              {booking.status}
-            </span>
-            {booking.valetRequested && (
-              <span className="px-4 py-0.5 bg-red-50 text-red-800 border border-red-100 text-[10px] font-bold rounded-sm uppercase tracking-wider">
-                Valet
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-gray-500">
-            {booking.garage?.locationName ||
-              "ABC nagar , kalamassery , kochi , kerala"}
-          </p>
+    <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50">
+      <div className="bg-white w-full max-w-md rounded-t-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center">
+          <h2 className="font-semibold text-lg">Booking Details</h2>
 
-          <div className="flex items-center gap-4 text-xs font-bold text-gray-400 pt-1">
-            <span>
-              {new Date(booking.startTime).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </span>
-            <div className="w-1 h-4 border-l border-black/20"></div>
-            <span>2 Hours</span>
-            <div className="w-1 h-4 border-l border-black/20"></div>
-            <span className="px-4 py-0.5 border border-red-100 bg-red-50 rounded-sm text-[10px]">
-              sedan
-            </span>
-          </div>
+          <button onClick={onClose}>
+            <X size={18} />
+          </button>
+        </div>
 
-          <div className="flex items-center gap-2 pt-2">
-            <span className="text-xs text-gray-400 font-bold">
-              Your rating :
-            </span>
-            <div className="flex gap-0.5">
-              {[1, 2, 3, 4, 5].map((s) => (
-                <Star key={s} size={14} className="text-gray-300" />
+        {/* Garage */}
+
+        <p className="font-medium">{booking.garage?.name}</p>
+
+        {/* Review */}
+
+        {canReview && (
+          <div className="border-t pt-4 space-y-3">
+            <p className="text-sm font-medium">Rate this booking</p>
+
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Star
+                  key={i}
+                  size={28}
+                  onClick={() => setRating(i)}
+                  fill={i <= rating ? "currentColor" : "none"}
+                  className="text-yellow-500 cursor-pointer"
+                />
               ))}
             </div>
-          </div>
-        </div>
 
-        <div className="flex flex-col items-end gap-3">
-          <p className="text-2xl font-bold">₹{isCancelled ? "0" : "40"}</p>
-          {!isCancelled && (
-            <button className="flex items-center gap-2 px-3 py-1.5 border border-black rounded-sm text-xs font-bold hover:bg-gray-50 transition-colors">
-              <RotateCcw size={14} /> try again
+            <textarea
+              placeholder="Write your review"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              className="w-full border rounded-lg p-2 text-sm resize-none h-24"
+            />
+
+            <button
+              onClick={handleSubmitReview}
+              disabled={submitting}
+              className="w-full bg-primary text-white py-2 rounded-lg text-sm"
+            >
+              {submitting ? "Submitting..." : "Submit Review"}
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
+}
+
+function TabButton({
+  children,
+  active,
+  onClick,
+}: {
+  children: React.ReactNode;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex-1 py-2 text-sm rounded-md",
+        active ? "bg-white shadow font-medium" : "text-muted-foreground",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+  });
 }

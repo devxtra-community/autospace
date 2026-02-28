@@ -85,6 +85,13 @@ export class Booking {
   })
   paymentStatus!: "unpaid" | "paid" | "failed";
 
+  @Column({
+    name: "review_submitted",
+    type: "boolean",
+    default: false,
+  })
+  reviewSubmitted!: boolean;
+
   @CreateDateColumn()
   createdAt!: Date;
 

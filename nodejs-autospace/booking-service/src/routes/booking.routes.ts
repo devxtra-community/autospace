@@ -11,6 +11,11 @@ import {
   getBookingHistory,
   listManagerBookings,
 } from "../controllers/bookingEdge.controller.js";
+import {
+  getAverageGarageRatingController,
+  getGarageReviewsController,
+  submitGarageReviewController,
+} from "../controllers/garage-review.controller.js";
 
 const router: ExpressRouter = Router();
 
@@ -87,5 +92,9 @@ router.patch(
   internalAuth,
   bookingController.updateValetStatus,
 );
+
+router.post("/reviews", internalAuth, submitGarageReviewController);
+router.get("/:garageId/reviews", getGarageReviewsController);
+router.get("/:garageId/rating", getAverageGarageRatingController);
 
 export default router;

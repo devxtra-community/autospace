@@ -10,11 +10,24 @@ router.get("/:slotId", internalAuth, async (req, res) => {
 
   const slot = await repo.findOne({
     where: { id: req.params.slotId as string },
+    relations: ["floor"],
   });
+
+  if (!slot) {
+    return res.status(404).json({
+      success: false,
+      message: "Slot not found",
+    });
+  }
 
   return res.json({
     success: true,
-    data: slot,
+    data: {
+      id: slot.id,
+      slotNumber: slot.slotNumber,
+      floorNumber: slot.floor.floorNumber,
+      slotSize: slot.slotSize,
+    },
   });
 });
 

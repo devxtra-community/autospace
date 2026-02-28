@@ -25,6 +25,10 @@ import { checkValetAvailability } from "@/services/garageValets.service";
 // import { useSwipeable } from "react-swipeable";
 
 import SmoothSwipeButton from "./swipeButton";
+import {
+  getGarageReviews,
+  getAverageGarageRating,
+} from "@/services/booking.service";
 
 export interface GarageDetailsProps {
   garage: {
@@ -44,6 +48,21 @@ export interface GarageDetailsProps {
   };
 }
 
+export interface GarageReview {
+  id: string;
+  garageId: string;
+  userId: string;
+  bookingId: string;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+  user?: {
+    fullname: string;
+    email?: string;
+    phone?: string;
+  } | null;
+}
+
 export default function GarageDetails({ garage }: GarageDetailsProps) {
   const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
@@ -54,6 +73,9 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
   const [valetEnabled, setValetEnabled] = useState(false);
   const [duration, setDuration] = useState(2);
   const [isBooking, setIsBooking] = useState(false);
+  const [reviews, setReviews] = useState<GarageReview[]>([]);
+  const [showAllReviews, setShowAllReviews] = useState(false);
+  const [averageRating, setAverageRating] = useState(0);
   // const [bookingId, setBookingId] = useState<string | null>(null);
   // const [showPayment, setShowPayment] = useState(false);
   const [isSlotModalOpen, setIsSlotModalOpen] = useState(false);
@@ -61,6 +83,7 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
   const [selectedSlot, setSelectedSlot] = useState<{
     floor: number;
     slotId: string;
+    slotNumber: string;
   } | null>(null);
 
   const [swiped, setSwiped] = useState(false);
@@ -79,6 +102,40 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
   const suvPrice = garage.largeSlotPrice || 15;
   const currentPrice = vehicleType === "sedan" ? sedanPrice : suvPrice;
   const valetCharge = 5;
+
+  useEffect(() => {
+    const loadAverageRating = async () => {
+      try {
+        const avg = await getAverageGarageRating(garage.id);
+
+        setAverageRating(avg.averageRating || 0);
+      } catch (err) {
+        console.error("Failed to load average rating", err);
+        setAverageRating(0);
+      }
+    };
+
+    if (garage?.id) {
+      loadAverageRating();
+    }
+  }, [garage.id]);
+
+  useEffect(() => {
+    const loadReviews = async () => {
+      try {
+        const data = await getGarageReviews(
+          garage.id,
+          showAllReviews ? 100 : 3,
+        );
+
+        setReviews(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadReviews();
+  }, [garage.id, showAllReviews]);
 
   useEffect(() => {
     if (!selectedDate || !startTime || !endTime) return;
@@ -437,7 +494,7 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                   </h1>
                   <div className="flex items-center gap-1.5 bg-yellow-400/10 text-yellow-700 px-2.5 py-1 text-sm font-bold border border-yellow-200/50">
                     <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
-                    {garage.rating || 4.8}
+                    {averageRating.toFixed(1)}
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-y-2 gap-x-6 text-gray-500 text-sm">
@@ -541,26 +598,60 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
               </div>
             </div>
 
-            <div className="mb-8">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">
-                Amenities
-              </h3>
-              <div className="flex flex-wrap gap-3">
-                {[
-                  "24/7 Access",
-                  "CCTV Covered",
-                  "EV Charging",
-                  "Disabled Access",
-                  "Underground",
-                ].map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-4 py-1.5 bg-white border border-gray-100 text-xs font-bold text-gray-700 shadow-sm"
+            <div className="mt-8">
+              <h3 className="text-lg font-bold mb-3">User Reviews</h3>
+
+              {reviews.length === 0 && (
+                <p className="text-sm text-gray-400">No reviews yet</p>
+              )}
+
+              <div className="space-y-3">
+                {reviews.map((review) => (
+                  <div
+                    key={review.id}
+                    className="border p-3 rounded-lg bg-white"
                   >
-                    {tag}
-                  </span>
+                    {/* Name */}
+                    <p className="font-semibold text-sm">
+                      {review.user?.fullname || "User"}
+                    </p>
+
+                    <p className="text-xs text-gray-400">
+                      {new Date(review.createdAt).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </p>
+
+                    {/* Stars */}
+                    <div className="flex">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <Star
+                          key={i}
+                          size={14}
+                          fill={i <= review.rating ? "currentColor" : "none"}
+                          className="text-yellow-500"
+                        />
+                      ))}
+                    </div>
+
+                    {/* Comment */}
+                    <p className="text-sm text-gray-600 mt-1">
+                      {review.comment}
+                    </p>
+                  </div>
                 ))}
               </div>
+
+              {!showAllReviews && reviews.length >= 3 && (
+                <button
+                  onClick={() => setShowAllReviews(true)}
+                  className="mt-3 text-primary font-semibold text-sm"
+                >
+                  Show more reviews
+                </button>
+              )}
             </div>
           </div>
 
@@ -746,7 +837,7 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                       </p>
                       <p className="text-[10px] font-medium opacity-70">
                         {selectedSlot
-                          ? `Floor ${selectedSlot.floor} • Slot ${selectedSlot.slotId}`
+                          ? `Floor ${selectedSlot.floor} • Slot ${selectedSlot.slotNumber}`
                           : "Choose your preferred spot"}
                       </p>
                     </div>

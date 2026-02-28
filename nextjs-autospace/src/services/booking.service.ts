@@ -26,8 +26,10 @@ export interface Booking {
   exitUsedd: boolean;
   vehicleType: string;
   slotNumber: string;
+  floorNumber: number;
   slotSize: string;
   amount: number;
+  reviewSubmitted: boolean;
   // These might be needed if we want to store additional info
   garageName?: string;
   garageAddress?: string;
@@ -52,5 +54,32 @@ export const updateBookingStatus = async (
   const res = await apiClient.patch(`/api/bookings/update/${bookingId}`, {
     status,
   });
+  return res.data.data;
+};
+
+export async function submitGarageReview(data: {
+  bookingId: string;
+  rating: number;
+  comment?: string;
+}) {
+  const res = await apiClient.post("api/bookings/reviews", data);
+  return res.data.data;
+}
+
+export const getGarageReviews = async (
+  garageId: string,
+  limit = 3,
+  offset = 0,
+) => {
+  const res = await apiClient.get(
+    `/api/bookings/${garageId}/reviews?limit=${limit}&offset=${offset}`,
+  );
+
+  return res.data.data;
+};
+
+export const getAverageGarageRating = async (garageId: string) => {
+  const res = await apiClient.get(`/api/bookings/${garageId}/rating`);
+
   return res.data.data;
 };

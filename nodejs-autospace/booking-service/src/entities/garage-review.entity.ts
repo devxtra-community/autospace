@@ -41,6 +41,7 @@ export class GarageReview {
   @Column({
     type: "text",
     nullable: true,
+    default: null,
   })
   comment!: string | null;
 

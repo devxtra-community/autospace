@@ -273,9 +273,8 @@ Amount Paid: ₹${savedBooking.amount}
 SECURE ACCESS INFORMATION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Entry PIN: ${savedBooking.entryPin}
-Exit PIN: ${savedBooking.exitPin}
 
-Please keep these PINs confidential. They are required to access and exit your parking slot.
+Please keep these PINs confidential. You will get Exit PIN in your app after entry. They are required to access and exit your parking slot.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 VALET SERVICE STATUS
@@ -454,27 +453,129 @@ Smart Parking. Seamless Experience.
 
     return bookings;
   }
-
   async getUserBookings(userId: string) {
     const bookingRepo = AppDataSource.getRepository(Booking);
+    const cacheKey = `userBookings:v2:${userId}`;
 
-    const cacheKey = `userBookings:${userId}`;
+    try {
+      const cached = await redisClient.get(cacheKey);
 
-    const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        const parsed: unknown = JSON.parse(cached);
 
-    if (cached) {
-      console.log("User bookings from Redis");
-      return JSON.parse(cached);
+        if (Array.isArray(parsed)) {
+          const invalidCache = parsed.some(
+            (b: unknown) =>
+              typeof b !== "object" || b === null || !("slot" in b),
+          );
+
+          if (!invalidCache) {
+            console.log("User bookings from Redis");
+            return parsed;
+          }
+
+          console.log("Cache outdated — refreshing");
+        }
+      }
+
+      const bookings = await bookingRepo.find({
+        where: { userId },
+        order: { createdAt: "DESC" },
+      });
+
+      const enriched = await Promise.all(
+        bookings.map(async (booking) => {
+          let valet: unknown = null;
+          let slot: { slotNumber: string; floorNumber: number } | null = null;
+
+          /* ================= VALET ================= */
+
+          if (booking.valetId) {
+            try {
+              const valetRes = await axios.get(
+                `${process.env.AUTH_SERVICE_URL}/internal/users/${booking.valetId}`,
+                {
+                  headers: {
+                    "x-user-id": "booking-service",
+                    "x-user-role": "SERVICE",
+                  },
+                },
+              );
+
+              valet = valetRes.data?.data ?? null;
+            } catch (err: unknown) {
+              if (axios.isAxiosError(err)) {
+                console.error(
+                  "Valet fetch failed:",
+                  err.response?.status,
+                  err.response?.data,
+                );
+              } else if (err instanceof Error) {
+                console.error("Valet fetch error:", err.message);
+              } else {
+                console.error("Unknown valet error:", err);
+              }
+            }
+          }
+
+          /* ================= SLOT ================= */
+
+          if (booking.slotId) {
+            try {
+              const slotRes = await axios.get(
+                `${process.env.RESOURCE_SERVICE_URL}/internal/slots/${booking.slotId}`,
+                {
+                  headers: {
+                    "x-user-id": "booking-service",
+                    "x-user-role": "SERVICE",
+                  },
+                },
+              );
+
+              const slotData = slotRes.data?.data;
+
+              if (slotData) {
+                slot = {
+                  slotNumber: slotData.slotNumber,
+                  floorNumber: slotData.floorNumber,
+                };
+              }
+            } catch (err: unknown) {
+              if (axios.isAxiosError(err)) {
+                console.error(
+                  "Slot fetch failed:",
+                  booking.slotId,
+                  err.response?.status,
+                  err.response?.data,
+                );
+              } else if (err instanceof Error) {
+                console.error("Slot fetch error:", err.message);
+              } else {
+                console.error("Unknown slot error:", err);
+              }
+            }
+          }
+
+          return {
+            ...booking,
+            valet,
+            slot,
+          };
+        }),
+      );
+
+      await redisClient.set(cacheKey, JSON.stringify(enriched), { EX: 300 });
+
+      return enriched;
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("getUserBookings failed:", err.message);
+      } else {
+        console.error("getUserBookings failed:", err);
+      }
+
+      throw err;
     }
-
-    const bookings = await bookingRepo.find({
-      where: { userId },
-      order: { createdAt: "DESC" },
-    });
-
-    await redisClient.set(cacheKey, JSON.stringify(bookings), { EX: 300 });
-
-    return bookings;
   }
 
   async updateBookingStatus(bookingId: string, status: string) {

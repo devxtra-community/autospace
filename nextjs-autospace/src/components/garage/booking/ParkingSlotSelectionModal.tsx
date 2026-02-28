@@ -12,7 +12,11 @@ interface ParkingSlotSelectionModalProps {
   garageId: string;
   startTime: string;
   endTime: string;
-  onConfirm: (data: { floor: number; slotId: string }) => void;
+  onConfirm: (data: {
+    floor: number;
+    slotId: string;
+    slotNumber: string;
+  }) => void;
 }
 
 export const ParkingSlotSelectionModal = ({
@@ -91,7 +95,11 @@ export const ParkingSlotSelectionModal = ({
 
   const handleConfirm = () => {
     if (!selectedSlot) return;
-    onConfirm({ floor: currentFloor, slotId: selectedSlot.id });
+    onConfirm({
+      floor: currentFloor,
+      slotId: selectedSlot.id,
+      slotNumber: selectedSlot.slotNumber,
+    });
     onClose();
   };
 
