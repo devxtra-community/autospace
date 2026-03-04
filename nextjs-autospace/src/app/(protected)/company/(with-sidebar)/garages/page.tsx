@@ -7,7 +7,7 @@ import { getMyGarages } from "@/services/garage.service";
 
 import {
   GaragesGrid,
-  Garage, // ✅ IMPORTANT FIX
+  Garage, //  IMPORTANT FIX
 } from "@/components/company/garage/GaragesGrid";
 
 import { GaragesHeader } from "@/components/company/garage/GaragesHeader";

@@ -26,7 +26,7 @@ export default function ChooseParkerSection() {
     <section className="max-w-7xl mx-auto px-4 py-16">
       <div className="mb-12">
         <h2 className="text-3xl font-bold text-black mb-2">
-          Why Choosing Parker ?
+          Why Choosing Autospace ?
         </h2>
         <p className="font-bold text-sm text-black mb-4">Shaping Vision</p>
         <p className="text-gray-600 max-w-3xl leading-relaxed">

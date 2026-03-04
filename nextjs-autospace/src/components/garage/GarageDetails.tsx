@@ -19,12 +19,15 @@ import {
 } from "lucide-react";
 import apiClient from "@/lib/apiClient";
 import { ParkingSlotSelectionModal } from "./booking/ParkingSlotSelectionModal";
+import { ValetPickupModal } from "../booking/ValetPickupModal";
 import { getGarageImages } from "@/services/garageImages.service";
 import { checkValetAvailability } from "@/services/garageValets.service";
+import { toast } from "sonner";
 
 // import { useSwipeable } from "react-swipeable";
 
 import SmoothSwipeButton from "./swipeButton";
+import axios from "axios";
 
 export interface GarageDetailsProps {
   garage: {
@@ -41,6 +44,7 @@ export interface GarageDetailsProps {
     hasOffer?: boolean;
     offerText?: string;
     valetAvailable?: boolean;
+    valetServiceRadius: number;
   };
 }
 
@@ -51,7 +55,7 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
   const [startTime, setStartTime] = useState("10:00");
   const [endTime, setEndTime] = useState("12:00");
   const [vehicleType, setVehicleType] = useState<"sedan" | "suv">("sedan");
-  const [valetEnabled, setValetEnabled] = useState(false);
+  // const [valetEnabled, setValetEnabled] = useState(false);
   const [duration, setDuration] = useState(2);
   const [isBooking, setIsBooking] = useState(false);
   // const [bookingId, setBookingId] = useState<string | null>(null);
@@ -64,6 +68,12 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
   } | null>(null);
 
   const [swiped, setSwiped] = useState(false);
+  const [pickupModalOpen, setPickupModalOpen] = useState(false);
+  const [pickupLocation, setPickupLocation] = useState<{
+    address: string;
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
   const [valetState, setValetState] = useState<
     "IDLE" | "AVAILABLE" | "REQUESTED" | "ASSIGNED" | "NONE"
@@ -79,6 +89,12 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
   const suvPrice = garage.largeSlotPrice || 15;
   const currentPrice = vehicleType === "sedan" ? sedanPrice : suvPrice;
   const valetCharge = 5;
+
+  useEffect(() => {
+    setPickupLocation(null);
+    // setValetEnabled(false);
+    setSwiped(false);
+  }, [selectedDate, startTime, endTime]);
 
   useEffect(() => {
     if (!selectedDate || !startTime || !endTime) return;
@@ -109,7 +125,7 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
         const imgs = await getGarageImages(garage.id);
 
         // take only urls
-        const urls = imgs.map((i) => i.url);
+        const urls = imgs.map((i: { url: string }) => i.url);
 
         setImages(urls);
       } catch (err) {
@@ -123,13 +139,15 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
     if (garage?.id) loadImages();
   }, [garage.id]);
 
+  const valetEnabled = !!pickupLocation;
+
   const subtotal = currentPrice * duration;
   const valetTotal = valetEnabled ? valetCharge : 0;
   const total = subtotal + valetTotal;
 
   const openDirections = () => {
     if (!navigator.geolocation) {
-      alert("Geolocation not supported");
+      toast.error("Geolocation not supported");
       return;
     }
 
@@ -146,14 +164,18 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
         window.open(url, "_blank");
       },
       () => {
-        alert("Location permission denied");
+        toast.error("Location permission denied");
       },
     );
   };
 
+  console.log("pickupLocation:", pickupLocation);
+  console.log("valetEnabled:", valetEnabled);
+  console.log("valetRequested:", !!pickupLocation);
+
   const handleBooking = async () => {
     if (!selectedSlot) {
-      alert("Please select a parking slot");
+      toast.error("Please select a parking slot");
       return;
     }
 
@@ -166,13 +188,19 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
       const endISO = new Date(`${selectedDate}T${endTime}:00`).toISOString();
 
       if (new Date(startISO) < new Date()) {
-        alert("Selection must be in the future");
+        toast.error("Selection must be in the future");
         setIsBooking(false);
         return;
       }
 
       if (duration < 0.5) {
-        alert("Minimum booking duration is 30 minutes");
+        toast.error("Minimum booking duration is 30 minutes");
+        setIsBooking(false);
+        return;
+      }
+
+      if (pickupLocation === null && valetState === "AVAILABLE") {
+        toast.error("Please select pickup location");
         setIsBooking(false);
         return;
       }
@@ -184,7 +212,10 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
         endTime: endISO,
         vehicleType,
         amount: total,
-        valetRequested: valetEnabled,
+        valetRequested: !!pickupLocation,
+        pickupLatitude: pickupLocation?.latitude,
+        pickupLongitude: pickupLocation?.longitude,
+        pickupAddress: pickupLocation?.address,
       };
 
       const response = await apiClient.post("/api/bookings", payload);
@@ -216,13 +247,13 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
         };
       };
 
-      if (error?.response?.status === 401) {
-        alert("Please login to continue booking");
-        router.push("/login?redirect=" + window.location.pathname);
-        return;
-      }
+      // if (error?.response?.status === 401) {
+      //   toast.error("Please login to continue booking");
+      //   router.push("/login?redirect=" + window.location.pathname);
+      //   return;
+      // }
 
-      alert(error?.response?.data?.message || "Booking failed");
+      toast.message(error?.response?.data?.message || "Booking failed");
     } finally {
       setIsBooking(false);
     }
@@ -230,7 +261,7 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
 
   const requestValet = async () => {
     if (!garage.valetAvailable) {
-      alert("This garage does not provide valet");
+      toast.message("This garage does not provide valet");
       return;
     }
 
@@ -242,16 +273,24 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
 
       if (!valets) {
         setValetState("NONE");
-        alert("All valets are busy right now");
+        toast.message("All valets are busy right now");
         return;
       }
 
       // Valets available
-      setValetEnabled(true);
+      // setValetEnabled(true);
       setValetState("AVAILABLE");
-    } catch {
-      setValetState("NONE");
-      alert("Failed to check valet availability");
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        if (err.response?.status === 401) {
+          setValetState("NONE");
+          return;
+        }
+
+        toast.error(
+          err.response?.data?.message ?? "Failed to check valet availability",
+        );
+      }
     }
   };
 
@@ -693,8 +732,7 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                   {valetState === "AVAILABLE" && !swiped && (
                     <SmoothSwipeButton
                       onSwipeComplete={() => {
-                        setSwiped(true);
-                        setValetEnabled(true);
+                        setPickupModalOpen(true);
                       }}
                       availableText="✔ Valet available — Swipe to use valet"
                       successText="✓ Valet enabled. Will be assigned after booking."
@@ -702,9 +740,16 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                   )}
 
                   {swiped && valetEnabled && (
-                    <p className="text-xs text-green-700 font-bold mt-2">
-                      ✔ Valet enabled. Will be assigned after booking.
-                    </p>
+                    <div className="mt-2 space-y-1">
+                      <p className="text-xs text-green-700 font-bold">
+                        ✔ Valet enabled. Will be assigned after booking.
+                      </p>
+                      {pickupLocation && (
+                        <p className="text-[10px] text-gray-700 font-bold bg-indigo-50 p-2 border border-indigo-100 rounded">
+                          ✔ Pickup: {pickupLocation.address}
+                        </p>
+                      )}
+                    </div>
                   )}
 
                   {/* Searching after booking */}
@@ -838,6 +883,31 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
         onConfirm={(data) => {
           // console.log("Selected Slot:", data);
           setSelectedSlot(data);
+        }}
+      />
+
+      <ValetPickupModal
+        open={pickupModalOpen}
+        onClose={() => {
+          setPickupModalOpen(false);
+
+          // Only reset if no pickup selected
+          if (!pickupLocation) {
+            setSwiped(false);
+            // setValetEnabled(false);
+          }
+        }}
+        garageLocation={{
+          latitude: garage.latitude,
+          longitude: garage.longitude,
+          name: garage.name,
+          valetRadius: garage.valetServiceRadius,
+        }}
+        onConfirm={(pickup) => {
+          setPickupLocation(pickup);
+          // setValetEnabled(true);
+          setSwiped(true);
+          setPickupModalOpen(false);
         }}
       />
 

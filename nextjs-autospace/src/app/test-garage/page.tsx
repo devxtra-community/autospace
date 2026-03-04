@@ -14,6 +14,7 @@ const mockGarage = {
   rating: 4.9,
   contactPhone: "+1 555 123 4567",
   valetAvailable: true,
+  valetServiceRadius: 15,
 };
 
 export default function TestGaragePage() {

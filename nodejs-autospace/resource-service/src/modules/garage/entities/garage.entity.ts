@@ -90,6 +90,12 @@ export class Garage {
   })
   largeSlotPrice!: number;
 
+  @Column({
+    type: "int",
+    default: 20,
+  })
+  valetServiceRadius!: number;
+
   @Index()
   @Column("uuid")
   createdBy!: string;

@@ -34,6 +34,9 @@ type BackendBooking = {
   pickupTime: string;
   dropTime: string;
   valetStatus: ValetStatus;
+  pickupLatitude?: number | null;
+  pickupLongitude?: number | null;
+  pickupAddress?: string | null;
 };
 
 function transformBooking(b: BackendBooking): ActiveJob {
@@ -48,6 +51,9 @@ function transformBooking(b: BackendBooking): ActiveJob {
     ).toLocaleTimeString()}`,
     date: new Date(b.pickupTime).toLocaleDateString(),
     valetStatus: b.valetStatus || "ASSIGNED",
+    pickupLatitude: b.pickupLatitude ?? null,
+    pickupLongitude: b.pickupLongitude ?? null,
+    pickupAddress: b.pickupAddress ?? null,
   };
 }
 

@@ -78,6 +78,15 @@ export class Booking {
   @Column({ type: "decimal", precision: 10, scale: 2 })
   amount!: number;
 
+  @Column({ type: "decimal", precision: 10, scale: 7, nullable: true })
+  pickupLatitude!: number | null;
+
+  @Column({ type: "decimal", precision: 10, scale: 7, nullable: true })
+  pickupLongitude!: number | null;
+
+  @Column({ type: "varchar", nullable: true })
+  pickupAddress!: string | null;
+
   @Column({
     type: "varchar",
     length: 20,

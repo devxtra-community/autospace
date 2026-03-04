@@ -19,6 +19,7 @@ interface Garage {
   hasOffer?: boolean;
   offerText?: string;
   valetAvailable?: boolean;
+  valetServiceRadius: number;
 }
 
 export default function GaragePage() {
@@ -53,7 +54,23 @@ export default function GaragePage() {
     fetchGarage();
   }, [garageId]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-primary/20 border-t-secondary rounded-full animate-spin" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-8 h-8 bg-primary rounded-full animate-pulse" />
+            </div>
+          </div>
+          <p className="text-sm font-bold text-gray-900 tracking-widest uppercase animate-pulse">
+            Loading Garage...
+          </p>
+        </div>
+      </div>
+    );
+  }
   if (!garage) return <div>Garage not found</div>;
 
   return <GarageDetails garage={garage} />;

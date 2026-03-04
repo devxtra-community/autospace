@@ -1,5 +1,6 @@
 "use client";
 import Navbar from "@/components/landing/Navbar";
+import { BackButton } from "@/components/ui/BackButton";
 
 import { useEffect, useState, useCallback } from "react";
 import { getMyBookings, Booking } from "@/services/booking.service";
@@ -105,7 +106,8 @@ export default function MyBookingsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white pt-32 pb-12 px-4 md:px-8">
+    <main className="min-h-screen bg-white pt-32 pb-12 px-4 md:px-8 relative">
+      <BackButton />
       <Navbar />
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">My Bookings</h1>

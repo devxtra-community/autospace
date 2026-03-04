@@ -4,6 +4,7 @@ import {
   getPublicGarageById,
   getPublicGarageController,
 } from "../controllers/public.garage.controller";
+import { getGarageImagesController } from "../controllers/garage-image.controller";
 
 const router = Router();
 
@@ -12,6 +13,8 @@ router.get(
   validatePublicGarageQuery,
   getPublicGarageController,
 );
+
+router.get("/garages/:garageId/images", getGarageImagesController);
 
 router.get("/user/garages/:garageId", getPublicGarageById);
 

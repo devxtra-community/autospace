@@ -64,7 +64,7 @@ export default function BookingsPage() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       <ManagerBookingsTable
         bookings={bookings}
         loading={loading}

@@ -94,11 +94,13 @@ router.put("/admin/:id/reject", internalAuth, rejectGarage);
 router.get("/admin/pending", internalAuth, getPendingGarages);
 router.post("/assign-manager", internalAuth, assignManagerController);
 router.get("/admin/all", internalAuth, getAllGaragesController);
+
 router.get(
   "/byCompany/:companyId",
   internalAuth,
   getGaragesByCompanyController,
 );
+
 router.put("/:id", internalAuth, updateGarageProfileController);
 router.post("/:garageId/images", internalAuth, addGarageImageController);
 router.get("/:garageId/images", internalAuth, getGarageImagesController);

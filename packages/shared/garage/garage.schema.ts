@@ -13,6 +13,8 @@ export const CreateGarageSchema = z.object({
     .string()
     .regex(/^\+?[0-9]{7,15}$/, "Invalid phone number")
     .optional(),
+
+  valetServiceRadius: z.number().int().positive().optional(),
 });
 
 export const CreateFloorSchema = z.object({

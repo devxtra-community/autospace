@@ -102,13 +102,13 @@ export default function SearchPage() {
 
             {isFilterOpen && (
               <div className="grid grid-cols-3 gap-3">
-                <button className="flex items-center justify-between px-3 py-1.5 rounded-sm border border-black text-xs font-medium text-gray-800 bg-foreground text-white">
+                <button className="flex items-center justify-between px-3 py-1.5 rounded-sm border border-black text-xs font-medium text-gray-800 bg-white text-forground">
                   Price <ChevronDown className="w-3.5 h-3.5" />
                 </button>
-                <button className="flex items-center justify-between px-3 py-1.5 rounded-sm border border-black text-xs font-medium text-gray-800 bg-foreground text-white">
+                <button className="flex items-center justify-between px-3 py-1.5 rounded-sm border border-black text-xs font-medium text-gray-800 bg-white text-forground">
                   Availability <ChevronDown className="w-3.5 h-3.5" />
                 </button>
-                <button className="flex items-center justify-between px-3 py-1.5 rounded-sm border border-black text-xs font-medium text-gray-800 bg-foreground text-white">
+                <button className="flex items-center justify-between px-3 py-1.5 rounded-sm border border-black text-xs font-medium text-gray-800 bg-white text-forground">
                   Distance <ChevronDown className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -124,7 +124,7 @@ export default function SearchPage() {
               <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">
                 Sort by:
               </span>
-              <button className="flex items-center gap-2 px-3 py-1.5 rounded-sm border border-black text-xs font-medium bg-foreground text-white">
+              <button className="flex items-center gap-2 px-3 py-1.5 rounded-sm border border-black text-xs font-medium bg-white text-forground">
                 Recommended <ChevronDown className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -194,7 +194,6 @@ export default function SearchPage() {
           ))}
         </div>
       </div>
-      8ip
       <div className="hidden md:flex flex-1 relative overflow-hidden">
         {!loading && lat && lng && (
           <SearchMap

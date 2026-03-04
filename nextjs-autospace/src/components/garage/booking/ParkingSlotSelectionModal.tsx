@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { SlotGrid, SlotStatus } from "./SlotGrid";
 import apiClient from "@/lib/apiClient";
+import axios from "axios";
 
 interface ParkingSlotSelectionModalProps {
   isOpen: boolean;
@@ -71,7 +72,12 @@ export const ParkingSlotSelectionModal = ({
         if (floors.length > 0) setCurrentFloor(floors[0]);
 
         setSelectedSlot(null);
-      } catch (err) {
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err)) {
+          if (err.response?.status === 401) {
+            return;
+          }
+        }
         console.error("Failed to fetch slots", err);
       } finally {
         setLoading(false);

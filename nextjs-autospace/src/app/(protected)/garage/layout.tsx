@@ -8,11 +8,8 @@ export default function GarageWithSidebarLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Sidebar */}
+    <div className="min-h-screen bg-white flex">
       <Sidebar />
-
-      {/* Content */}
       <div className="flex-1 md:ml-64 p-6">{children}</div>
     </div>
   );

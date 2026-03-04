@@ -13,6 +13,7 @@ exports.CreateGarageSchema = zod_1.z.object({
         .string()
         .regex(/^\+?[0-9]{7,15}$/, "Invalid phone number")
         .optional(),
+    valetServiceRadius: zod_1.z.number().int().positive().optional(),
 });
 exports.CreateFloorSchema = zod_1.z.object({
     floorNumber: zod_1.z.number().int().nonnegative(),

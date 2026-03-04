@@ -52,6 +52,9 @@ export const createGarage = async (
     garageRegistrationNumber,
     createdBy: ownerUserId,
     status: GarageStatus.PENDING,
+    ...(data.valetServiceRadius !== undefined && {
+      valetServiceRadius: data.valetServiceRadius,
+    }),
   });
 
   const saved = await garageRepo.save(garage);
@@ -66,6 +69,7 @@ export const createGarage = async (
     contactPhone: saved.contactPhone,
     status: saved.status,
     garageRegistrationNumber,
+    valetServiceRadius: saved.valetServiceRadius,
     createdAt: saved.createdAt,
   };
 };
@@ -135,6 +139,7 @@ export const updateGarageProfile = async (
     contactPhone?: string;
     valetAvailable?: boolean;
     capacity?: number;
+    valetServiceRadius?: number;
   },
 ) => {
   const repo = AppDataSource.getRepository(Garage);
@@ -151,6 +156,8 @@ export const updateGarageProfile = async (
   if (data.valetAvailable !== undefined)
     garage.valetAvailable = data.valetAvailable;
   if (data.capacity !== undefined) garage.capacity = data.capacity;
+  if (data.valetServiceRadius !== undefined)
+    garage.valetServiceRadius = data.valetServiceRadius;
 
   await repo.save(garage);
 
