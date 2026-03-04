@@ -1,6 +1,7 @@
 import { RegisterApiInput } from "@autospace/shared/auth/register.schema";
 import apiClient from "./apiClient";
 import type { LoginDto } from "@autospace/shared";
+import { AxiosRequestConfig } from "axios";
 
 /**
  * Backend response shape (UPDATED)
@@ -17,6 +18,10 @@ export interface AuthResponse {
     status: "active" | "pending" | "rejected";
   };
 }
+
+type CustomAxiosConfig = AxiosRequestConfig & {
+  skipRedirect?: boolean;
+};
 
 // export const api = axios.create({
 //   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000",
@@ -52,7 +57,9 @@ export const loginUser = async (data: LoginDto): Promise<AuthResponse> => {
 };
 
 export const getMe = () => {
-  return apiClient.get<AuthResponse>("/api/auth/me");
+  return apiClient.get<AuthResponse>("/api/auth/me", {
+    skipRedirect: true,
+  } as CustomAxiosConfig);
 };
 
 export const logoutUser = async (): Promise<void> => {

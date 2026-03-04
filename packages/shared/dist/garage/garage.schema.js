@@ -15,6 +15,7 @@ exports.CreateGarageSchema = zod_1.z.object({
         .optional(),
     openingTime: zod_1.z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
     closingTime: zod_1.z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
+    valetServiceRadius: zod_1.z.number().int().positive().optional(),
 });
 exports.CreateFloorSchema = zod_1.z.object({
     floorNumber: zod_1.z.number().int().nonnegative(),

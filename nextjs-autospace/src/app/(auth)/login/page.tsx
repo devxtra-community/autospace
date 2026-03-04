@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Mail, Phone, Lock, Eye, EyeOff } from "lucide-react";
+import { BackButton } from "@/components/ui/BackButton";
 
 import { loginUser, getMe } from "@/lib/auth.api";
 import { redirectByRole } from "@/lib/roleredirect";
@@ -69,7 +70,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 sm:px-6">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 sm:px-6 relative">
+      <BackButton />
       <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-40 p-6 sm:p-10">
         {/* LEFT (DESKTOP ONLY) */}
         <div className="hidden md:flex flex-col items-center justify-center text-center gap-6">

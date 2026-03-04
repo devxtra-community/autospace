@@ -5,8 +5,18 @@ import { EntityManager, In, IsNull, LessThan, MoreThan } from "typeorm";
 import redisClient from "../config/redis.js";
 import { publishEvent } from "../config/rabbitmq.js";
 import { sendMail } from "../config/mail.js";
+import { calculateDistanceKm } from "../utils/distance.js";
+import { ValidationError } from "../validators/booking.validator.js";
 
 // Repositories are obtained inside methods to ensure AppDataSource is initialized
+
+type GarageInternal = {
+  name: string;
+  locationName: string;
+  latitude: number | string;
+  longitude: number | string;
+  valetServiceRadius: number;
+};
 
 export class BookingService {
   async checkOverlap(slotId: string, start: Date, end: Date): Promise<boolean> {
@@ -77,7 +87,46 @@ export class BookingService {
     vehicleType: "sedan" | "suv";
     status?: string;
     valetRequested: boolean;
+    pickupLatitude: number;
+    pickupLongitude: number;
+    pickupAddress: string;
   }) {
+    let garage: GarageInternal | null = null;
+
+    if (bookingData.valetRequested) {
+      const garageRes = await axios.get<{ data: GarageInternal }>(
+        `${process.env.RESOURCE_SERVICE_URL}/internal/garages/${bookingData.garageId}`,
+        {
+          headers: {
+            "x-user-id": "booking-service",
+            "x-user-role": "SERVICE",
+          },
+        },
+      );
+
+      garage = garageRes.data.data;
+
+      if (
+        bookingData.pickupLatitude === undefined ||
+        bookingData.pickupLongitude === undefined
+      ) {
+        throw new ValidationError("Pickup location required for valet");
+      }
+
+      const distance = calculateDistanceKm(
+        Number(garage.latitude),
+        Number(garage.longitude),
+        bookingData.pickupLatitude,
+        bookingData.pickupLongitude,
+      );
+
+      if (distance > garage.valetServiceRadius) {
+        throw new ValidationError(
+          `Pickup outside valet radius (${garage.valetServiceRadius} km)`,
+        );
+      }
+    }
+
     const idempotencyKey = `booking:idemp:${bookingData.userId}:${bookingData.slotId}:${bookingData.startTime.toISOString()}`;
 
     const idempotencyResult = await redisClient.set(
@@ -103,6 +152,84 @@ export class BookingService {
     }
 
     try {
+      // ---------------- PRICE RE-CALCULATION (SECURITY FIX) ----------------
+
+      // Fetch slot details
+      const slotResponse = await axios.get(
+        `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${bookingData.slotId}`,
+        {
+          headers: {
+            "x-user-id": "booking-service",
+            "x-user-role": "SERVICE",
+          },
+        },
+      );
+
+      const slote = slotResponse.data.data;
+
+      if (!slote) {
+        throw new ValidationError("Invalid slot");
+      }
+
+      // Fetch garage pricing
+      const garageRes = await axios.get(
+        `${process.env.RESOURCE_SERVICE_URL}/internal/garages/${bookingData.garageId}`,
+        {
+          headers: {
+            "x-user-id": "booking-service",
+            "x-user-role": "SERVICE",
+          },
+        },
+      );
+
+      const garageData = garageRes.data.data;
+
+      if (!garageData) {
+        throw new ValidationError("Invalid garage");
+      }
+
+      // Calculate duration (hours)
+      const durationMs =
+        bookingData.endTime.getTime() - bookingData.startTime.getTime();
+
+      if (durationMs <= 0) {
+        throw new ValidationError("Invalid booking duration");
+      }
+
+      const durationHours = parseFloat(
+        (durationMs / (1000 * 60 * 60)).toFixed(2),
+      );
+
+      // Determine hourly price based on vehicle type
+      let hourlyPrice = 0;
+
+      if (bookingData.vehicleType === "sedan") {
+        hourlyPrice = garageData.standardSlotPrice;
+      } else {
+        hourlyPrice = garageData.largeSlotPrice;
+      }
+
+      if (!hourlyPrice) {
+        throw new ValidationError("Pricing not configured");
+      }
+
+      const subtotal = hourlyPrice * durationHours;
+
+      // Valet charge (fixed or configurable)
+      const valetCharge = bookingData.valetRequested ? 5 : 0;
+
+      // Final total (rounded to 2 decimals)
+      const computedTotal = parseFloat((subtotal + valetCharge).toFixed(2));
+
+      // Optional: Detect tampering attempt
+      if (bookingData.amount !== computedTotal) {
+        console.warn(
+          `⚠ Amount mismatch detected. Frontend: ${bookingData.amount}, Backend: ${computedTotal}`,
+        );
+      }
+
+      // -----------------------------------------------------------------------
+
       const savedBooking = await AppDataSource.transaction(
         async (manager: EntityManager) => {
           const repo = manager.getRepository(Booking);
@@ -128,13 +255,17 @@ export class BookingService {
             slotId: bookingData.slotId,
             startTime: bookingData.startTime,
             endTime: bookingData.endTime,
-            amount: bookingData.amount,
+            amount: computedTotal,
             vehicleType: bookingData.vehicleType,
-            status: "payment_pending",
             valetRequested: bookingData.valetRequested,
+            pickupLatitude: bookingData.pickupLatitude ?? null,
+            pickupLongitude: bookingData.pickupLongitude ?? null,
+            pickupAddress: bookingData.pickupAddress ?? null,
+            status: "payment_pending",
             valetStatus: bookingData.valetRequested
               ? BookingValetStatus.REQUESTED
               : BookingValetStatus.NONE,
+
             entryPin: generatePin(),
             exitPin: null,
             entryUsed: false,
@@ -187,42 +318,6 @@ export class BookingService {
 
       const user = userRes.data.data;
 
-      const garageRes = await axios.get(
-        `${process.env.RESOURCE_SERVICE_URL}/internal/garages/${savedBooking.garageId}`,
-        {
-          headers: {
-            "x-user-id": "booking-service",
-            "x-user-role": "SERVICE",
-          },
-        },
-      );
-
-      const garage = garageRes.data.data;
-
-      if (!garage.openingTime || !garage.closingTime) {
-        throw new Error("Garage working hours not configured");
-      }
-
-      const start = new Date(bookingData.startTime);
-      const end = new Date(bookingData.endTime);
-
-      // Convert garage opening time into Date of same day
-      const [openHour, openMin] = garage.openingTime.split(":").map(Number);
-      const [closeHour, closeMin] = garage.closingTime.split(":").map(Number);
-
-      const openingDateTime = new Date(start);
-      openingDateTime.setHours(openHour, openMin, 0, 0);
-
-      const closingDateTime = new Date(start);
-      closingDateTime.setHours(closeHour, closeMin, 0, 0);
-
-      if (start < openingDateTime || end > closingDateTime) {
-        throw new Error("Garage is closed at this time");
-      }
-
-      if (start >= end) {
-        throw new Error("Invalid booking time range");
-      }
       const slotRes = await axios.get(
         `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${savedBooking.slotId}`,
         {
@@ -237,6 +332,9 @@ export class BookingService {
       console.log("SLOT RESPONSE:", slotRes.data);
       const startTime = new Date(savedBooking.startTime).toLocaleString();
       const endTime = new Date(savedBooking.endTime).toLocaleString();
+
+      const garageName = garage?.name ?? "N/A";
+      const garageLocation = garage?.locationName ?? "N/A";
 
       const valetLine = savedBooking.valetRequested
         ? `Valet Service: Requested
@@ -255,10 +353,8 @@ Thank you for choosing Autospace. Your parking reservation has been successfully
 BOOKING DETAILS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Booking ID: ${savedBooking.id}
-
-Garage: ${garage.name}
-Location: ${garage.locationName}
-
+Garage: ${garageName}
+Location: ${garageLocation}
 Floor: ${slot.floorNumber}
 Slot Number: ${slot.slotNumber}
 
@@ -713,6 +809,9 @@ Smart Parking. Seamless Experience.
             dropTime: booking.endTime,
             valetStatus: booking.valetStatus,
             createdAt: booking.createdAt,
+            pickupAdress: booking.pickupAddress,
+            pickupLatitude: booking.pickupLatitude,
+            pickupLongitude: booking.pickupLongitude,
           };
         } catch (err) {
           console.log("Enrich failed:", err);

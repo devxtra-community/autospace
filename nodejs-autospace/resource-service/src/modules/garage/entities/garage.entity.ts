@@ -104,6 +104,12 @@ export class Garage {
   })
   closingTime!: string | null;
 
+  @Column({
+    type: "int",
+    default: 20,
+  })
+  valetServiceRadius!: number;
+
   @Index()
   @Column("uuid")
   createdBy!: string;

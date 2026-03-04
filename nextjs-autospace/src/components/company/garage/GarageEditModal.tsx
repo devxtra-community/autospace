@@ -17,6 +17,7 @@ interface Garage {
   garageRegistrationNumber?: string | null;
   capacity?: number | null;
   valetAvailable?: boolean | null;
+  valetServiceRadius?: number | null;
 }
 
 export function GarageEditModal({
@@ -36,6 +37,7 @@ export function GarageEditModal({
     contactPhone: "",
     capacity: "",
     valetAvailable: false,
+    valetServiceRadius: "20",
   });
 
   useEffect(() => {
@@ -47,6 +49,7 @@ export function GarageEditModal({
       contactPhone: garage.contactPhone ?? "",
       capacity: garage.capacity?.toString() ?? "",
       valetAvailable: garage.valetAvailable ?? false,
+      valetServiceRadius: garage.valetServiceRadius?.toString() ?? "20",
     });
   }, [open, garage]);
 
@@ -59,6 +62,7 @@ export function GarageEditModal({
       contactPhone: form.contactPhone || undefined,
       capacity: Number(form.capacity),
       valetAvailable: form.valetAvailable,
+      valetServiceRadius: Number(form.valetServiceRadius),
     });
 
     onUpdated?.();
@@ -91,6 +95,19 @@ export function GarageEditModal({
           placeholder="Capacity"
           value={form.capacity}
           onChange={(e) => setForm({ ...form, capacity: e.target.value })}
+        />
+
+        <Input
+          type="number"
+          placeholder="Valet Service Radius (km)"
+          value={form.valetServiceRadius}
+          min={1}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              valetServiceRadius: e.target.value,
+            })
+          }
         />
 
         <label className="flex items-center gap-2 text-sm">

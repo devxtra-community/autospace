@@ -14,6 +14,7 @@ export interface Garage {
   capacity?: number | null;
   garageRegistrationNumber?: string | null;
   valetAvailable?: boolean | null;
+  valetServiceRadius?: number | null;
   manager?: {
     id: string;
     fullname: string;
@@ -82,6 +83,7 @@ export function GaragesGrid({ garages, companyId }: Props) {
             capacity: selectedGarage.capacity ?? 0,
             garageRegistrationNumber:
               selectedGarage.garageRegistrationNumber ?? "",
+            valetServiceRadius: selectedGarage.valetServiceRadius ?? 20,
             valetAvailable: selectedGarage.valetAvailable ?? false,
             manager: selectedGarage.manager ?? null,
           }}

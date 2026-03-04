@@ -67,6 +67,7 @@ export const updateGarageProfile = async (
     contactPhone?: string;
     valetAvailable?: boolean;
     capacity?: number;
+    valetServiceRadius?: number;
   },
 ) => {
   const res = await apiClient.put(`/api/garages/${garageId}`, data);

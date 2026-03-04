@@ -1,12 +1,19 @@
 import apiClient from "@/lib/apiClient";
+import publicApiClient from "@/lib/publicApiClient";
 import type { ApiGarageImage } from "@/types/garage-images";
 
+type GarageImagesResponse = {
+  data: ApiGarageImage[];
+};
+
 export const getGarageImages = async (garageId: string) => {
-  const res = await apiClient.get<ApiGarageImage[]>(
-    `/api/garages/${garageId}/images`,
+  const res = await publicApiClient.get<GarageImagesResponse>(
+    `/api/public/garages/${garageId}/images`,
   );
 
-  return res.data.map((img) => ({
+  const data = res.data.data;
+
+  return data.map((img: ApiGarageImage) => ({
     id: img.id,
     url: `${process.env.NEXT_PUBLIC_R2_PUBLIC_BASE_URL}/${img.file.key}`,
   }));

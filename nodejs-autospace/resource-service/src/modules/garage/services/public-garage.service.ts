@@ -69,6 +69,7 @@ export const getGarageByIdService = async (garageId: string) => {
       "standardSlotPrice",
       "largeSlotPrice",
       "valetAvailable",
+      "valetServiceRadius",
       "capacity",
       "contactPhone",
       "createdAt",
@@ -142,6 +143,7 @@ async function getGaragesWithProximity(
         standard_slot_price,
         large_slot_price,
         "valetAvailable",
+        "valetServiceRadius",
         status,
         "createdAt",
       (
@@ -243,6 +245,7 @@ async function getAllActiveGarages(
       "longitude",
       "capacity",
       "valetAvailable",
+      "valetServiceRadius",
       "standardSlotPrice",
       "largeSlotPrice",
       "status",

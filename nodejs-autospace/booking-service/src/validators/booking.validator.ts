@@ -27,8 +27,23 @@ export function validateBookingInput(data: {
   vehicleType: string;
   amount?: number;
   status?: string;
+  pickupLatitude?: number;
+  pickupLongitude?: number;
+  pickupAddress?: string;
+  valetRequested?: boolean;
 }) {
-  const { slotId, userId, garageId, startTime, endTime, status } = data;
+  const {
+    slotId,
+    userId,
+    garageId,
+    startTime,
+    endTime,
+    status,
+    pickupAddress,
+    pickupLatitude,
+    pickupLongitude,
+    valetRequested,
+  } = data;
 
   if (slotId) validateId(slotId, "slotId");
   if (userId) validateId(userId, "userId");
@@ -62,6 +77,18 @@ export function validateBookingInput(data: {
 
   if (durationMinutes > 1440) {
     throw new ValidationError("Booking cannot exceed 24 hours");
+  }
+
+  if (valetRequested) {
+    if (
+      pickupLatitude === undefined ||
+      pickupLongitude === undefined ||
+      !pickupAddress
+    ) {
+      throw new ValidationError(
+        "Pickup location required when valet is requested",
+      );
+    }
   }
 
   // Status validation

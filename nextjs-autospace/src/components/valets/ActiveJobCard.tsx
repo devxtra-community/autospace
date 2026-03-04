@@ -35,6 +35,9 @@ export type ActiveJob = {
   entryPin: string;
   exitPin: string;
   valetStatus: ValetStatus;
+  pickupLatitude?: number | null;
+  pickupLongitude?: number | null;
+  pickupAddress?: string | null;
 };
 
 type Props = {
@@ -74,6 +77,14 @@ export default function ActiveJobCard({
     PARKED: "Parked",
     ON_THE_WAY_TO_DROP: "On the way to drop",
     COMPLETED: "Completed",
+  };
+
+  const openPickupNavigation = () => {
+    if (!req.pickupLatitude || !req.pickupLongitude) return;
+
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${req.pickupLatitude},${req.pickupLongitude}&travelmode=driving`;
+
+    window.open(url, "_blank");
   };
 
   const renderButton = () => {
@@ -146,9 +157,10 @@ export default function ActiveJobCard({
         </div>
 
         {/* LOCATION */}
+        {/* LOCATION */}
         <div className="flex items-center gap-2 text-sm">
           <MapPin size={14} />
-          {req.location}
+          {req.pickupAddress ?? req.location}
         </div>
 
         {/* FLOOR */}
@@ -184,7 +196,18 @@ export default function ActiveJobCard({
           {req.date}
         </div>
 
-        {/* BUTTON */}
+        {req.pickupLatitude &&
+          req.pickupLongitude &&
+          status !== "COMPLETED" && (
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={openPickupNavigation}
+            >
+              Navigate to Pickup
+            </Button>
+          )}
+
         {renderButton()}
       </CardContent>
     </Card>

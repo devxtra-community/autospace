@@ -16,6 +16,7 @@ export const CreateGarageSchema = z.object({
 
   openingTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
   closingTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
+  valetServiceRadius: z.number().int().positive().optional(),
 });
 
 export const CreateFloorSchema = z.object({

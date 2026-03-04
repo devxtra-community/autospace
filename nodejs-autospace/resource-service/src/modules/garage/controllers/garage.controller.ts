@@ -130,8 +130,14 @@ export const updateGarageProfileController = async (
 ) => {
   try {
     const garageId = req.params.id as string;
-    const { name, contactEmail, contactPhone, valetAvailable, capacity } =
-      req.body;
+    const {
+      name,
+      contactEmail,
+      contactPhone,
+      valetAvailable,
+      capacity,
+      valetServiceRadius,
+    } = req.body;
 
     if (
       !name &&
@@ -152,6 +158,7 @@ export const updateGarageProfileController = async (
       contactPhone,
       valetAvailable,
       capacity,
+      valetServiceRadius,
     });
 
     return res.status(200).json({

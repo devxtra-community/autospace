@@ -119,6 +119,7 @@ export const getGarageById = async (garageId: string) => {
 
     return {
       ...garage,
+      valetServiceRadius: garage.valetServiceRadius,
       manager: user
         ? {
             fullname: user.fullname || user.email || "Manager",
@@ -128,6 +129,7 @@ export const getGarageById = async (garageId: string) => {
   } catch {
     return {
       ...garage,
+      valetServiceRadius: garage.valetServiceRadius,
       manager: null,
     };
   }
@@ -224,6 +226,7 @@ export const getAllGarages = async (
 
         status: garage.status,
         createdAt: garage.createdAt,
+        valetServiceRadius: garage.valetServiceRadius,
 
         companyId: garage.companyId,
       };
@@ -315,6 +318,7 @@ export const getGaragesByCompanyId = async (
 
         return {
           ...garage,
+          valetServiceRadius: garage.valetServiceRadius,
           manager: user
             ? {
                 fullname: user.fullname || user.email || "Manager",
@@ -324,6 +328,7 @@ export const getGaragesByCompanyId = async (
       } catch {
         return {
           ...garage,
+          valetServiceRadius: garage.valetServiceRadius,
           manager: null,
         };
       }

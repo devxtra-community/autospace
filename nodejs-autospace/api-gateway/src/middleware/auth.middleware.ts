@@ -41,6 +41,16 @@ export const authMiddleware = (
 
     const decoded = verifyAccessToken(token);
 
+    if (decoded.status === "rejected") {
+      sendAuthError(
+        res,
+        AuthErrorCode.TOKEN_INVALID,
+        "Account rejected. Contact admin.",
+        403,
+      );
+      return;
+    }
+
     req.user = {
       id: decoded.id,
       email: decoded.email,

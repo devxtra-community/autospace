@@ -21,6 +21,9 @@ export class BookingController {
       vehicleType,
       amount,
       valetRequested,
+      pickupAddress,
+      pickupLatitude,
+      pickupLongitude,
     } = req.body;
 
     // console.log("vahicle from frontend",vehicleType);
@@ -49,6 +52,19 @@ export class BookingController {
         });
       }
 
+      if (valetRequested) {
+        if (
+          pickupLatitude === undefined ||
+          pickupLongitude === undefined ||
+          !pickupAddress
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: "Pickup location required for valet booking",
+          });
+        }
+      }
+
       validateBookingInput({
         slotId,
         userId,
@@ -57,6 +73,9 @@ export class BookingController {
         endTime,
         amount,
         vehicleType,
+        pickupAddress,
+        pickupLatitude,
+        pickupLongitude,
         status: "pending",
       });
 
@@ -83,6 +102,9 @@ export class BookingController {
         amount,
         status: "pending",
         valetRequested: valetRequested || false,
+        pickupLatitude: valetRequested ? pickupLatitude : undefined,
+        pickupLongitude: valetRequested ? pickupLongitude : undefined,
+        pickupAddress: valetRequested ? pickupAddress : undefined,
       });
 
       logger.info("Booking created", booking.id);

@@ -6,7 +6,7 @@ export default function Footer() {
     <footer className="border-t border-gray-100 py-12">
       <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-6">
         <div className="text-gray-500 font-medium text-sm flex items-center">
-          <span className="mr-2">©</span> 2025 - Parker
+          <span className="mr-2">©</span> 2026 - Autospace
         </div>
 
         <div className="flex items-center gap-8 text-[#917C0E]">
