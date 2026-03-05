@@ -839,10 +839,17 @@ Smart Parking. Seamless Experience.
 
   async getActiveJobs(valetId: string) {
     const bookingRepo = AppDataSource.getRepository(Booking);
+
     const bookings = await bookingRepo.find({
       where: {
         valetId,
-        valetStatus: BookingValetStatus.ASSIGNED,
+        valetStatus: In([
+          BookingValetStatus.ASSIGNED,
+          BookingValetStatus.ON_THE_WAY_TO_PICKUP,
+          BookingValetStatus.PICKED_UP,
+          BookingValetStatus.PARKED,
+          BookingValetStatus.ON_THE_WAY_TO_DROP,
+        ]),
       },
     });
 

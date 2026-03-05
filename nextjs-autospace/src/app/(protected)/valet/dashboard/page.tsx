@@ -73,8 +73,11 @@ export default function ValetDashboard() {
 
   useEffect(() => {
     loadAll();
-  }, []);
 
+    const interval = setInterval(loadAll, 15000);
+
+    return () => clearInterval(interval);
+  }, []);
   async function loadAll() {
     try {
       const req = await getValetRequests();
