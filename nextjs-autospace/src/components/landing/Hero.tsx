@@ -119,7 +119,7 @@ export default function Hero() {
           playsInline
           preload="auto"
         >
-          <source src="/carAnimationAutospace.mp4" type="video/mp4" />
+          <source src="/valetParking2.mp4" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
       </div>

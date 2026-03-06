@@ -215,9 +215,9 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
     );
   };
 
-  console.log("pickupLocation:", pickupLocation);
-  console.log("valetEnabled:", valetEnabled);
-  console.log("valetRequested:", !!pickupLocation);
+  // console.log("pickupLocation:", pickupLocation);
+  // console.log("valetEnabled:", valetEnabled);
+  // console.log("valetRequested:", !!pickupLocation);
 
   const handleBooking = async () => {
     if (!selectedSlot) {

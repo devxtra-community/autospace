@@ -105,9 +105,9 @@ export default function SearchPage() {
                 <button className="flex items-center justify-between px-3 py-1.5 rounded-sm border border-black text-xs font-medium text-gray-800 bg-white text-forground">
                   Price <ChevronDown className="w-3.5 h-3.5" />
                 </button>
-                <button className="flex items-center justify-between px-3 py-1.5 rounded-sm border border-black text-xs font-medium text-gray-800 bg-white text-forground">
+                {/* <button className="flex items-center justify-between px-3 py-1.5 rounded-sm border border-black text-xs font-medium text-gray-800 bg-white text-forground">
                   Availability <ChevronDown className="w-3.5 h-3.5" />
-                </button>
+                </button> */}
                 <button className="flex items-center justify-between px-3 py-1.5 rounded-sm border border-black text-xs font-medium text-gray-800 bg-white text-forground">
                   Distance <ChevronDown className="w-3.5 h-3.5" />
                 </button>
@@ -117,17 +117,17 @@ export default function SearchPage() {
 
           {/* Stats and Sort */}
           <div className="flex items-center justify-between pt-2">
-            <span className="text-xs font-bold text-gray-900">
+            <span className="text-sm font-bold text-gray-900">
               Spot found: {garages.length}
             </span>
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">
                 Sort by:
               </span>
               <button className="flex items-center gap-2 px-3 py-1.5 rounded-sm border border-black text-xs font-medium bg-white text-forground">
                 Recommended <ChevronDown className="w-3.5 h-3.5" />
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -140,7 +140,7 @@ export default function SearchPage() {
 
           {garages.map((garage) => (
             <Link key={garage.id} href={`/garages/${garage.id}`}>
-              <div className=" p-4 flex flex-col gap-3 rounded-lg relative bg-search-card cursor-pointer  transition-colors shadow-sm active:translate-y-0.5">
+              <div className=" p-4 flex flex-col gap-3 rounded-lg relative bg-blue-50 cursor-pointer  transition-colors shadow-md active:translate-y-0.5">
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
                     <h3 className="text-sm font-extrabold text-gray-900 uppercase">
