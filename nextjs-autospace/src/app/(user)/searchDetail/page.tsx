@@ -1,7 +1,7 @@
 "use client";
 // export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { MapPin, Star, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 
@@ -33,6 +33,42 @@ export default function SearchPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(true);
   const [garages, setGarages] = useState<PublicGarage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [priceFilter, setPriceFilter] = useState("");
+  const [distanceFilter, setDistanceFilter] = useState("");
+
+  const filteredGarages = useMemo(() => {
+    let result = [...garages];
+
+    if (distanceFilter === "under_2")
+      result = result.filter((g) => (g.distance ?? 0) < 2);
+    else if (distanceFilter === "under_5")
+      result = result.filter((g) => (g.distance ?? 0) < 5);
+    else if (distanceFilter === "under_10")
+      result = result.filter((g) => (g.distance ?? 0) < 10);
+
+    if (priceFilter === "under_50")
+      result = result.filter((g) => (g.standard_slot_price ?? 0) < 50);
+    else if (priceFilter === "under_100")
+      result = result.filter((g) => (g.standard_slot_price ?? 0) < 100);
+    else if (priceFilter === "under_200")
+      result = result.filter((g) => (g.standard_slot_price ?? 0) < 200);
+
+    if (distanceFilter === "nearest")
+      result.sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0));
+    else if (distanceFilter === "farthest")
+      result.sort((a, b) => (b.distance ?? 0) - (a.distance ?? 0));
+
+    if (priceFilter === "low_to_high")
+      result.sort(
+        (a, b) => (a.standard_slot_price ?? 0) - (b.standard_slot_price ?? 0),
+      );
+    else if (priceFilter === "high_to_low")
+      result.sort(
+        (a, b) => (b.standard_slot_price ?? 0) - (a.standard_slot_price ?? 0),
+      );
+
+    return result;
+  }, [garages, priceFilter, distanceFilter]);
   // const [valetFilter, setValetFilter] = useState<boolean | null>(null);
 
   const fetchData = async () => {
@@ -101,16 +137,38 @@ export default function SearchPage() {
             </div>
 
             {isFilterOpen && (
-              <div className="grid grid-cols-3 gap-3">
-                <button className="flex items-center justify-between px-3 py-1.5 rounded-sm border border-black text-xs font-medium text-gray-800 bg-white text-forground">
-                  Price <ChevronDown className="w-3.5 h-3.5" />
-                </button>
-                {/* <button className="flex items-center justify-between px-3 py-1.5 rounded-sm border border-black text-xs font-medium text-gray-800 bg-white text-forground">
-                  Availability <ChevronDown className="w-3.5 h-3.5" />
-                </button> */}
-                <button className="flex items-center justify-between px-3 py-1.5 rounded-sm border border-black text-xs font-medium text-gray-800 bg-white text-forground">
-                  Distance <ChevronDown className="w-3.5 h-3.5" />
-                </button>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="relative">
+                  <select
+                    className="appearance-none w-full px-3 py-1.5 rounded-sm border border-black text-xs font-medium text-gray-800 bg-white focus:outline-none"
+                    value={priceFilter}
+                    onChange={(e) => setPriceFilter(e.target.value)}
+                  >
+                    <option value="">Price (All)</option>
+                    <option value="under_50">Under ₹50</option>
+                    <option value="under_100">Under ₹100</option>
+                    <option value="under_200">Under ₹200</option>
+                    <option value="low_to_high">Price: Low to High</option>
+                    <option value="high_to_low">Price: High to Low</option>
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-800" />
+                </div>
+
+                <div className="relative">
+                  <select
+                    className="appearance-none w-full px-3 py-1.5 rounded-sm border border-black text-xs font-medium text-gray-800 bg-white focus:outline-none"
+                    value={distanceFilter}
+                    onChange={(e) => setDistanceFilter(e.target.value)}
+                  >
+                    <option value="">Distance (All)</option>
+                    <option value="under_2">Under 2 km</option>
+                    <option value="under_5">Under 5 km</option>
+                    <option value="under_10">Under 10 km</option>
+                    <option value="nearest">Nearest First</option>
+                    <option value="farthest">Farthest First</option>
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-800" />
+                </div>
               </div>
             )}
           </div>
@@ -118,7 +176,7 @@ export default function SearchPage() {
           {/* Stats and Sort */}
           <div className="flex items-center justify-between pt-2">
             <span className="text-sm font-bold text-gray-900">
-              Spot found: {garages.length}
+              Spot found: {filteredGarages.length}
             </span>
             {/* <div className="flex items-center gap-2">
               <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">
@@ -138,7 +196,7 @@ export default function SearchPage() {
             </div>
           )}
 
-          {garages.map((garage) => (
+          {filteredGarages.map((garage) => (
             <Link key={garage.id} href={`/garages/${garage.id}`}>
               <div className=" p-4 flex flex-col gap-3 rounded-lg relative bg-blue-50 cursor-pointer  transition-colors shadow-md active:translate-y-0.5">
                 <div className="flex justify-between items-start">
@@ -197,7 +255,7 @@ export default function SearchPage() {
       <div className="hidden md:flex flex-1 relative overflow-hidden">
         {!loading && lat && lng && (
           <SearchMap
-            garages={garages}
+            garages={filteredGarages}
             userLat={Number(lat)}
             userLng={Number(lng)}
           />

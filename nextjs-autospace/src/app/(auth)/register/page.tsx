@@ -16,11 +16,7 @@ export default function RegisterPage() {
             alt="Park Your Car"
             width={420}
             height={320}
-            className="
-              w-[380px] h-auto
-              min-[1440px]:w-[450px]
-              min-[1440px]:h-[350px]
-            "
+            className="w-[380px] h-auto min-[1440px]:w-[450px] min-[1440px]:h-[350px]"
           />
 
           <h2 className="mt-6 text-3xl font-semibold text-foreground">

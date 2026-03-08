@@ -50,6 +50,28 @@ export const registerOwner = async (
   return response.data;
 };
 
+export const registerManager = async (
+  data: RegisterApiInput,
+): Promise<AuthResponse> => {
+  const response = await apiClient.post<AuthResponse>(
+    "/api/auth/manager/register",
+    data,
+  );
+
+  return response.data;
+};
+
+export const registerValet = async (
+  data: RegisterApiInput,
+): Promise<AuthResponse> => {
+  const response = await apiClient.post<AuthResponse>(
+    "/api/auth/valet/register",
+    data,
+  );
+
+  return response.data;
+};
+
 export const loginUser = async (data: LoginDto): Promise<AuthResponse> => {
   const response = await apiClient.post<AuthResponse>("/api/auth/login", data);
 

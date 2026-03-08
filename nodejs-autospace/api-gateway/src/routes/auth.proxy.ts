@@ -90,6 +90,19 @@ router.post(
   authRateLimiter as unknown as RequestHandler,
   createAuthProxy("/api/logout"),
 );
+
+router.post(
+  "/forget-password",
+  authRateLimiter as unknown as RequestHandler,
+  createAuthProxy("/api/forget-password"),
+);
+
+router.post(
+  "/reset-password",
+  authRateLimiter as unknown as RequestHandler,
+  createAuthProxy("/api/reset-password"),
+);
+
 router.post("/refresh", createAuthProxy("/api/refresh"));
 router.post("/owner/register", createAuthProxy("/api/owner/register"));
 router.post("/manager/register", createAuthProxy("/api/manager/register"));
@@ -100,6 +113,13 @@ router.get(
   authMiddleware,
   rbac(UserRole.ADMIN),
   createAuthProxy("/api/admin/allusers"),
+);
+
+router.get(
+  "/admin/user/stats",
+  authMiddleware,
+  rbac(UserRole.ADMIN),
+  createAuthProxy("/api/admin/user/stats"),
 );
 
 router.patch(

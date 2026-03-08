@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
 import { OwnerRegisterSchema } from "../validators/auth.api.schema";
-import { registerOwner } from "../services/owner-register.service";
+import {
+  getUserLoginStatsService,
+  registerOwner,
+} from "../services/owner-register.service";
 
 export const ownerSignup = async (req: Request, res: Response) => {
   try {
@@ -30,3 +33,19 @@ export const ownerSignup = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const getUserLoginStatsController = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const data = await getUserLoginStatsService();
+    res.json(data);
+  } catch (error) {
+    console.error("User login stats API error:", error);
+    res.status(500).json({
+      message: "User login stats API failed",
+    });
+  }
+};
+// admin user stats

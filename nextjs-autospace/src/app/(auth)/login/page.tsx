@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { AxiosError } from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,10 +12,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Mail, Phone, Lock, Eye, EyeOff } from "lucide-react";
 import { BackButton } from "@/components/ui/BackButton";
+import { GoogleLogin } from "@react-oauth/google";
 
 import { loginUser, getMe } from "@/lib/auth.api";
 import { redirectByRole } from "@/lib/roleredirect";
 import { LoginDto } from "@autospace/shared";
+import apiClient from "@/lib/apiClient";
 // import { useSearchParams } from "next/navigation";
 
 // interface ApiErrorResponse {
@@ -102,6 +105,14 @@ export default function LoginPage() {
             </p>
           </div>
 
+          <GoogleLogin
+            onSuccess={async (credentialResponse) => {
+              await apiClient.post("/api/auth/google", {
+                token: credentialResponse.credential,
+              });
+            }}
+          />
+
           {/* Tabs */}
           <Tabs
             value={loginType}
@@ -185,9 +196,12 @@ export default function LoginPage() {
               </Label>
             </div>
 
-            <button className="text-secondary hover:underline">
+            <Link
+              href="/forgot-password"
+              className="text-secondary hover:underline"
+            >
               Forget Password?
-            </button>
+            </Link>
           </div>
 
           {/* Button */}

@@ -55,7 +55,7 @@ export default function CreateCompanyPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="min-h-screen flex items-center justify-center bg-white px-4">
       <Card className="w-full max-w-lg border border-border shadow-xl rounded-3xl">
         <CardHeader className="text-center space-y-2 pb-2">
           <div className="mx-auto w-12 h-12 rounded-full bg-primary flex items-center justify-center text-black font-bold text-xl">

@@ -1,14 +1,21 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import { getMe, logoutUser } from "@/lib/auth.api";
-import { User, LogOut, Settings, ShoppingBag } from "lucide-react";
+import { LogOut } from "lucide-react";
 import Link from "next/link";
 
 export default function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -28,81 +35,84 @@ export default function Navbar() {
     try {
       await logoutUser();
       setIsLoggedIn(false);
-      setIsDropdownOpen(false);
     } catch (error) {
       console.error("Logout failed:", error);
     }
   };
 
   return (
-    <nav className="flex items-center bg-white/60 fixed top-0 left-0 right-0 z-50 backdrop-blur-sm w-full justify-between px-18 py-6 max-w-full mx-auto">
-      <div className="flex items-center">
-        <Link href="/" className="flex items-center gap-2">
-          <Image
-            src="/auto2.png"
-            alt="Autospace logo"
-            width={40}
-            height={40}
-            priority
-            className="scale-150"
-          />
-        </Link>
-      </div>
-      <div className="flex items-center gap-4">
-        <button className="px-6 py-2 bg-[var(--secondary-button)] text-black font-medium border border-black rounded-sm hover:bg-[#eac855] transition-colors  active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
-          Rent Plot
-        </button>
-        {isLoggedIn && (
-          <Link
-            href="/bookings"
-            className="flex items-center justify-center w-10 h-10 bg-white border border-black rounded-full hover:bg-gray-50 transition-colors active:translate-y-[1px]"
-          >
-            <ShoppingBag size={20} />
-          </Link>
-        )}
-        {isLoggedIn ? (
-          <div className="relative">
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center justify-center w-10 h-10 bg-white border border-black rounded-full hover:bg-gray-50 transition-colors active:translate-y-[1px]"
+    <div
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out flex justify-center ${
+        isScrolled ? "pt-0" : "pt-6"
+      }`}
+    >
+      <nav
+        className={`flex items-center justify-between transition-all duration-500 ease-in-out ${
+          isScrolled
+            ? "w-full bg-white/90 backdrop-blur-md px-8 py-4 shadow-sm border-b border-gray-100"
+            : "w-[800px] max-w-[95%] bg-[#2a2a2a]/90 backdrop-blur-md px-6 py-3 rounded-full shadow-lg border border-white/10"
+        }`}
+      >
+        <div className="flex items-center">
+          <Link href="/" className="flex items-center gap-2">
+            <span
+              className={`text-xl font-zalando font-extrabold tracking-tight transition-colors ${isScrolled ? "text-gray-900" : "text-white"}`}
             >
-              <User size={20} />
-            </button>
+              Autospace
+            </span>
+          </Link>
+        </div>
 
-            {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-black rounded-sm overflow-hidden z-20">
-                <div className="p-3 border-b border-black bg-[var(--background)]">
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    User Account
-                  </p>
-                </div>
+        {/* Center Links */}
+        <div
+          className={`hidden md:flex items-center gap-8 text-sm transition-colors ${isScrolled ? "text-gray-600" : "text-gray-100"}`}
+        >
+          {
+            isLoggedIn ? (
+              <>
+                <Link
+                  href="/bookings"
+                  className="flex items-center gap-1.5 hover:text-gray-600 transition-colors"
+                >
+                  Bookings
+                </Link>
                 <Link
                   href="/profile"
-                  onClick={() => setIsDropdownOpen(false)}
-                  className="flex items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-[var(--primary)] transition-colors border border-black"
+                  className="flex items-center gap-1.5 hover:text-gray-600 transition-colors"
                 >
-                  <Settings size={18} />
-                  My Profile
+                  Profile
                 </Link>
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
-                >
-                  <LogOut size={16} />
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
+              </>
+            ) : null // Empty center if not logged in based on your request
+          }
+        </div>
+
+        <div className="flex items-center gap-4">
           <Link
-            href="/login"
-            className="px-6 py-2 bg-white text-black font-medium border border-black rounded-lg hover:bg-gray-50 transition-colors"
+            href="/rent"
+            className="px-5 py-2 bg-[#F4DA71] text-black text-sm font-medium rounded-full hover:bg-[#eac855] transition-colors shadow-sm"
           >
-            Signup
+            Rent Plot
           </Link>
-        )}
-      </div>
-    </nav>
+
+          {!isLoggedIn ? (
+            <Link
+              href="/login"
+              className={`text-sm font-medium transition-colors ${isScrolled ? "text-gray-600 hover:text-black" : "text-gray-300 hover:text-white"}`}
+            >
+              Log In
+            </Link>
+          ) : (
+            <button
+              onClick={handleLogout}
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors rounded-full border ${isScrolled ? "border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-100 text-gray-700" : "border-white/20 text-white hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/50"}`}
+            >
+              <LogOut size={16} />
+              Logout
+            </button>
+          )}
+        </div>
+      </nav>
+    </div>
   );
 }

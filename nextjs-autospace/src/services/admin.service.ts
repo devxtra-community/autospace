@@ -70,6 +70,12 @@ export const getAllUsersService = async (params?: {
   // console.log("users", res.data);
 };
 
+export const getUserLoginStats = async () => {
+  const res = await apiClient.get("/api/auth/admin/user/stats");
+  console.log("user login stats", res.data);
+  return res.data;
+};
+
 export const updateUserStatus = async (
   userId: string,
   status: "ACTIVE" | "REJECTED",
