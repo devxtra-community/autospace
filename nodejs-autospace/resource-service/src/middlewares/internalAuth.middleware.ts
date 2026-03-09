@@ -2,6 +2,7 @@
 
 import { Request, Response, NextFunction } from "express";
 import { UserRole, UserStatus } from "../types/auth.type";
+import { requireActiveGarage } from "./garage-status.middleware";
 
 export const internalAuth = (
   req: Request,
@@ -26,5 +27,5 @@ export const internalAuth = (
     status: UserStatus.ACTIVE,
   };
 
-  next();
+  requireActiveGarage(req, res, next);
 };

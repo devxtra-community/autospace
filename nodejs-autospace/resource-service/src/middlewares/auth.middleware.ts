@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { extractAndVerify } from "../utils/jwt.utils";
+import { requireActiveGarage } from "./garage-status.middleware";
 
 export const authTokenMiddleware = (
   req: Request,
@@ -10,7 +11,7 @@ export const authTokenMiddleware = (
     const authHeader = req.headers.authorization;
     const user = extractAndVerify(authHeader);
     req.user = user;
-    next();
+    requireActiveGarage(req, res, next);
   } catch (error) {
     if (error instanceof Error) {
       res.status(401).json({

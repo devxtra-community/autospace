@@ -13,14 +13,14 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
 import { approveCompany, rejectCompany } from "@/services/admin.service";
-
 import { CompanyData } from "./CompanyTable";
+
+import { toast } from "sonner";
 
 interface Props {
   company: CompanyData | null;
-  onClose: () => void;
+  onClose: (refresh?: boolean) => void;
 }
 
 /* STATUS COLORS */
@@ -34,11 +34,29 @@ export function CompanyProfilePanel({ company, onClose }: Props) {
   if (!company) return null;
 
   const handleApprove = async () => {
-    await approveCompany(company.companyId);
+    toast.promise(approveCompany(company.companyId), {
+      loading: "Approving company...",
+      success: () => {
+        onClose(true);
+        return "Company approved successfully";
+      },
+      error: (err: unknown) =>
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to approve company",
+    });
   };
 
   const handleReject = async () => {
-    await rejectCompany(company.companyId);
+    toast.promise(rejectCompany(company.companyId), {
+      loading: "Rejecting company...",
+      success: () => {
+        onClose(true);
+        return "Company rejected successfully";
+      },
+      error: (err: unknown) =>
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to reject company",
+    });
   };
 
   return (
@@ -47,7 +65,10 @@ export function CompanyProfilePanel({ company, onClose }: Props) {
       <div className="flex justify-between items-center p-6 border-b border-border">
         <h2 className="font-bold text-lg">Company Profile</h2>
 
-        <button onClick={onClose} className="p-2 hover:bg-muted rounded-lg">
+        <button
+          onClick={() => onClose()}
+          className="p-2 hover:bg-muted rounded-lg"
+        >
           <X size={18} />
         </button>
       </div>

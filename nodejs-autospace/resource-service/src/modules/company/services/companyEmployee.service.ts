@@ -5,6 +5,8 @@ import axios from "axios";
 
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL;
 
+// console.log("urlee",process.env.AUTH_SERVICE_URL);
+
 export const getCompanyEmployeesService = async (
   companyId: string,
   filters: {
@@ -66,6 +68,8 @@ export const getCompanyEmployeesService = async (
     );
   }
 
+  // console.log("EMPLOYEES BEFORE AUTH FETCH", employees);
+
   const users = await Promise.all(
     employees.map(async (emp) => {
       if (!emp.userId) return null;
@@ -87,7 +91,8 @@ export const getCompanyEmployeesService = async (
           email: res.data.data.email,
           phone: res.data.data.phone,
         };
-      } catch {
+      } catch (err) {
+        console.error("AUTH SERVICE ERROR", err);
         return null;
       }
     }),

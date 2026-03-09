@@ -176,8 +176,23 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // ---------- REJECTED USER ----------
+    // ---------- REJECTED / BLOCKED ----------
     if (status === 403) {
+      const data = axiosError.response?.data as
+        | { message?: string; error?: { code?: string } }
+        | undefined;
+
+      const isGarageBlocked =
+        data?.error?.code === "GARAGE_BLOCKED" ||
+        data?.message === "Garage blocked by authority";
+
+      if (isGarageBlocked) {
+        if (typeof window !== "undefined") {
+          window.location.href = "/garage-blocked";
+        }
+        return Promise.reject(error);
+      }
+
       toast.error("Your account is not allowed to access this feature");
 
       if (typeof window !== "undefined") {

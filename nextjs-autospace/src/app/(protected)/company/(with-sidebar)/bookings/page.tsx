@@ -139,7 +139,7 @@ export default function CompanyBookingsPage() {
               setSearch(e.target.value);
             }}
             placeholder="Search customer or garage..."
-            className="pl-9 pr-3 py-2 border rounded-lg bg-background w-64"
+            className="pl-9 pr-3 py-2 border rounded-lg bg-white w-64"
           />
         </div>
 
@@ -151,7 +151,7 @@ export default function CompanyBookingsPage() {
             setPage(1);
             setStatus(e.target.value);
           }}
-          className="border rounded-lg px-3 py-2 bg-background"
+          className="border rounded-lg px-3 py-2 bg-white"
         >
           <option value="ALL">All Status</option>
 
@@ -173,7 +173,7 @@ export default function CompanyBookingsPage() {
             setPage(1);
             setStartDate(e.target.value);
           }}
-          className="border rounded-lg px-3 py-2 bg-background"
+          className="border rounded-lg px-3 py-2 bg-white"
         />
       </div>
 
@@ -269,7 +269,7 @@ export default function CompanyBookingsPage() {
       {/* PAGINATION */}
 
       <div className="flex justify-between items-center">
-        <span className="text-sm text-muted-foreground">
+        <span className="text-sm text-muted-black">
           Page {meta.page} of {meta.totalPages}
         </span>
 

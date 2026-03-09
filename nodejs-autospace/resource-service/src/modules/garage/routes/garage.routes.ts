@@ -16,6 +16,8 @@ import {
   getPendingGarages,
   approveGarage,
   rejectGarage,
+  blockGarage,
+  unblockGarage,
   getAllGaragesController,
   getGarageByIdController,
 } from "../controllers/admin.garage.controller";
@@ -91,6 +93,8 @@ router.get("/", validatePublicGarageQuery, getPublicGarageController);
 
 router.put("/admin/:id/active", internalAuth, approveGarage);
 router.put("/admin/:id/reject", internalAuth, rejectGarage);
+router.patch("/admin/:id/block", internalAuth, blockGarage);
+router.patch("/admin/:id/unblock", internalAuth, unblockGarage);
 router.get("/admin/pending", internalAuth, getPendingGarages);
 router.post("/assign-manager", internalAuth, assignManagerController);
 router.get("/admin/all", internalAuth, getAllGaragesController);

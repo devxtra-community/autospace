@@ -13,6 +13,7 @@ import {
   LogOut,
   Menu,
   X,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -93,8 +94,30 @@ export function AdminSidebar() {
           })}
         </nav>
 
+        {/* Profile Link */}
+        <div className="px-4 mt-auto pt-4 border-t border-gray-100 pb-2">
+          <Link
+            href="/admin/profile"
+            onClick={() => setOpen(false)}
+            className={cn(
+              "flex items-center gap-3 px-4 py-2.5 rounded-lg text-[14px] font-semibold transition-all duration-200",
+              pathname === "/admin/profile"
+                ? "bg-[#050505] text-white shadow-sm"
+                : "text-gray-500 hover:text-black hover:bg-gray-100",
+            )}
+          >
+            <User
+              size={18}
+              className={
+                pathname === "/admin/profile" ? "text-white" : "text-gray-400"
+              }
+            />
+            Profile
+          </Link>
+        </div>
+
         {/* Logout */}
-        <div className="p-4">
+        <div className="p-4 border-t border-gray-100">
           <button
             onClick={() => handleLogout()}
             className="flex items-center gap-3 px-4 py-2 rounded-lg text-[14px] font-semibold text-gray-500 hover:text-red-500 hover:bg-red-50 w-full transition-all group"

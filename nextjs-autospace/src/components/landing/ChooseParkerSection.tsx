@@ -41,7 +41,7 @@ export default function ChooseParkerSection() {
         {features.map((feature, index) => (
           <div
             key={index}
-            className="bg-[#FFF8E7] p-6 rounded-xl border-b-4 border-r-4 border-l border-t border-[#F4DA71] shadow-sm h-full flex flex-col items-center text-center"
+            className="bg-[#FFF8E7] p-6 rounded-xl border-b-4 border-r-4 border-l border-t border-[#F4DA71] shadow-sm h-full flex flex-col items-center text-center transition-transform duration-300 ease-out hover:-translate-y-2"
           >
             <h3 className="font-bold text-lg mb-4 leading-tight">
               {feature.title}

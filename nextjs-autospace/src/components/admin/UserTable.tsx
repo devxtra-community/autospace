@@ -203,8 +203,8 @@ export function UserTable({ onSelectUser, selectedUserId }: UserTableProps) {
                     key={user.userId}
                     onClick={() => onSelectUser(user)}
                     className={cn(
-                      "hover:bg-[#FFFAE8]/50 cursor-pointer",
-                      selectedUserId === user.userId && "bg-[#FFFAE8]",
+                      "hover:bg-gray-50 cursor-pointer",
+                      selectedUserId === user.userId && "bg-gray-50",
                     )}
                   >
                     <td className="px-6 py-4">

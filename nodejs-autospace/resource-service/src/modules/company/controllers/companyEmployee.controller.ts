@@ -43,7 +43,7 @@ export const getCompanyEmployeesController = async (
     const search =
       typeof req.query.search === "string" ? req.query.search : undefined;
 
-    /* ================= CALL SERVICE ================= */
+    // console.log("company",companyId);
 
     const result = await getCompanyEmployeesService(companyId, {
       page,

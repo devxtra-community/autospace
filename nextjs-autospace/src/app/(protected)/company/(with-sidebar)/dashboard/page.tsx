@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getCompanyBookings, getMyCompany } from "@/services/company.service";
+import {
+  getCompanyBookings,
+  getCompanyEmployees,
+  getMyCompany,
+} from "@/services/company.service";
 
 import { Header } from "@/components/company/Header";
 import { StatCard } from "@/components/company/StatCard";
@@ -30,6 +34,7 @@ export default function CompanyDashboardPage() {
 
   const [bookingsCount, setBookingsCount] = useState(0);
   const [garagesCount, setGaragesCount] = useState(0);
+  const [employeeCount, setEmployeeCount] = useState(0);
 
   useEffect(() => {
     const checkCompany = async () => {
@@ -55,8 +60,10 @@ export default function CompanyDashboardPage() {
         if (!company) return;
         const bookings = await getCompanyBookings(company.id);
         const garages = await getMyGarages(company.id);
+        const employees = await getCompanyEmployees(company.id);
         setBookingsCount(bookings.meta.total);
         setGaragesCount(garages.meta.total);
+        setEmployeeCount(employees.meta.total);
       } catch (err) {
         console.error("Failed to fetch bookings", err);
       }
@@ -85,8 +92,8 @@ export default function CompanyDashboardPage() {
           linkHref="/company/garages"
         />
         <StatCard
-          label="Total Valets"
-          value={12}
+          label="Total Employees"
+          value={employeeCount}
           icon={Users}
           colorClass="bg-[#ff7c42]"
           linkHref="/company/employees"

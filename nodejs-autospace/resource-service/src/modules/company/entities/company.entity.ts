@@ -11,6 +11,7 @@ export enum CompanyStatus {
   PENDING = "pending",
   ACTIVE = "active",
   REJECTED = "rejected",
+  BLOCKER = "blocked",
 }
 @Entity("companies")
 export class Company {

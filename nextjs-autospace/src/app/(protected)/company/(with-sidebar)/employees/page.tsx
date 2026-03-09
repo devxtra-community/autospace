@@ -74,6 +74,7 @@ export default function CompanyEmployeesPage() {
         employmentStatus: status === "ALL" ? undefined : status,
         search: search || undefined,
       });
+      // console.log("employees",res);
 
       setEmployees(res.data);
       setMeta(res.meta);
@@ -134,7 +135,7 @@ export default function CompanyEmployeesPage() {
               setSearch(e.target.value);
             }}
             placeholder="Search employees..."
-            className="pl-9 pr-3 py-2 border rounded-lg bg-background w-64"
+            className="pl-9 pr-3 py-2 border rounded-lg bg-white w-64"
           />
         </div>
 
@@ -146,7 +147,7 @@ export default function CompanyEmployeesPage() {
             setPage(1);
             setRole(e.target.value as Role | "ALL");
           }}
-          className="border rounded-lg px-3 py-2 bg-background"
+          className="border rounded-lg px-3 py-2 bg-white"
         >
           <option value="ALL">All Roles</option>
           <option value="MANAGER">Managers</option>
@@ -161,7 +162,7 @@ export default function CompanyEmployeesPage() {
             setPage(1);
             setStatus(e.target.value as EmploymentStatus | "ALL");
           }}
-          className="border rounded-lg px-3 py-2 bg-background"
+          className="border rounded-lg px-3 py-2 bg-white"
         >
           <option value="ALL">All Status</option>
           <option value="ACTIVE">Active</option>
@@ -243,7 +244,7 @@ export default function CompanyEmployeesPage() {
       {/* PAGINATION */}
 
       <div className="flex justify-between items-center">
-        <span className="text-sm text-muted-foreground">
+        <span className="text-sm text-muted-black">
           Page {meta.page} of {meta.totalPages}
         </span>
 

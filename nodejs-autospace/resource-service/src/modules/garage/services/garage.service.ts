@@ -122,8 +122,24 @@ export const updateGarageStatus = async (
     throw new Error("Garage not found");
   }
 
-  if (garage.status !== GarageStatus.PENDING) {
-    throw new Error("Garage already processed");
+  // Valid transitions:
+  // PENDING  → ACTIVE, REJECTED
+  // ACTIVE   → BLOCKED, REJECTED
+  // BLOCKED  → ACTIVE
+  // REJECTED → ACTIVE
+  const validTransitions: Record<GarageStatus, GarageStatus[]> = {
+    [GarageStatus.PENDING]: [GarageStatus.ACTIVE, GarageStatus.REJECTED],
+    [GarageStatus.ACTIVE]: [GarageStatus.BLOCKED, GarageStatus.REJECTED],
+    [GarageStatus.BLOCKED]: [GarageStatus.ACTIVE],
+    [GarageStatus.REJECTED]: [GarageStatus.ACTIVE],
+  };
+
+  const allowed = validTransitions[garage.status] ?? [];
+
+  if (!allowed.includes(status)) {
+    throw new Error(
+      `Cannot transition garage from '${garage.status}' to '${status}'`,
+    );
   }
 
   garage.status = status;
@@ -133,7 +149,7 @@ export const updateGarageStatus = async (
   await redisClient.del(`garage:${companyId}`);
 
   console.log(
-    `[AUDIT] Admin ${adminUserId} set company ${companyId} to ${status}`,
+    `[AUDIT] Admin ${adminUserId} set garage ${companyId} from ${garage.status} to ${status}`,
   );
 
   return garage;

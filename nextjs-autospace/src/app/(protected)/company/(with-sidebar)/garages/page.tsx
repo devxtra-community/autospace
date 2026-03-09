@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { getMyCompany } from "@/services/company.service";
 import { getMyGarages } from "@/services/garage.service";
@@ -104,21 +105,28 @@ export default function GaragesPage() {
 
       {/* PAGINATION */}
 
-      <div className="flex justify-center gap-4">
-        <button disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
-          Previous
-        </button>
-
-        <span>
+      <div className="flex justify-between items-center">
+        <span className="text-sm text-muted-black">
           Page {page} of {totalPages}
         </span>
 
-        <button
-          disabled={page === totalPages}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          Next
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="p-2 border rounded-lg disabled:opacity-50"
+          >
+            <ChevronLeft size={16} />
+          </button>
+
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="p-2 border rounded-lg disabled:opacity-50"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
       </div>
 
       {loading && <div>Loading...</div>}

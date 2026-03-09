@@ -28,7 +28,17 @@ export const approveGarage = async (id: number | string) => {
 };
 
 export const rejectGarage = async (id: number | string) => {
-  const res = await apiClient.put(`/api/admin/garages/${id}/reject`);
+  const res = await apiClient.put(`/api/garages/admin/${id}/reject`);
+  return res.data;
+};
+
+export const blockGarage = async (id: number | string) => {
+  const res = await apiClient.patch(`/api/garages/admin/${id}/block`);
+  return res.data;
+};
+
+export const unblockGarage = async (id: number | string) => {
+  const res = await apiClient.patch(`/api/garages/admin/${id}/unblock`);
   return res.data;
 };
 

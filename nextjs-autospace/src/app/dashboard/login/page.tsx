@@ -7,37 +7,23 @@ import { AxiosError } from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CardContent } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Mail, Phone, Lock, Eye, EyeOff } from "lucide-react";
-import { BackButton } from "@/components/ui/BackButton";
-import { GoogleLogin } from "@react-oauth/google";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 
-import { loginUser, getMe } from "@/lib/auth.api";
+import { BackButton } from "@/components/ui/BackButton";
+
+import { loginUser, getMe, logoutUser } from "@/lib/auth.api";
 import { redirectByRole } from "@/lib/roleredirect";
 import { LoginDto } from "@autospace/shared";
-import apiClient from "@/lib/apiClient";
-// import { useSearchParams } from "next/navigation";
 
-// interface ApiErrorResponse {
-//   success: false;
-//   message: string;
-//   code?: string;
-// }
-
-export default function LoginPage() {
-  // const params = new useSearchParams(window.location.search);
-  // const redirect = params.get("redirect") || "/";
+export default function ManagementLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const [loginType, setLoginType] = useState<"email" | "phone">("email");
 
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // router.push(redirect);
 
   const handleLogin = async () => {
     try {
@@ -45,30 +31,41 @@ export default function LoginPage() {
       setError(null);
 
       const payload: LoginDto = {
-        email: identifier, // always use email key (even for phone UI)
+        email: identifier,
         password,
       };
 
       await loginUser(payload);
-      // console.log("LOGIN OK");
+      console.log("LOGIN OK");
 
       const meRes = await getMe();
-      // console.log("ME RESPONSE", meRes.data);
+      console.log("ME RESPONSE", meRes.data);
 
-      await redirectByRole(meRes.data.data.role);
+      const role = meRes.data.data.role;
+
+      if (role === "customer") {
+        await logoutUser();
+        setError("This login portal is for management users only.");
+        return;
+      }
+
+      await redirectByRole(role);
     } catch (err) {
       const axiosError = err as AxiosError<{
         success: false;
         error: { code: string; message: string };
       }>;
 
-      if (axiosError.response?.data?.error?.message) {
+      if (axiosError.response?.data?.error?.code === "GARAGE_BLOCKED") {
+        window.location.href = "/garage-blocked";
+        return;
+      } else if (axiosError.response?.data?.error?.message) {
         setError(axiosError.response.data.error.message);
       } else {
         setError("Login failed. Please try again.");
       }
     } finally {
-      setLoading(false);
+      if (!error) setLoading(false);
     }
   };
 
@@ -76,20 +73,22 @@ export default function LoginPage() {
     <div className="min-h-screen bg-background flex items-center justify-center px-4 sm:px-6 relative">
       <BackButton />
       <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-40 p-6 sm:p-10">
+        {/* LEFT (DESKTOP ONLY) */}
         <div className="hidden md:flex flex-col items-center justify-center text-center gap-6">
           <Image
-            src="/valet-illustration.png"
-            alt="Park your car"
+            src="/coorparateParking.jpg"
+            alt="Management Portal"
             width={420}
             height={320}
+            className="rounded-lg object-cover w-full max-h-[320px]"
             priority
           />
 
           <div className="space-y-2">
-            <h2 className="text-2xl font-semibold">Park Your Car</h2>
+            <h2 className="text-2xl font-semibold">Management Portal</h2>
             <p className="text-sm text-muted-foreground max-w-xs">
-              Track your vehicle in real-time with our valet service and enjoy
-              hassle-free parking.
+              Secure access for systems administration and parking operations
+              management.
             </p>
           </div>
         </div>
@@ -98,75 +97,26 @@ export default function LoginPage() {
         <div className="flex flex-col justify-center gap-8 w-full max-w-md mx-auto">
           {/* Heading */}
           <div className="space-y-1 text-center md:text-left">
-            <h1 className="text-3xl text-center font-semibold">Login</h1>
+            <h1 className="text-3xl text-center font-semibold">
+              Management Login
+            </h1>
             <p className="text-sm text-center text-muted-foreground">
-              Please enter your details below
+              Sign in to manage parking operations, garages, and system
+              administration.
             </p>
           </div>
 
-          <div className="flex flex-col gap-3">
-            <GoogleLogin
-              onSuccess={async (credentialResponse) => {
-                try {
-                  await apiClient.post("/api/auth/google", {
-                    token: credentialResponse.credential,
-                  });
-
-                  const meRes = await getMe();
-
-                  await redirectByRole(meRes.data.data.role);
-                } catch (err) {
-                  console.error("Google login failed", err);
-                  setError("Google login failed. Please try again.");
-                }
-              }}
-            />
-            {/* Tabs */}
-            <Tabs
-              value={loginType}
-              onValueChange={(value) => {
-                setLoginType(value as "email" | "phone");
-                setIdentifier(""); //
-              }}
-              className="w-full"
-            >
-              <TabsList className="grid grid-cols-2 w-full bg-muted rounded-sm">
-                <TabsTrigger value="email" className="rounded-sm">
-                  Email
-                </TabsTrigger>
-                <TabsTrigger value="phone" className="rounded-sm">
-                  Phone
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-
-          {/* Email / Phone Input */}
-          <div className="space-y-2">
+          {/* Email Input */}
+          <div className="space-y-2 translate-y-2">
             <div className="relative">
-              {loginType === "email" ? (
-                <>
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="email"
-                    placeholder="Email Address"
-                    className="pl-10 bg-muted rounded-none"
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                  />
-                </>
-              ) : (
-                <>
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="tel"
-                    placeholder="Phone Number"
-                    className="pl-10 bg-muted rounded-none"
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                  />
-                </>
-              )}
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="email"
+                placeholder="Email Address"
+                className="pl-10 bg-muted rounded-none"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+              />
             </div>
           </div>
 
@@ -222,13 +172,21 @@ export default function LoginPage() {
             {loading ? "Logging in..." : "Login"}
           </Button>
 
-          {/* Signup */}
-          <p className="text-center text-sm text-foreground">
-            Don’t have an account ?{" "}
-            <span className="p-2 text-secondary font-medium cursor-pointer hover:underline">
-              Sign Up
-            </span>
-          </p>
+          {/* Signup & Customer Portal Link */}
+          <div className="flex flex-col items-center gap-2 mt-2">
+            <p className="text-center text-sm text-foreground">
+              Don’t have an account ?{" "}
+              <span className="p-2 text-secondary font-medium cursor-pointer hover:underline">
+                Contact Admin
+              </span>
+            </p>
+            <Link
+              href="/login"
+              className="text-sm text-muted-foreground hover:text-secondary hover:underline transition-colors mt-4"
+            >
+              Customer? Login here
+            </Link>
+          </div>
         </div>
       </CardContent>
     </div>

@@ -89,10 +89,10 @@ export default function Navbar() {
 
         <div className="flex items-center gap-4">
           <Link
-            href="/rent"
+            href="/dashboard/login"
             className="px-5 py-2 bg-[#F4DA71] text-black text-sm font-medium rounded-full hover:bg-[#eac855] transition-colors shadow-sm"
           >
-            Rent Plot
+            Mangement
           </Link>
 
           {!isLoggedIn ? (

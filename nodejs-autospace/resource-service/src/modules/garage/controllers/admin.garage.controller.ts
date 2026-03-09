@@ -87,6 +87,54 @@ export const rejectGarage = async (req: Request, res: Response) => {
   }
 };
 
+export const blockGarage = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const adminUserId = req.user.id;
+
+    const garage = await updateGarageStatus(
+      id,
+      GarageStatus.BLOCKED,
+      adminUserId,
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Garage blocked successfully",
+      data: garage,
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Failed to block garage",
+    });
+  }
+};
+
+export const unblockGarage = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const adminUserId = req.user.id;
+
+    const garage = await updateGarageStatus(
+      id,
+      GarageStatus.ACTIVE,
+      adminUserId,
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Garage unblocked successfully",
+      data: garage,
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Failed to unblock garage",
+    });
+  }
+};
+
 export const getGarageByIdController = async (
   req: Request,
   res: Response,

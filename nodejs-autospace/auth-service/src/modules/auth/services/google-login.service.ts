@@ -49,9 +49,17 @@ export const googleLoginService = async (idToken: string) => {
   }
 
   // generate tokens
+  // generate tokens
   const tokens = {
-    accessToken: generateAccessToken(user),
-    refreshToken: generateRefreshToken(user),
+    accessToken: generateAccessToken({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+    }),
+    refreshToken: generateRefreshToken({
+      id: user.id,
+    }),
   };
 
   return { user, tokens };

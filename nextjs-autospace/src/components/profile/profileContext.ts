@@ -11,6 +11,12 @@ export const ProfileContext = createContext<ProfileContextType | null>(null);
 
 export const useProfile = () => {
   const ctx = useContext(ProfileContext);
-  if (!ctx) throw new Error("useProfile must be used inside ProfileLayout");
+  if (!ctx) {
+    // Return a dummy context if used outside ProfileProvider (e.g., Company, Admin layouts)
+    return {
+      userName: "",
+      setUsername: () => {},
+    };
+  }
   return ctx;
 };

@@ -65,7 +65,7 @@ export function GaragesHeader({
         </select>
 
         <Link href="/company/garages/create">
-          <Button className="bg-black hover:bg-gray-700">Add Garage </Button>
+          <Button className="bg-black hover:bg-gray-700">Add Garage + </Button>
         </Link>
       </div>
     </div>

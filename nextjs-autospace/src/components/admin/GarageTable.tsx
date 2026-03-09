@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState, useCallback } from "react";
 import { getGarageAdmin } from "@/services/admin.service";
 
-export type GarageStatus = "pending" | "active" | "rejected";
+export type GarageStatus = "pending" | "active" | "rejected" | "blocked";
 
 export interface GarageData {
   garageId: string;
@@ -33,6 +33,7 @@ const statusStyles: Record<GarageStatus, string> = {
   active: "bg-[#E7F7EF] text-[#0D9488]",
   pending: "bg-[#FEF3C7] text-[#D97706]",
   rejected: "bg-[#FEE2E2] text-[#EF4444]",
+  blocked: "bg-[#FEE2E2] text-[#EF4444]",
 };
 
 export function GarageTable({
@@ -132,6 +133,7 @@ export function GarageTable({
           <option value="pending">Pending</option>
           <option value="active">Active</option>
           <option value="rejected">Rejected</option>
+          <option value="blocked">Blocked</option>
         </select>
       </div>
 

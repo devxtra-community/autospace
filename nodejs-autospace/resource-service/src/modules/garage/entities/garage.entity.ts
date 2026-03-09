@@ -14,6 +14,7 @@ export enum GarageStatus {
   PENDING = "pending",
   ACTIVE = "active",
   REJECTED = "rejected",
+  BLOCKED = "blocked",
 }
 
 @Entity("garages")

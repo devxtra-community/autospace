@@ -68,7 +68,13 @@ router.use(
 router.use(
   "/garages",
   authMiddleware,
-  rbac(UserRole.OWNER, UserRole.ADMIN, UserRole.MANAGER, UserRole.CUSTOMER),
+  rbac(
+    UserRole.OWNER,
+    UserRole.ADMIN,
+    UserRole.MANAGER,
+    UserRole.CUSTOMER,
+    UserRole.VALET,
+  ),
   createProxyMiddleware({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,

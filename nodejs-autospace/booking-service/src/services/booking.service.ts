@@ -16,6 +16,7 @@ type GarageInternal = {
   latitude: number | string;
   longitude: number | string;
   valetServiceRadius: number;
+  status: string;
 };
 
 export class BookingService {
@@ -186,6 +187,10 @@ export class BookingService {
 
       if (!garageData) {
         throw new ValidationError("Invalid garage");
+      }
+
+      if (garageData.status !== "active") {
+        throw new ValidationError("Garage is currently unavailable");
       }
 
       // Calculate duration (hours)

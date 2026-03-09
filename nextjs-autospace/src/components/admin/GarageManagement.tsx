@@ -12,13 +12,17 @@ export function GarageManagement() {
   const [selectedGarage, setSelectedGarage] = useState<GarageData | null>(null);
 
   const [search, setSearch] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleSelectGarage = (garage: GarageData) => {
     setSelectedGarage(garage);
   };
 
-  const handleClosePanel = () => {
+  const handleClosePanel = (refresh?: boolean) => {
     setSelectedGarage(null);
+    if (refresh) {
+      setRefreshKey((prev) => prev + 1);
+    }
   };
 
   return (
@@ -50,6 +54,7 @@ export function GarageManagement() {
 
       {/* TABLE */}
       <GarageTable
+        key={refreshKey}
         search={search}
         onSelectGarage={handleSelectGarage}
         selectedGarageId={selectedGarage?.garageId}

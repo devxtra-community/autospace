@@ -40,7 +40,7 @@ export function CompanyInfo() {
 
   return (
     <>
-      <Card className="rounded-xl shadow-sm mt-6">
+      <Card className="rounded-xl shadow-sm border border-gray-100">
         <CardContent className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between border-b pb-4 mb-6">
@@ -58,32 +58,21 @@ export function CompanyInfo() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="flex flex-col gap-6">
             {/* Info */}
             <div className="space-y-4 text-sm">
               <div className="flex items-center gap-2">
                 <MapPin size={18} />
-                <span>{company.businessLocation}</span>
+                <span>{company.businessLocation || "No address provided"}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone size={18} />
-                <span>{company.contactPhone}</span>
+                <span>{company.contactPhone || "No phone provided"}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail size={18} />
-                <span>{company.contactEmail}</span>
+                <span>{company.contactEmail || "No email provided"}</span>
               </div>
-            </div>
-
-            {/* KPI Cards */}
-            <div className="bg-secondary rounded-lg flex flex-col items-center justify-center py-6">
-              <p className="text-sm">Garages</p>
-              <p className="text-3xl font-bold">—</p>
-            </div>
-
-            <div className="bg-black text-white rounded-lg flex flex-col items-center justify-center py-6">
-              <p className="text-sm">Employees</p>
-              <p className="text-3xl font-bold">—</p>
             </div>
           </div>
         </CardContent>

@@ -11,17 +11,21 @@ export function CompanyManagement() {
   );
 
   const [search, setSearch] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleSelectCompany = (company: CompanyData) => {
     setSelectedCompany(company);
   };
 
-  const handleClosePanel = () => {
+  const handleClosePanel = (refresh?: boolean) => {
     setSelectedCompany(null);
+    if (refresh) {
+      setRefreshKey((prev) => prev + 1);
+    }
   };
 
   return (
-    <main className="relative p-6 space-y-6">
+    <main className="relative p-6  space-y-6">
       {/*  PROPER HEADER */}
       <div className="flex items-center justify-between">
         {/* Left */}
@@ -51,6 +55,7 @@ export function CompanyManagement() {
 
       {/* Table */}
       <CompanyTable
+        key={refreshKey}
         onSelectCompany={handleSelectCompany}
         selectedCompanyId={selectedCompany?.companyId}
         search={search}

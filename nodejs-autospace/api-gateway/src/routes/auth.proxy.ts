@@ -92,6 +92,12 @@ router.post(
 );
 
 router.post(
+  "/google",
+  authRateLimiter as unknown as RequestHandler,
+  createAuthProxy("/api/google"),
+);
+
+router.post(
   "/forget-password",
   authRateLimiter as unknown as RequestHandler,
   createAuthProxy("/api/forget-password"),

@@ -48,4 +48,36 @@ router.get("/manager/:managerId", internalAuth, async (req, res) => {
   });
 });
 
+router.get("/users/:userId/status", internalAuth, async (req, res) => {
+  try {
+    const userId = req.params.userId as string;
+    let garage = await repo.findOne({ where: { managerId: userId } });
+
+    if (!garage) {
+      const valetRepo = AppDataSource.getRepository(
+        require("../../valets/entities/valets.entity").Valet,
+      );
+      const valet = await valetRepo.findOne({ where: { id: userId } });
+      if (valet) {
+        garage = await repo.findOne({ where: { id: valet.garageId } });
+      }
+    }
+
+    if (!garage) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Garage not found for this user" });
+    }
+
+    return res.json({
+      success: true,
+      data: { status: garage.status },
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, message: "Server error checking garage status" });
+  }
+});
+
 export default router;

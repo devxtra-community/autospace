@@ -2,7 +2,7 @@ import apiClient from "@/lib/apiClient";
 
 export const getMyCompany = async () => {
   const res = await apiClient.get("/api/companies/my");
-  console.log("data", res.data.data);
+  // console.log("data", res.data.data);
 
   return res.data.data;
 };
@@ -60,6 +60,7 @@ export const getCompanyEmployees = async (
       search: filters?.search,
     },
   });
+  //  console.log("employee",res.data);
 
   return res.data;
 };

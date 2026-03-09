@@ -13,15 +13,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-import { approveGarage, rejectGarage } from "@/services/admin.service";
-
+import {
+  approveGarage,
+  rejectGarage,
+  blockGarage,
+  unblockGarage,
+} from "@/services/admin.service";
 import { GarageData } from "./GarageTable";
+
+import { toast } from "sonner";
 
 /* ================= TYPES ================= */
 
 interface Props {
   garage: GarageData | null;
-  onClose: () => void;
+  onClose: (refresh?: boolean) => void;
 }
 
 interface DetailProps {
@@ -36,6 +42,7 @@ const statusStyles: Record<string, string> = {
   active: "bg-[#E7F7EF] text-[#0D9488]",
   pending: "bg-[#FEF3C7] text-[#D97706]",
   rejected: "bg-[#FEE2E2] text-[#EF4444]",
+  blocked: "bg-[#FEE2E2] text-[#EF4444]",
 };
 
 /* ================= COMPONENT ================= */
@@ -46,19 +53,55 @@ export function GarageProfilePanel({ garage, onClose }: Props) {
   /* ===== ACTIONS ===== */
 
   const handleApprove = async () => {
-    try {
-      await approveGarage(garage.garageId);
-    } catch (err) {
-      console.error("Approve garage failed", err);
-    }
+    toast.promise(approveGarage(garage.garageId), {
+      loading: "Approving garage...",
+      success: () => {
+        onClose(true);
+        return "Garage approved successfully";
+      },
+      error: (err: unknown) =>
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to approve garage",
+    });
   };
 
   const handleReject = async () => {
-    try {
-      await rejectGarage(garage.garageId);
-    } catch (err) {
-      console.error("Reject garage failed", err);
-    }
+    toast.promise(rejectGarage(garage.garageId), {
+      loading: "Rejecting garage...",
+      success: () => {
+        onClose(true);
+        return "Garage rejected successfully";
+      },
+      error: (err: unknown) =>
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to reject garage",
+    });
+  };
+
+  const handleBlock = async () => {
+    toast.promise(blockGarage(garage.garageId), {
+      loading: "Blocking garage...",
+      success: () => {
+        onClose(true);
+        return "Garage blocked successfully";
+      },
+      error: (err: unknown) =>
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to block garage",
+    });
+  };
+
+  const handleUnblock = async () => {
+    toast.promise(unblockGarage(garage.garageId), {
+      loading: "Unblocking garage...",
+      success: () => {
+        onClose(true);
+        return "Garage unblocked successfully";
+      },
+      error: (err: unknown) =>
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to unblock garage",
+    });
   };
 
   /* ================= UI ================= */
@@ -70,7 +113,7 @@ export function GarageProfilePanel({ garage, onClose }: Props) {
         <h3 className="font-bold text-lg text-foreground">Garage Profile</h3>
 
         <button
-          onClick={onClose}
+          onClick={() => onClose()}
           className="p-2 hover:bg-muted rounded-lg transition"
         >
           <X size={18} />
@@ -175,14 +218,14 @@ export function GarageProfilePanel({ garage, onClose }: Props) {
           </>
         )}
 
-        {/* Active → Reject only */}
+        {/* Active → Block only */}
         {garage.status === "active" && (
           <Button
             variant="destructive"
-            onClick={handleReject}
+            onClick={handleBlock}
             className="w-full"
           >
-            Reject Garage
+            Block Garage
           </Button>
         )}
 
@@ -193,6 +236,16 @@ export function GarageProfilePanel({ garage, onClose }: Props) {
             className="w-full bg-primary text-black hover:bg-primary/90"
           >
             Approve Garage
+          </Button>
+        )}
+
+        {/* Blocked → Unblock only */}
+        {garage.status === "blocked" && (
+          <Button
+            onClick={handleUnblock}
+            className="w-full bg-primary text-black hover:bg-primary/90"
+          >
+            Unblock Garage
           </Button>
         )}
       </div>
