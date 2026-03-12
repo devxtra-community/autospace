@@ -83,6 +83,22 @@ export function startPendingExpiryJob() {
           );
 
           logger.info(`Expired booking ${booking.id}`);
+
+          if (booking.valetId) {
+            await axios
+              .patch(
+                `${process.env.RESOURCE_SERVICE_URL}/internal/valets/${booking.valetId}/release`,
+                { bookingId: booking.id },
+                {
+                  headers: {
+                    Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
+                    "x-user-id": "booking-service",
+                    "x-user-role": "SERVICE",
+                  },
+                },
+              )
+              .catch(() => {});
+          }
         } catch (err) {
           logger.error(`Failed to expire booking ${booking.id}`, err);
         }

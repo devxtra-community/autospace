@@ -99,7 +99,17 @@ export function UserProfile() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="animate-spin text-[#F4DA71]" size={40} />
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-primary/20 border-t-secondary rounded-full animate-spin" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-8 h-8 bg-primary rounded-full animate-pulse" />
+            </div>
+          </div>
+          <p className="text-sm font-bold text-gray-900 tracking-widest uppercase animate-pulse">
+            Loading Profile...
+          </p>
+        </div>
       </div>
     );
   }

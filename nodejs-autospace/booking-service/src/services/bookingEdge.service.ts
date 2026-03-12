@@ -1,16 +1,23 @@
 import axios from "axios";
 import { AppDataSource } from "../data-source.js";
-import { Booking } from "../entities/booking.entity.js";
+import { Booking, BookingValetStatus } from "../entities/booking.entity.js";
 
 const bookingRepo = AppDataSource.getRepository(Booking);
 
-export async function enterBookingService(bookingId: string, pin: string) {
+export async function enterBookingService(
+  bookingId: string,
+  pin: string,
+  userId: string,
+) {
   return await AppDataSource.transaction(async (manager) => {
     const repo = await manager.getRepository(Booking);
 
     const booking = await repo.findOne({ where: { id: bookingId } });
 
     if (!booking) throw new Error("Booking not found");
+
+    // M4 FIX: Ownership check
+    if (booking.userId !== userId) throw new Error("Forbidden");
 
     if (booking.entryUsed) throw new Error("Entry already used");
 
@@ -69,14 +76,16 @@ export async function exitBookingService(bookingId: string, pin: string) {
 
     if (booking.exitPin !== pin) throw new Error("Invalid exit PIN");
 
-    // const now = new Date();
-    // if (now < booking.endTime) throw new Error("Too early to enter");
-
     if (booking.status !== "occupied")
       throw new Error("Car not parked / booking not active");
 
     booking.exitUsed = true;
     booking.status = "completed";
+
+    // M6 FIX: Mark valet as completed on exit
+    if (booking.valetId) {
+      booking.valetStatus = BookingValetStatus.COMPLETED;
+    }
 
     await repo.save(booking);
 
@@ -95,6 +104,24 @@ export async function exitBookingService(bookingId: string, pin: string) {
       );
     } catch {
       throw new Error("Failed to release slot");
+    }
+
+    // M6 FIX: Release valet in resource-service after exit
+    if (booking.valetId) {
+      await axios
+        .patch(
+          `${process.env.RESOURCE_SERVICE_URL}/internal/valets/${booking.valetId}/release`,
+          { bookingId: booking.id },
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
+              "x-user-id": "booking-service",
+              "x-user-role": "SERVICE",
+              "x-user-email": "service@internal",
+            },
+          },
+        )
+        .catch(() => {});
     }
 
     return {
@@ -117,6 +144,9 @@ export async function cancelBookingService(bookingId: string) {
       throw new Error("Booking cannot be cancelled");
 
     booking.status = "cancelled";
+    if (booking.valetId) {
+      booking.valetStatus = BookingValetStatus.COMPLETED;
+    }
     await repo.save(booking);
 
     await axios.post(
@@ -131,6 +161,23 @@ export async function cancelBookingService(bookingId: string) {
         },
       },
     );
+
+    if (booking.valetId) {
+      await axios
+        .patch(
+          `${process.env.RESOURCE_SERVICE_URL}/internal/valets/${booking.valetId}/release`,
+          { bookingId: booking.id },
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
+              "x-user-id": "booking-service",
+              "x-user-role": "SERVICE",
+              "x-user-email": "service@internal",
+            },
+          },
+        )
+        .catch(() => {});
+    }
 
     return {
       bookingId: booking.id,

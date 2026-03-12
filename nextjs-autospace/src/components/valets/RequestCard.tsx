@@ -16,8 +16,7 @@ type RequestCardProps = {
     time: string;
     date: string;
     floor: string;
-    entryPin: string;
-    exitPin: string;
+    pickupPin?: string | null;
   };
   onAccept: () => void;
   onReject: () => void;
@@ -62,17 +61,16 @@ export default function RequestCard({
           {req.floor}
         </div>
 
-        {/* ENTRY PIN */}
-        <div className="flex items-center gap-2 text-sm">
-          <Key size={14} />
-          Entry PIN: <span className="font-semibold">{req.entryPin}</span>
-        </div>
-
-        {/* EXIT PIN */}
-        <div className="flex items-center gap-2 text-sm">
-          <Key size={14} />
-          Exit PIN: <span className="font-semibold">{req.exitPin}</span>
-        </div>
+        {/* PICKUP PIN — shown so valet knows what to verify with customer */}
+        {req.pickupPin && (
+          <div className="flex items-center gap-2 text-sm">
+            <Key size={14} />
+            Pickup PIN:{" "}
+            <span className="font-semibold tracking-widest">
+              {req.pickupPin}
+            </span>
+          </div>
+        )}
 
         {/* TIME */}
         <div className="flex items-center gap-2 text-sm">

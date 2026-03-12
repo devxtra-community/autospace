@@ -69,6 +69,13 @@ export class Booking {
 
   @Column({ name: "exit_used", type: "boolean", default: false })
   exitUsed!: boolean;
+
+  @Column({ name: "pickup_pin", type: "varchar", length: 5, nullable: true })
+  pickupPin!: string | null;
+
+  @Column({ name: "pickup_pin_used", type: "boolean", default: false })
+  pickupPinUsed!: boolean;
+
   @Column({ name: "current_valet_request_id", type: "uuid", nullable: true })
   currentValetRequestId!: string | null;
 

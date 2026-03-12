@@ -19,11 +19,11 @@ import {
   Edit2,
   Star,
   // RotateCcw,
-  Loader2,
   CheckCircle2,
   // Wifi,
   X,
 } from "lucide-react";
+import { YellowLoader } from "@/components/ui/YellowLoader";
 
 import { cn } from "@/lib/utils";
 import axios from "axios";
@@ -141,16 +141,12 @@ export default function MyBookingsPage() {
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="animate-spin" size={40} />
-      </div>
-    );
+    return <YellowLoader text="Loading Bookings..." />;
   }
 
   return (
     <main className="min-h-screen bg-white pt-32 pb-12 px-4 md:px-8 relative">
-      <BackButton />
+      <BackButton className="fixed top-6 left-6 z-[100]" />
       <Navbar />
 
       <div className="max-w-5xl mx-auto">
@@ -394,6 +390,18 @@ function ActiveBookingCard({ booking }: { booking: BookingWithGarage }) {
         </div>
 
         <div className="space-y-3">
+          {/* M2 FIX: Show pickupPin for valet bookings before it's been used */}
+          {booking.valetRequested &&
+            booking.pickupPin &&
+            !booking.pickupPinUsed && (
+              <div className="w-full flex items-center justify-center gap-2 py-3 border border-black rounded-sm text-sm font-bold bg-yellow-50">
+                PICKUP PIN:{" "}
+                <span className="text-yellow-800 tracking-widest text-lg">
+                  {booking.pickupPin}
+                </span>
+              </div>
+            )}
+
           {!booking.valetRequested && (
             <button className="w-full flex items-center justify-center gap-2 py-3 border border-black rounded-sm text-sm font-bold hover:bg-gray-50 transition-colors">
               {booking.status === "confirmed" ? "ENTRY PIN :" : "EXIT PIN :"}{" "}
@@ -404,11 +412,6 @@ function ActiveBookingCard({ booking }: { booking: BookingWithGarage }) {
               )}
             </button>
           )}
-          {/* {booking.valetRequested &&
-          <button className="w-full flex items-center justify-center gap-2 py-3 bg-[#C5E4FD] border border-black rounded-sm text-sm font-bold hover:bg-[#b0dcfd] transition-colors">
-            Track your Valet <Wifi size={18} className="rotate-90" />
-          </button>
-          } */}
         </div>
       </div>
     </div>

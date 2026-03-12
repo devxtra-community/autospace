@@ -19,6 +19,14 @@ type GarageInternal = {
   status: string;
 };
 
+type ValetInternal = {
+  id: string;
+  fullname?: string;
+  phone?: string;
+  email?: string;
+  employmentStatus?: string;
+};
+
 export class BookingService {
   async checkOverlap(slotId: string, start: Date, end: Date): Promise<boolean> {
     const bookingRepo = AppDataSource.getRepository(Booking);
@@ -153,8 +161,6 @@ export class BookingService {
     }
 
     try {
-      // ---------------- PRICE RE-CALCULATION (SECURITY FIX) ----------------
-
       // Fetch slot details
       const slotResponse = await axios.get(
         `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${bookingData.slotId}`,
@@ -275,6 +281,8 @@ export class BookingService {
             exitPin: null,
             entryUsed: false,
             exitUsed: false,
+            pickupPin: bookingData.valetRequested ? generatePin() : null,
+            pickupPinUsed: false,
           });
 
           const saved = await repo.save(booking);
@@ -294,7 +302,7 @@ export class BookingService {
 
       await redisClient.set(idempotencyKey, "completed", { EX: 300 });
 
-      await redisClient.del(`userBookings:${bookingData.userId}`);
+      await redisClient.del(`userBookings:v2:${bookingData.userId}`);
 
       await publishEvent("booking.created", {
         bookingId: savedBooking.id,
@@ -468,18 +476,28 @@ Smart Parking. Seamless Experience.
     // NO MORE VALETS → MANAGER MANUAL ASSIGN REQUIRED
     if (!nextValet) {
       booking.currentValetRequestId = null;
-
       booking.valetStatus = BookingValetStatus.NONE;
 
-      return await bookingRepo.save(booking);
+      const saved = await bookingRepo.save(booking);
+
+      // Clear cache so old valet's request list is invalidated immediately
+      await redisClient.del(`booking:${bookingId}`);
+      await redisClient.del(`userBookings:v2:${booking.userId}`);
+
+      return saved;
     }
 
     // REQUEST NEXT VALET
     booking.currentValetRequestId = nextValet.id;
-
     booking.valetStatus = BookingValetStatus.REQUESTED;
 
-    return await bookingRepo.save(booking);
+    const saved = await bookingRepo.save(booking);
+
+    // Clear cache so old valet's request list is invalidated immediately
+    await redisClient.del(`booking:${bookingId}`);
+    await redisClient.del(`userBookings:v2:${booking.userId}`);
+
+    return saved;
   }
   async updateBookingWithValet(booking: Booking) {
     const bookingRepo = AppDataSource.getRepository(Booking);
@@ -488,7 +506,7 @@ Smart Parking. Seamless Experience.
 
     // FIX: clear Redis cache
     await redisClient.del(`booking:${booking.id}`);
-    await redisClient.del(`userBookings:${booking.userId}`);
+    await redisClient.del(`userBookings:v2:${booking.userId}`);
 
     return updated;
   }
@@ -543,6 +561,7 @@ Smart Parking. Seamless Experience.
     const bookings = await bookingRepo.find({
       where: {
         garageId,
+        status: In(["pending", "confirmed"]),
         valetRequested: true,
         valetStatus: BookingValetStatus.NONE,
         currentValetRequestId: IsNull(),
@@ -552,8 +571,95 @@ Smart Parking. Seamless Experience.
       },
     });
 
-    return bookings;
+    let allAvailableValets: ValetInternal[] = [];
+    try {
+      const valetsRes = await axios.get(
+        `${process.env.RESOURCE_SERVICE_URL}/valets/all-active/${garageId}`,
+        {
+          headers: {
+            "x-user-id": managerId,
+            "x-user-role": "SERVICE",
+            "x-user-email": "service@internal",
+          },
+        },
+      );
+      allAvailableValets = valetsRes.data?.data || [];
+    } catch (err) {
+      console.error("Failed to fetch active valets", err);
+    }
+
+    const enriched = await Promise.all(
+      bookings.map(async (booking) => {
+        let customer = {
+          id: booking.userId,
+          name: "Unknown",
+          phone: "Unknown",
+        };
+        let slot = { id: booking.slotId, slotNumber: "N/A", slotType: "N/A" };
+
+        try {
+          const headers = {
+            "x-user-id": "booking-service",
+            "x-user-role": "SERVICE",
+            "x-user-email": "service@internal",
+          };
+
+          const userRes = await axios.get(
+            `${process.env.AUTH_SERVICE_URL}/internal/users/${booking.userId}`,
+            { headers },
+          );
+          if (userRes.data?.data) {
+            customer = {
+              id: booking.userId,
+              name: userRes.data.data.fullname || "Unknown",
+              phone: userRes.data.data.phone || "Unknown",
+            };
+          }
+
+          const slotRes = await axios.get(
+            `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}`,
+            { headers },
+          );
+          if (slotRes.data?.data) {
+            slot = {
+              id: booking.slotId,
+              slotNumber: slotRes.data.data.slotNumber,
+              slotType: slotRes.data.data.slotSize,
+            };
+          }
+        } catch (err) {
+          console.error("Failed to enrich booking", booking.id, err);
+        }
+
+        const rejectedIds = booking.rejectedValetIds || [];
+        const availableValets = allAvailableValets.filter(
+          (v: ValetInternal) =>
+            v.employmentStatus === "ACTIVE" && !rejectedIds.includes(v.id),
+        );
+
+        return {
+          bookingId: booking.id,
+          customer,
+          garage: {
+            id: garage.id,
+            name: garage.name,
+            location: garage.locationName,
+          },
+          slot,
+          timing: {
+            startTime: booking.startTime,
+            endTime: booking.endTime,
+          },
+          rejectedValetIds: rejectedIds,
+          availableValets,
+          createdAt: booking.createdAt,
+        };
+      }),
+    );
+
+    return enriched;
   }
+
   async getUserBookings(userId: string) {
     const bookingRepo = AppDataSource.getRepository(Booking);
     const cacheKey = `userBookings:v2:${userId}`;
@@ -731,7 +837,7 @@ Smart Parking. Seamless Experience.
 
     const updated = await bookingRepo.save(booking);
     await redisClient.del(`booking:${bookingId}`);
-    await redisClient.del(`userBookings:${booking.userId}`);
+    await redisClient.del(`userBookings:v2:${booking.userId}`);
 
     return updated;
   }
@@ -751,7 +857,7 @@ Smart Parking. Seamless Experience.
     await bookingRepo.delete(bookingId);
 
     await redisClient.del(`booking:${bookingId}`);
-    await redisClient.del(`userBookings:${booking.userId}`);
+    await redisClient.del(`userBookings:v2:${booking.userId}`);
 
     return true;
   }
@@ -810,11 +916,12 @@ Smart Parking. Seamless Experience.
             slotType: slot.slotSize,
             entryPin: booking.entryPin,
             exitPin: booking.exitPin,
+            pickupPin: booking.pickupPin ?? null,
             pickupTime: booking.startTime,
             dropTime: booking.endTime,
             valetStatus: booking.valetStatus,
             createdAt: booking.createdAt,
-            pickupAdress: booking.pickupAddress,
+            pickupAddress: booking.pickupAddress,
             pickupLatitude: booking.pickupLatitude,
             pickupLongitude: booking.pickupLongitude,
           };
@@ -1015,11 +1122,50 @@ Smart Parking. Seamless Experience.
     const updated = await bookingRepo.save(booking);
 
     await redisClient.del(`booking:${bookingId}`);
-    await redisClient.del(`userBookings:${booking.userId}`);
+    await redisClient.del(`userBookings:v2:${booking.userId}`);
 
     await this.sendValetStatusEmail(updated);
 
     return updated;
+  }
+
+  async verifyPickupPin(bookingId: string, valetId: string, pin: string) {
+    const bookingRepo = AppDataSource.getRepository(Booking);
+
+    const booking = await bookingRepo.findOne({ where: { id: bookingId } });
+
+    if (!booking) throw new Error("Booking not found");
+
+    if (booking.valetId !== valetId)
+      throw new Error("Not your assigned booking");
+
+    if (booking.pickupPinUsed) throw new Error("Pickup PIN already verified");
+
+    if (!booking.pickupPin || booking.pickupPin !== pin)
+      throw new Error("Invalid pickup PIN");
+
+    if (
+      booking.valetStatus !== BookingValetStatus.ASSIGNED &&
+      booking.valetStatus !== BookingValetStatus.ON_THE_WAY_TO_PICKUP
+    ) {
+      throw new Error("Cannot verify pickup in current status");
+    }
+
+    booking.pickupPinUsed = true;
+    booking.valetStatus = BookingValetStatus.PICKED_UP;
+
+    const updated = await bookingRepo.save(booking);
+
+    await redisClient.del(`booking:${bookingId}`);
+    await redisClient.del(`userBookings:v2:${booking.userId}`);
+
+    // notify customer via email that valet picked up their car
+    await this.sendValetStatusEmail(updated);
+
+    return {
+      valetStatus: updated.valetStatus,
+      entryPin: updated.entryPin,
+    };
   }
 }
 

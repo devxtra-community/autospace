@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getMyProfile, updateMyProfile } from "@/services/user.service";
 import { Card } from "@/components/ui/card";
+import { logoutUser } from "@/lib/auth.api";
+import { LogOut } from "lucide-react";
 
 type Profile = {
   name: string;
@@ -53,6 +55,10 @@ export default function ValetHeader() {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handleLogout() {
+    await logoutUser();
   }
 
   const initial = profile?.name?.charAt(0)?.toUpperCase() || "V";
@@ -188,6 +194,27 @@ export default function ValetHeader() {
                 "
               >
                 {saving ? "Saving..." : "Save Changes"}
+              </button>
+
+              {/* Logout button */}
+              <button
+                onClick={handleLogout}
+                className="
+                  w-full
+                  bg-red-50 text-red-600
+                  border border-red-100
+                  rounded-lg
+                  py-2.5
+                  font-medium
+                  mt-2
+                  active:scale-95
+                  transition
+                  flex items-center justify-center gap-2
+                  hover:bg-red-100
+                "
+              >
+                <LogOut size={18} />
+                Logout
               </button>
             </div>
           </Card>

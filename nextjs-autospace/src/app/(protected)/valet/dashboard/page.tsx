@@ -22,6 +22,7 @@ import {
   getCompletedJobs,
   updateValetStatus,
   completeBooking,
+  verifyPickupPin,
 } from "@/services/valet.service";
 
 type BackendBooking = {
@@ -41,6 +42,7 @@ type BackendBooking = {
   pickupLatitude?: number | null;
   pickupLongitude?: number | null;
   pickupAddress?: string | null;
+  pickupPin?: string | null;
 };
 
 function transformBooking(b: BackendBooking): ActiveJob {
@@ -61,6 +63,7 @@ function transformBooking(b: BackendBooking): ActiveJob {
     pickupLatitude: b.pickupLatitude ?? null,
     pickupLongitude: b.pickupLongitude ?? null,
     pickupAddress: b.pickupAddress ?? null,
+    pickupPin: b.pickupPin ?? null,
   };
 }
 
@@ -181,7 +184,10 @@ export default function ValetDashboard() {
                 onStartPickup={() =>
                   updateStatus(job.id, "ON_THE_WAY_TO_PICKUP")
                 }
-                onPickedUp={() => updateStatus(job.id, "PICKED_UP")}
+                onVerifyPickupPin={async (pin: string) => {
+                  await verifyPickupPin(job.id, pin);
+                  await loadAll();
+                }}
                 onParked={() => updateStatus(job.id, "PARKED")}
                 onStartDrop={() => updateStatus(job.id, "ON_THE_WAY_TO_DROP")}
                 onComplete={() => updateStatus(job.id, "COMPLETED")}

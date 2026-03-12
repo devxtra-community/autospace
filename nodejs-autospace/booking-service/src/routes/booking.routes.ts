@@ -93,6 +93,12 @@ router.patch(
   bookingController.updateValetStatus,
 );
 
+router.post(
+  "/:bookingId/valet/verify-pickup",
+  internalAuth,
+  bookingController.verifyPickupPin,
+);
+
 router.post("/reviews", internalAuth, submitGarageReviewController);
 router.get("/:garageId/reviews", getGarageReviewsController);
 router.get("/:garageId/rating", getAverageGarageRatingController);

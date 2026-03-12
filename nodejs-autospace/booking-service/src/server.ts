@@ -7,9 +7,11 @@ import { AppDataSource } from "./data-source.js";
 import { startPendingExpiryJob } from "./jobs/pendingExpiry.jobs.js";
 import { startBookingLifecycleJob } from "./jobs/bookingLifeCycle.job.js";
 import { startNoShowExpiryJob } from "./jobs/noShowExpiry.job.js";
+import { startValetRequestTimeoutJob } from "./jobs/valetRequestTimeout.job.js";
 import { connectRedis } from "./config/redis.js";
 import { connectRabbit } from "./config/rabbitmq.js";
 import { startValetAssignedConsumer } from "./config/valet.consumer.js";
+import { startValetRequestedConsumer } from "./config/valetRequest.Consumer.js";
 
 dotenv.config();
 
@@ -30,10 +32,12 @@ const startServer = async () => {
 
     await startValetAssignedConsumer();
     logger.info("valet assigned consumer started");
+    await startValetRequestedConsumer();
 
     startPendingExpiryJob();
     startBookingLifecycleJob();
     startNoShowExpiryJob();
+    startValetRequestTimeoutJob();
 
     app.listen(PORT, () => {
       logger.info(`Booking service running on port ${PORT}`);

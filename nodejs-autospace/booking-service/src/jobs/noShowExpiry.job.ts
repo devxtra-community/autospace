@@ -2,7 +2,7 @@ import cron from "node-cron";
 import axios from "axios";
 import { LessThan } from "typeorm";
 import { AppDataSource } from "../data-source.js";
-import { Booking } from "../entities/booking.entity.js";
+import { Booking, BookingValetStatus } from "../entities/booking.entity.js";
 import { logger } from "../utils/logger.js";
 
 const bookingRepo = AppDataSource.getRepository(Booking);
@@ -37,6 +37,11 @@ export function startNoShowExpiryJob() {
 
           booking.status = "cancelled";
           booking.paymentStatus = "failed";
+
+          if (booking.valetId) {
+            booking.valetStatus = BookingValetStatus.COMPLETED;
+          }
+
           await bookingRepo.save(booking);
 
           const res = await axios.post(
@@ -52,6 +57,22 @@ export function startNoShowExpiryJob() {
           );
 
           logger.info(`Slot released for ${booking.id} status=${res.status}`);
+
+          if (booking.valetId) {
+            await axios
+              .patch(
+                `${process.env.RESOURCE_SERVICE_URL}/internal/valets/${booking.valetId}/release`,
+                { bookingId: booking.id },
+                {
+                  headers: {
+                    Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
+                    "x-user-id": "booking-service",
+                    "x-user-role": "SERVICE",
+                  },
+                },
+              )
+              .catch(() => {});
+          }
         } catch (err) {
           logger.error(`Failed cancelling no‑show ${booking.id}`, err);
         }

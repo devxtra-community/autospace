@@ -19,6 +19,7 @@ export async function enterBookingController(req: Request, res: Response) {
       : bookingIdRaw;
 
     const { pin } = req.body;
+    const userId = req.user?.id;
 
     if (!bookingId || !pin) {
       return res.status(400).json({
@@ -27,7 +28,11 @@ export async function enterBookingController(req: Request, res: Response) {
       });
     }
 
-    const result = await enterBookingService(bookingId, pin);
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const result = await enterBookingService(bookingId, pin, userId);
 
     return res.status(200).json({
       success: true,
@@ -92,11 +97,29 @@ export async function cancelBooking(req: Request, res: Response) {
       ? bookingIdRaw[0]
       : bookingIdRaw;
 
+    const userId = req.user?.id;
+
     if (!bookingId) {
       return res.status(400).json({
         success: false,
         message: "Booking ID required",
       });
+    }
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    // M3 FIX: Ownership check — only the booking owner can cancel
+    const bookingRepo = AppDataSource.getRepository(Booking);
+    const booking = await bookingRepo.findOne({ where: { id: bookingId } });
+    if (!booking) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Booking not found" });
+    }
+    if (booking.userId !== userId) {
+      return res.status(403).json({ success: false, message: "Forbidden" });
     }
 
     const result = await cancelBookingService(bookingId);
@@ -198,7 +221,10 @@ async function getManagerGarageId(managerId: string) {
 }
 
 export async function listManagerBookings(req: Request, res: Response) {
-  const { page = 1, limit = 8, search, status, sort = "DESC" } = req.query;
+  const { page = 1, limit = 8, status, sort = "DESC" } = req.query;
+  // M5 FIX: Limit search string length to prevent DoS via oversized inputs
+  const rawSearch = req.query.search as string | undefined;
+  const search = rawSearch ? rawSearch.slice(0, 100) : undefined;
 
   const userId = req.user?.id;
 

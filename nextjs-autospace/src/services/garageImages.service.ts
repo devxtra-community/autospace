@@ -11,7 +11,8 @@ export const getGarageImages = async (garageId: string) => {
     `/api/public/garages/${garageId}/images`,
   );
 
-  const data = res.data.data;
+  const raw = res.data;
+  const data = Array.isArray(raw) ? raw : (raw?.data ?? []);
 
   return data.map((img: ApiGarageImage) => ({
     id: img.id,

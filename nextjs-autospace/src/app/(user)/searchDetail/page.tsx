@@ -9,6 +9,7 @@ import { useSearchParams } from "next/navigation";
 import apiClient from "@/lib/apiClient";
 // import dynamic from "next/dynamic";
 import SearchMap from "@/components/map/SearchMap";
+import { BackButton } from "@/components/ui/BackButton";
 // import GarageDetails from "@/components/garage/GarageDetails";
 
 interface PublicGarage {
@@ -104,8 +105,9 @@ export default function SearchPage() {
 
   return (
     <div className="flex flex-col h-screen md:flex-row bg-white overflow-hidden font-sans">
+      <BackButton className="fixed top-4 left-4 z-50" fallbackHref="/" />
       <div className="w-full md:w-[400px] lg:w-[450px] flex flex-col border-r border-gray-100 overflow-hidden">
-        <div className="p-6 space-y-6 flex-shrink-0">
+        <div className="p-6 mt-13/ space-y-6 flex-shrink-0">
           <div className="relative group">
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
               <MapPin className="text-red-500 w-5 h-5" />
@@ -191,8 +193,16 @@ export default function SearchPage() {
 
         <div className="flex flex-col   overflow-y-auto px-6 pb-6 space-y-4 no-scrollbar">
           {loading && (
-            <div className="text-sm text-gray-500 py-6 text-center">
-              Searching nearby garages…
+            <div className="flex flex-col items-center gap-4 py-12">
+              <div className="relative">
+                <div className="w-16 h-16 border-4 border-primary/20 border-t-secondary rounded-full animate-spin" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-8 h-8 bg-primary rounded-full animate-pulse" />
+                </div>
+              </div>
+              <p className="text-sm font-bold text-gray-900 tracking-widest uppercase animate-pulse">
+                Searching Garages...
+              </p>
             </div>
           )}
 

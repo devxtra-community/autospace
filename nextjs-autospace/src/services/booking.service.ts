@@ -25,10 +25,12 @@ export interface Booking {
   valetId: string | null;
   createdAt: string;
   updatedAt: string;
-  entryPin: string;
-  exitPin: string;
+  entryPin: string | null;
+  exitPin: string | null;
   entryUsed: boolean;
   exitUsedd: boolean;
+  pickupPin: string | null;
+  pickupPinUsed: boolean;
   vehicleType: string;
   slotNumber: string;
   floorNumber: number;

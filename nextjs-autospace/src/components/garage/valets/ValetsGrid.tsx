@@ -69,6 +69,8 @@ export function ValetsGrid() {
     ManualAssignBooking[]
   >([]);
 
+  console.log("valets", valets);
+
   const [selectedValets, setSelectedValets] = useState<Record<string, string>>(
     {},
   );
@@ -356,6 +358,8 @@ export function ValetsGrid() {
             {unassignedBookings.map((booking) => {
               const selected = selectedValets[booking.bookingId] || "";
 
+              console.log("booking.availableValets", booking.availableValets);
+
               return (
                 <div
                   key={booking.bookingId}
@@ -394,11 +398,17 @@ export function ValetsGrid() {
                       >
                         <option value="">Select valet</option>
 
-                        {booking.availableValets?.map((valet) => (
-                          <option key={valet.id} value={valet.id}>
-                            {valet.name}
-                          </option>
-                        ))}
+                        {valets
+                          .filter(
+                            (v) =>
+                              v.employmentStatus === "ACTIVE" &&
+                              v.availabilityStatus === "AVAILABLE",
+                          )
+                          .map((valet) => (
+                            <option key={valet.id} value={valet.id}>
+                              {valet.name}
+                            </option>
+                          ))}
                       </select>
 
                       <button

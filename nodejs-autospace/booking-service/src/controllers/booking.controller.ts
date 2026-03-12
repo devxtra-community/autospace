@@ -486,6 +486,7 @@ export class BookingController {
       });
     }
   }
+
   async getValetRequests(req: Request, res: Response) {
     try {
       const valetId = req.user?.id;
@@ -655,6 +656,47 @@ export class BookingController {
         message: "Failed to update valet status",
         err,
       });
+    }
+  }
+  async verifyPickupPin(req: Request, res: Response) {
+    try {
+      const bookingId = req.params.bookingId as string;
+      const { pin } = req.body;
+      const valetId = req.user?.id;
+
+      if (!bookingId || !pin) {
+        return res.status(400).json({
+          success: false,
+          message: "bookingId and pin required",
+        });
+      }
+
+      if (!valetId) {
+        return res
+          .status(401)
+          .json({ success: false, message: "Unauthorized" });
+      }
+
+      const result = await bookingService.verifyPickupPin(
+        bookingId,
+        valetId,
+        pin,
+      );
+
+      return res.json({
+        success: true,
+        data: result,
+      });
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "Pickup PIN verification failed";
+      const status =
+        msg === "Invalid pickup PIN" ||
+        msg === "Pickup PIN already verified" ||
+        msg === "Not your assigned booking"
+          ? 400
+          : 500;
+      return res.status(status).json({ success: false, message: msg });
     }
   }
 }

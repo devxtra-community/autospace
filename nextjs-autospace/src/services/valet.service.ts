@@ -54,3 +54,11 @@ export const updateValetStatus = async (
 
   return res.data;
 };
+
+export const verifyPickupPin = async (bookingId: string, pin: string) => {
+  const res = await apiClient.post(
+    `/api/bookings/${bookingId}/valet/verify-pickup`,
+    { pin },
+  );
+  return res.data;
+};

@@ -32,7 +32,7 @@ export const startValetAssignedConsumer = async () => {
       valetStatus: BookingValetStatus.REQUESTED,
     });
 
-    await redisClient.del(`booking:${bookingId}:valetRequest`); // Clear any existing valet request cache
+    await redisClient.del(`booking:${bookingId}`); // Clear any existing valet request cache
 
     console.log("Booking updated with valet request:", bookingId, valetId);
 
