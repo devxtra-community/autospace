@@ -75,13 +75,13 @@ export default function ValetHeader() {
           className="flex items-center gap-3 active:scale-95 transition"
         >
           <Avatar className="h-11 w-11 shadow-sm border border-border">
-            <AvatarFallback className="bg-primary text-black font-semibold">
+            <AvatarFallback className="bg-black text-white font-semibold">
               {initial}
             </AvatarFallback>
           </Avatar>
 
           <div className="flex flex-col leading-tight text-left">
-            <p className="text-xs text-muted-foreground">Welcome back</p>
+            <p className="text-xs text-muted-foreground">{profile?.email}</p>
 
             <p className="text-base font-semibold tracking-tight">
               {firstName}

@@ -160,21 +160,21 @@ export default function ActiveJobCard({
 
       case "PICKED_UP":
         return (
-          <Button className="w-full" onClick={onParked}>
+          <Button className="w-full bg-black" onClick={onParked}>
             Mark Parked
           </Button>
         );
 
       case "PARKED":
         return (
-          <Button className="w-full" onClick={onStartDrop}>
+          <Button className="w-full bg-black" onClick={onStartDrop}>
             Start Drop
           </Button>
         );
 
       case "ON_THE_WAY_TO_DROP":
         return (
-          <Button className="w-full" onClick={onComplete}>
+          <Button className="w-full bg-black" onClick={onComplete}>
             Complete Job
           </Button>
         );
@@ -216,9 +216,21 @@ export default function ActiveJobCard({
         </div>
 
         {/* PHONE */}
-        <div className="flex items-center gap-2 text-sm">
-          <Phone size={14} />
-          {req.phone}
+        {/* CUSTOMER PHONE + CALL */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm">
+            <Phone size={14} />
+            {req.phone}
+          </div>
+
+          {status !== "COMPLETED" && (
+            <a href={`tel:${req.phone}`}>
+              <button className="w-full flex items-center justify-center gap-2 bg-black text-white py-2 rounded-md text-sm font-semibold hover:bg-gray-800 transition">
+                <Phone size={16} />
+                Call Customer
+              </button>
+            </a>
+          )}
         </div>
 
         {/* LOCATION */}

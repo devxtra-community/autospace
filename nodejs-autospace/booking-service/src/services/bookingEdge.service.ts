@@ -17,7 +17,28 @@ export async function enterBookingService(
     if (!booking) throw new Error("Booking not found");
 
     // M4 FIX: Ownership check
-    if (booking.userId !== userId) throw new Error("Forbidden");
+    // if (booking.userId !== userId) throw new Error("Forbidden");
+
+    try {
+      const garageRes = await axios.get(
+        `${process.env.RESOURCE_SERVICE_URL}/internal/garages/manager/${userId}`,
+        {
+          headers: {
+            "x-user-id": "booking-service",
+            "x-user-role": "SERVICE",
+            "x-user-email": "service@internal",
+          },
+        },
+      );
+
+      const managerGarage = garageRes.data?.data;
+
+      if (!managerGarage || managerGarage.id !== booking.garageId) {
+        throw new Error("Forbidden");
+      }
+    } catch {
+      throw new Error("Manager not authorized for this garage");
+    }
 
     if (booking.entryUsed) throw new Error("Entry already used");
 
@@ -80,11 +101,15 @@ export async function exitBookingService(bookingId: string, pin: string) {
       throw new Error("Car not parked / booking not active");
 
     booking.exitUsed = true;
-    booking.status = "completed";
 
-    // M6 FIX: Mark valet as completed on exit
-    if (booking.valetId) {
-      booking.valetStatus = BookingValetStatus.COMPLETED;
+    if (!booking.valetRequested) {
+      // Self parking → booking finishes immediately
+      booking.status = "completed";
+    }
+
+    if (booking.valetRequested) {
+      booking.status = "occupied";
+      booking.valetStatus = BookingValetStatus.ON_THE_WAY_TO_DROP;
     }
 
     await repo.save(booking);
@@ -107,7 +132,7 @@ export async function exitBookingService(bookingId: string, pin: string) {
     }
 
     // M6 FIX: Release valet in resource-service after exit
-    if (booking.valetId) {
+    if (!booking.valetRequested && booking.valetId) {
       await axios
         .patch(
           `${process.env.RESOURCE_SERVICE_URL}/internal/valets/${booking.valetId}/release`,
@@ -196,6 +221,14 @@ export async function getActiveBookingService(userId: string) {
   });
 
   if (!booking) return null;
+  let valet;
+
+  if (booking.valetId) {
+    const valetRes = await axios.get(
+      `${process.env.AUTH_SERVICE_URL}/internal/users/${booking.valetId}`,
+    );
+    valet = valetRes.data?.data ?? null;
+  }
 
   return {
     bookingId: booking.id,
@@ -205,6 +238,7 @@ export async function getActiveBookingService(userId: string) {
     endTime: booking.endTime,
     entryPin: booking.entryUsed ? null : booking.entryPin,
     exitPin: booking.exitPin ?? null,
+    valet: valet,
   };
 }
 
@@ -229,6 +263,11 @@ export async function getBookingHistoryService(userId: string) {
 export async function enrichBookingsWithSlot(bookings: Booking[]) {
   const enriched = await Promise.all(
     bookings.map(async (booking) => {
+      let slotNumber = null;
+      let slotSize = null;
+      let customerName = "Unknown";
+      let customerEmail = "N/A";
+
       try {
         const slotRes = await axios.get(
           `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}`,
@@ -241,20 +280,36 @@ export async function enrichBookingsWithSlot(bookings: Booking[]) {
         );
 
         const slot = slotRes.data.data;
-
-        return {
-          ...booking,
-          slotNumber: slot.slotNumber,
-          slotSize: slot.slotSize,
-        };
+        slotNumber = slot.slotNumber;
+        slotSize = slot.slotSize;
       } catch {
         console.error("Slot fetch failed for", booking.slotId);
-        return {
-          ...booking,
-          slotNumber: null,
-          slotSize: null,
-        };
       }
+
+      try {
+        const userRes = await axios.get(
+          `${process.env.AUTH_SERVICE_URL}/internal/users/${booking.userId}`,
+          {
+            headers: {
+              "x-user-id": "booking-service",
+              "x-user-role": "SERVICE",
+            },
+          },
+        );
+        const user = userRes.data.data;
+        customerName = user.fullname || "Unknown";
+        customerEmail = user.email || "N/A";
+      } catch {
+        console.error("User fetch failed for", booking.userId);
+      }
+
+      return {
+        ...booking,
+        slotNumber,
+        slotSize,
+        customerName,
+        customerEmail,
+      };
     }),
   );
 

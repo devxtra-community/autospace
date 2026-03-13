@@ -13,7 +13,7 @@ export const requireActiveGarage = async (
     }
 
     const response = await axios.get(
-      `${process.env.RESOURCE_SERVICE_URL}/garages/internal/users/${user.id}/status`,
+      `${process.env.RESOURCE_SERVICE_URL}/internal/garages/users/${user.id}/status`,
       {
         headers: {
           "x-user-id": "booking-service",

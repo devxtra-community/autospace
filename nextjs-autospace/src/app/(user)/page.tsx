@@ -8,6 +8,7 @@ import Navbar from "@/components/landing/Navbar";
 import Hero from "@/components/landing/Hero";
 import EarnSection from "@/components/landing/EarnSection";
 import ChooseParkerSection from "@/components/landing/ChooseParkerSection";
+import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import PartnersSection from "@/components/landing/PartnersSection";
 import AboutSection from "@/components/landing/AboutSection";
 import Footer from "@/components/landing/Footer";
@@ -39,6 +40,7 @@ export default function LandingPage() {
       <Hero />
       <EarnSection />
       <ChooseParkerSection />
+      <HowItWorksSection />
       <PartnersSection />
       <AboutSection />
       <div className="bg-background">

@@ -122,10 +122,10 @@ export default function ValetDashboard() {
 
       <Tabs value={tab} onValueChange={setTab} className="mt-4">
         {/* Modern Production Tabs */}
-        <TabsList className="mx-4 grid grid-cols-3 rounded-xl bg-muted p-1 h-10">
+        <TabsList className="mx-4 grid grid-cols-3 rounded-xl bg-muted w-[90%]  p-1 h-10">
           <TabsTrigger
             value="requests"
-            className="rounded-lg text-xs font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            className="rounded-lg text-xs font-medium data-[state=active]:bg-black data-[state=active]:text-primary-foreground"
           >
             Requests
             {requests.length > 0 && (
@@ -137,7 +137,7 @@ export default function ValetDashboard() {
 
           <TabsTrigger
             value="active"
-            className="rounded-lg text-xs font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            className="rounded-lg text-xs font-medium data-[state=active]:bg-black data-[state=active]:text-primary-foreground"
           >
             In‑Progress
             {active.length > 0 && (
@@ -149,7 +149,7 @@ export default function ValetDashboard() {
 
           <TabsTrigger
             value="completed"
-            className="rounded-lg text-xs font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            className="rounded-lg text-xs font-medium data-[state=active]:bg-balck data-[state=active]:text-primary-foreground"
           >
             Completed
             {completed.length > 0 && (

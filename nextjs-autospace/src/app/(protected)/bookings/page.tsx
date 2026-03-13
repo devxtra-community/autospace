@@ -127,6 +127,12 @@ export default function MyBookingsPage() {
 
   useEffect(() => {
     fetchBookings();
+
+    const interval = setInterval(() => {
+      fetchBookings();
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, [fetchBookings]);
 
   const activeBookings = bookings.filter(
@@ -364,6 +370,25 @@ function ActiveBookingCard({ booking }: { booking: BookingWithGarage }) {
               </div>
             );
           })()}
+
+        {booking.valetRequested &&
+          booking.valetId &&
+          booking.valetStatus === "ASSIGNED" && (
+            <div className="flex items-center justify-between gap-3 p-3 border rounded-sm mb-6 bg-white">
+              {/* Valet Name */}
+              <div className="text-sm font-bold">
+                Valet: {booking.valet?.fullname}
+              </div>
+
+              {/* Call Button */}
+              <a href={`tel:${booking.valet?.phone}`}>
+                <button className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-xs font-bold hover:bg-gray-800 transition">
+                  <Phone size={14} />
+                  Call valet
+                </button>
+              </a>
+            </div>
+          )}
 
         <div className="space-y-2 border-t border-black/5 pt-4 mb-6">
           <p className="text-xs font-bold text-gray-400">Payment summary :</p>

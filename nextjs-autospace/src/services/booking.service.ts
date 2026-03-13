@@ -41,6 +41,11 @@ export interface Booking {
   garageName?: string;
   garageAddress?: string;
   garagePhone?: string;
+  valet?: {
+    id: string;
+    fullname: string;
+    phone: string;
+  };
 }
 
 export const getMyBookings = async (): Promise<Booking[]> => {
@@ -89,4 +94,15 @@ export const getAverageGarageRating = async (garageId: string) => {
   const res = await apiClient.get(`/api/bookings/${garageId}/rating`);
 
   return res.data.data;
+};
+
+export const getManagerBookings = async (params: {
+  page?: number;
+  limit?: number;
+  status?: string;
+  search?: string;
+  sort?: "ASC" | "DESC";
+}) => {
+  const res = await apiClient.get("/api/bookings/manager/bookings", { params });
+  return res.data;
 };

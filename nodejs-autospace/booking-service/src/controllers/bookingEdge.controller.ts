@@ -19,6 +19,8 @@ export async function enterBookingController(req: Request, res: Response) {
       : bookingIdRaw;
 
     const { pin } = req.body;
+    console.log("pin", pin);
+
     const userId = req.user?.id;
 
     if (!bookingId || !pin) {

@@ -6,7 +6,7 @@ import {
   validateBookingInput,
 } from "../validators/booking.validator.js";
 import { BookingValetStatus } from "../entities/booking.entity.js";
-import axios from "axios";
+// import axios from "axios";
 import { getCompanyBookingsService } from "../services/bookingCompany.service.js";
 const bookingService = new BookingService();
 
@@ -341,6 +341,7 @@ export class BookingController {
       });
     }
   }
+
   async assignValetInternal(req: Request, res: Response) {
     try {
       const bookingId = req.params.bookingId as string;
@@ -406,16 +407,16 @@ export class BookingController {
 
       // occupy slot
 
-      await axios.post(
-        `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}/occupy`,
-        {},
-        {
-          headers: {
-            "x-user-id": "booking-service",
-            "x-user-role": "SERVICE",
-          },
-        },
-      );
+      // await axios.post(
+      //   `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}/occupy`,
+      //   {},
+      //   {
+      //     headers: {
+      //       "x-user-id": "booking-service",
+      //       "x-user-role": "SERVICE",
+      //     },
+      //   },
+      // );
 
       return res.status(200).json({
         success: true,
@@ -430,6 +431,7 @@ export class BookingController {
       });
     }
   }
+
   async rejectValet(req: Request, res: Response) {
     try {
       const bookingId = req.params.bookingId as string;

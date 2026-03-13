@@ -47,7 +47,7 @@ export function Sidebar() {
       {/* ===== Sidebar ===== */}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-700 z-50 transform transition-transform duration-300 flex flex-col",
+          "fixed top-0 left-0 h-full w-64 bg-white shadow-xl rounded-lg z-50 transform transition-transform duration-300 flex flex-col",
           open ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         )}
       >
@@ -95,7 +95,7 @@ export function Sidebar() {
         {/* Logout */}
         <div className="p-4 mt-auto">
           <button
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-900 hover:bg-black/5 transition-all duration-200 w-full"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-900 hover:bg-red-500/5 transition-all duration-200 w-full"
             onClick={() => logoutUser()}
           >
             <LogOut size={20} className="text-gray-900" /> Logout

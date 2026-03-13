@@ -76,8 +76,8 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
         bookingId: booking.id,
       },
 
-      success_url: `http://localhost:3000/payment-success?bookingId=${booking.id}`,
-      cancel_url: `http://localhost:3000/payment-cancel?bookingId=${booking.id}`,
+      success_url: `${process.env.FRONTEND_URL}/payment-success?bookingId=${booking.id}`,
+      cancel_url: `${process.env.FRONTEND_URL}/payment-cancel?bookingId=${booking.id}`,
     });
 
     return res.status(200).json({

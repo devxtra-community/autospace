@@ -184,7 +184,7 @@ export function ValetsGrid() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search valet..."
-          className="border border-border rounded-xl px-3 py-2 text-sm bg-background w-60"
+          className="border border-border rounded-xl px-3 py-2 text-sm bg-white w-60"
         />
 
         <select
@@ -192,7 +192,7 @@ export function ValetsGrid() {
           onChange={(e) =>
             setAvailabilityStatus(e.target.value as AvailabilityStatus | "ALL")
           }
-          className="border border-border rounded-xl px-3 py-2 text-sm bg-background"
+          className="border border-border rounded-xl px-3 py-2 text-sm bg-white"
         >
           <option value="ALL">All Status</option>
           <option value="AVAILABLE">Available</option>

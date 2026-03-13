@@ -207,7 +207,7 @@ export default function ManagerBookingsTable({
   };
 
   return (
-    <div className="w-full bg-background min-h-screen p-4 md:p-8 font-sans">
+    <div className="w-full bg-white min-h-screen p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -240,7 +240,7 @@ export default function ManagerBookingsTable({
                 type="date"
                 value={dateFilter}
                 onChange={(e) => onDateChange(e.target.value)}
-                className="w-full h-11 px-4 rounded-[var(--radius)] border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all bg-background text-foreground"
+                className="w-full h-11 px-4 rounded-[var(--radius)] border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all bg-white text-foreground"
               />
             </div>
             <div className="space-y-1.5 text-left relative group">
@@ -254,7 +254,7 @@ export default function ManagerBookingsTable({
                   placeholder="Booking ID..."
                   value={searchTerm}
                   onChange={(e) => onSearchChange(e.target.value)}
-                  className="w-full h-11 pl-10 pr-4 rounded-[var(--radius)] border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all bg-background text-foreground"
+                  className="w-full h-11 pl-10 pr-4 rounded-[var(--radius)] border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all bg-white text-foreground"
                 />
               </div>
             </div>

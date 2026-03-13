@@ -31,12 +31,12 @@ export default function PartnersSection() {
               key={index}
               className="flex-shrink-0 w-[10%] flex justify-center items-center px-4"
             >
-              <div className="relative w-32 h-32 grayscale opacity-80 hover:grayscale-0 hover:opacity-100 transition-all">
+              <div className="relative w-42 h-32 grayscale opacity-80 hover:grayscale-0 hover:opacity-100 transition-all">
                 <Image
                   src={partner.src}
                   alt={partner.name}
                   fill
-                  className="object-contain"
+                  className="object-cover"
                 />
               </div>
             </div>

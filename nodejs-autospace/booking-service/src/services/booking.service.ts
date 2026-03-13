@@ -1119,6 +1119,31 @@ Smart Parking. Seamless Experience.
 
     booking.valetStatus = valetStatus;
 
+    /**
+     * FINAL STEP
+     * When valet completes job → booking becomes completed
+     */
+    if (valetStatus === BookingValetStatus.COMPLETED) {
+      booking.status = "completed";
+
+      // release valet
+      if (booking.valetId) {
+        await this.releaseValet(booking.valetId);
+      }
+
+      // free slot
+      await axios.post(
+        `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}/free`,
+        {},
+        {
+          headers: {
+            "x-user-id": "booking-service",
+            "x-user-role": "SERVICE",
+          },
+        },
+      );
+    }
+
     const updated = await bookingRepo.save(booking);
 
     await redisClient.del(`booking:${bookingId}`);

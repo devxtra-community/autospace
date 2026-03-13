@@ -67,7 +67,7 @@ export default function StatusCard() {
               font-medium
               ${
                 employmentStatus === "ACTIVE"
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-black text-primary-foreground"
                   : "bg-muted text-muted-foreground"
               }
             `}

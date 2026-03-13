@@ -49,6 +49,13 @@ export default function RequestCard({
           {req.phone}
         </div>
 
+        <a href={`tel:${req.phone}`}>
+          <button className="w-full flex items-center justify-center gap-2 bg-black text-white py-2 rounded-md text-sm font-semibold hover:bg-gray-800 transition mt-2">
+            <Phone size={16} />
+            Call Customer
+          </button>
+        </a>
+
         {/* LOCATION */}
         <div className="flex items-center gap-2 text-sm">
           <MapPin size={14} />
