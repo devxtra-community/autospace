@@ -57,5 +57,17 @@ jobs:
           pnpm build
           NODE_ENV=stage pm2 restart resource-service || NODE_ENV=stage pm2 start dist/server.js --name resource-service
 
+          echo "Deploying Booking Service..."
+          cd ~/booking-service/nodejs-autospace/booking-service
+
+          git fetch origin
+          git checkout stage
+          git pull origin stage
+
+          pnpm install
+          pnpm build
+
+          NODE_ENV=stage pm2 restart booking-service || NODE_ENV=stage pm2 start dist/server.js --name booking-service
+
           pm2 save
           EOF
