@@ -33,7 +33,8 @@ jobs:
           cd nodejs-autospace/api-gateway
           pnpm install
           pnpm build
-          pm2 restart api-gateway
+
+          NODE_ENV=stage pm2 restart api-gateway || NODE_ENV=stage pm2 start dist/index.js --name api-gateway
 
           echo "Deploying Auth Service..."
           cd ~/auth-service/autospace
