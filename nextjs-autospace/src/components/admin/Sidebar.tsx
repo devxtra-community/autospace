@@ -13,6 +13,7 @@ import {
   LogOut,
   Menu,
   X,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -36,12 +37,10 @@ export function AdminSidebar() {
   return (
     <>
       {/* ===== Mobile Top Bar ===== */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 border-b bg-sidebar-primary">
-        <span className="text-lg font-bold text-sidebar-primary-foreground">
-          AUTOSPACE
-        </span>
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 border-b bg-white border-gray-600">
+        <span className="text-lg font-bold text-black">AUTOSPACE</span>
         <button onClick={() => setOpen(true)}>
-          <Menu size={24} className="text-sidebar-primary-foreground" />
+          <Menu size={24} className="text-black" />
         </button>
       </div>
 
@@ -55,22 +54,22 @@ export function AdminSidebar() {
 
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full w-64 bg-[#111111] z-50 transform transition-transform duration-300 flex flex-col",
+          "fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-300 z-50 transform transition-transform duration-300 flex flex-col",
           open ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         )}
       >
         {/* Header */}
-        <div className="p-6 pb-2 text-xl font-black text-white flex justify-between items-center">
+        <div className="p-6 pb-2 text-xl font-black text-black flex justify-between items-center">
           <div className="flex items-center gap-2">
             <span className="tracking-widest uppercase">AUTOSPACE</span>
           </div>
           <button className="md:hidden" onClick={() => setOpen(false)}>
-            <X size={22} className="text-white/70" />
+            <X size={22} className="text-gray-500" />
           </button>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-2 space-y-1 mt-8">
+        <nav className="flex-1 px-4 space-y-1.5 mt-8">
           {navItems.map(({ label, href, icon: Icon }) => {
             const isActive = pathname === href;
             return (
@@ -81,13 +80,13 @@ export function AdminSidebar() {
                 className={cn(
                   "flex items-center gap-3 px-4 py-2.5 rounded-lg text-[14px] font-semibold transition-all duration-200",
                   isActive
-                    ? "bg-[#F4DA71] text-black"
-                    : "text-white/60 hover:text-white hover:bg-white/5",
+                    ? "bg-[#050505] text-white shadow-sm"
+                    : "text-gray-500 hover:text-black hover:bg-gray-100",
                 )}
               >
                 <Icon
                   size={18}
-                  className={isActive ? "text-black" : "text-white/40"}
+                  className={isActive ? "text-white" : "text-gray-400"}
                 />
                 {label}
               </Link>
@@ -95,14 +94,36 @@ export function AdminSidebar() {
           })}
         </nav>
 
+        {/* Profile Link */}
+        <div className="px-4 mt-auto pt-4 border-t border-gray-100 pb-2">
+          <Link
+            href="/admin/profile"
+            onClick={() => setOpen(false)}
+            className={cn(
+              "flex items-center gap-3 px-4 py-2.5 rounded-lg text-[14px] font-semibold transition-all duration-200",
+              pathname === "/admin/profile"
+                ? "bg-[#050505] text-white shadow-sm"
+                : "text-gray-500 hover:text-black hover:bg-gray-100",
+            )}
+          >
+            <User
+              size={18}
+              className={
+                pathname === "/admin/profile" ? "text-white" : "text-gray-400"
+              }
+            />
+            Profile
+          </Link>
+        </div>
+
         {/* Logout */}
-        <div className="p-4">
+        <div className="p-4 border-t border-gray-100">
           <button
             onClick={() => handleLogout()}
-            className="flex items-center gap-3 px-4 py-2 rounded-lg text-[14px] font-semibold text-white/50 hover:text-white w-full transition-all group"
+            className="flex items-center gap-3 px-4 py-2 rounded-lg text-[14px] font-semibold text-gray-500 hover:text-red-500 hover:bg-red-50 w-full transition-all group"
           >
-            <div className="w-8 h-8 rounded-full bg-white/10 hover:bg-red-500 flex items-center justify-center text-xs font-bold text-white/70">
-              <LogOut size={18} />
+            <div className="w-8 h-8 rounded-full bg-gray-100 group-hover:bg-red-100 flex items-center justify-center text-xs font-bold text-gray-500 group-hover:text-red-500 transition-colors">
+              <LogOut size={16} strokeWidth={2.5} />
             </div>
             Logout
           </button>

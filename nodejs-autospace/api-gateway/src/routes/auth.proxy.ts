@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, RequestHandler } from "express";
 import axios from "axios";
 import express from "express";
 import { authMiddleware } from "../middleware/auth.middleware";
@@ -8,14 +8,11 @@ import { UserRole } from "../constants/role.enum";
 
 const router = Router();
 
-const AUTH_SERVICE_URL =
-  process.env.AUTH_SERVICE_URL || "http://localhost:4001";
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL!;
 
-// Parse JSON
 router.use(express.json());
 router.use(express.urlencoded({ extended: true }));
 
-// /me endpoint - handled by gateway
 router.get("/me", authMiddleware, (req, res) => {
   res.status(200).json({
     success: true,
@@ -32,6 +29,7 @@ const createAuthProxy = (targetPath: string) => {
         method: req.method,
         url,
         data: req.body,
+        params: req.query,
         headers: {
           "Content-Type": "application/json",
           Cookie: req.headers.cookie || "",
@@ -42,6 +40,7 @@ const createAuthProxy = (targetPath: string) => {
             "x-user-email": req.user.email,
           }),
         },
+
         timeout: 10000,
         validateStatus: () => true,
       });
@@ -75,14 +74,45 @@ const createAuthProxy = (targetPath: string) => {
   };
 };
 
-router.post("/login", authRateLimiter, createAuthProxy("/api/login"));
-router.post("/register", authRateLimiter, createAuthProxy("/api/register"));
-router.post("/logout", authRateLimiter, createAuthProxy("/api/logout"));
+router.post(
+  "/login",
+  authRateLimiter as unknown as RequestHandler,
+  createAuthProxy("/api/login"),
+);
+router.post(
+  "/register",
+  authRateLimiter as unknown as RequestHandler,
+  createAuthProxy("/api/register"),
+);
+router.post(
+  "/logout",
+  authRateLimiter as unknown as RequestHandler,
+  createAuthProxy("/api/logout"),
+);
+
+router.post(
+  "/google",
+  authRateLimiter as unknown as RequestHandler,
+  createAuthProxy("/api/google"),
+);
+
+router.post(
+  "/forget-password",
+  authRateLimiter as unknown as RequestHandler,
+  createAuthProxy("/api/forget-password"),
+);
+
+router.post(
+  "/reset-password",
+  authRateLimiter as unknown as RequestHandler,
+  createAuthProxy("/api/reset-password"),
+);
+
 router.post("/refresh", createAuthProxy("/api/refresh"));
 router.post("/owner/register", createAuthProxy("/api/owner/register"));
 router.post("/manager/register", createAuthProxy("/api/manager/register"));
 router.post("/valet/register", createAuthProxy("/api/valet/register"));
-router.patch("/profile/my", createAuthProxy("/api/profile/my"));
+
 router.get(
   "/admin/allusers",
   authMiddleware,
@@ -90,4 +120,85 @@ router.get(
   createAuthProxy("/api/admin/allusers"),
 );
 
+router.get(
+  "/admin/user/stats",
+  authMiddleware,
+  rbac(UserRole.ADMIN),
+  createAuthProxy("/api/admin/user/stats"),
+);
+
+router.patch(
+  "/admin/update/user/:userId",
+  authMiddleware,
+  rbac(UserRole.ADMIN),
+  async (req, res) => {
+    try {
+      const targetUrl =
+        AUTH_SERVICE_URL + req.originalUrl.replace("/api/auth", "/api");
+
+      const response = await axios({
+        method: req.method,
+        url: targetUrl,
+        data: req.body,
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: req.headers.cookie || "",
+
+          ...(req.user && {
+            "x-user-id": req.user.id,
+            "x-user-role": req.user.role,
+            "x-user-email": req.user.email,
+          }),
+        },
+
+        timeout: 10000,
+        validateStatus: () => true,
+      });
+
+      if (response.headers["set-cookie"]) {
+        res.setHeader("Set-Cookie", response.headers["set-cookie"]);
+      }
+
+      res.status(response.status).json(response.data);
+    } catch (error: unknown) {
+      console.error("Admin update user proxy error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Gateway admin update user proxy error",
+      });
+    }
+  },
+);
+
+router.get("/profile/my", authMiddleware, createAuthProxy("/api/profile/my"));
+router.patch("/profile/my", authMiddleware, createAuthProxy("/api/profile/my"));
+router.use("/manager", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const targetUrl =
+      AUTH_SERVICE_URL + req.originalUrl.replace("/api/auth", "/api");
+
+    const response = await axios({
+      method: req.method,
+      url: targetUrl,
+      data: req.body,
+      headers: {
+        "Content-Type": "application/json",
+        ...(req.user && {
+          "x-user-id": req.user.id,
+          "x-user-role": req.user.role,
+          "x-user-email": req.user.email,
+        }),
+      },
+      validateStatus: () => true,
+    });
+
+    return res.status(response.status).json(response.data);
+  } catch (err) {
+    console.error("Manager proxy error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Gateway manager proxy error",
+    });
+  }
+});
 export default router;

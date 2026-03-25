@@ -1,8 +1,18 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+
 .font-zalando {
   font-family: var(--font-zalando-sans-expanded);
+}
+
+@utility scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 
@@ -10,6 +20,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --color-search-card: var(--search-card);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -37,6 +48,7 @@
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
+  --color-dark-gold: var(--dark-gold);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
@@ -54,8 +66,8 @@
 
 :root {
   --radius: 0.625rem;
-  --text:oklch(0.145 0 0);  
-  --background:#FFFAE8;
+  --text: oklch(0.145 0 0);
+  --background: #FFFAE8;
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -65,6 +77,9 @@
   --primary-foreground: oklch(0.985 0 0);
   --secondary: #e3be07;
   --secondary-button: #F4DA71;
+  --search-card: #fbe386;
+  --small-card: #aff7f2;
+  --dark-gold: #97800c;
 
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(1 0 0);
@@ -125,10 +140,31 @@
 }
 
 @layer base {
+
+  html,
+  body {
+    @apply scrollbar-hide;
+  }
+
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 20s linear infinite;
 }

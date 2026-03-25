@@ -2,11 +2,28 @@ import { Router } from "express";
 import {
   resolveGarage,
   registerValet,
+  getAvailableValetController,
+  assignValetController,
+  releaseValetController,
+  rejectBookingController,
 } from "../controllers/internal-valet.controller";
+import { getMyValetController } from "../controllers/valet.controller";
+import { internalAuth } from "../../../middlewares/internalAuth.middleware";
 
 const router = Router();
 
-router.post("/internal/resolve-garage", resolveGarage);
-router.post("/internal/valets/register", registerValet);
+router.post("/resolve-garage", resolveGarage);
+
+router.post("/register", registerValet);
+
+router.get("/me", internalAuth, getMyValetController);
+
+router.get("/available/:garageId", getAvailableValetController);
+
+router.patch("/:valetId/assign", assignValetController);
+
+router.patch("/:valetId/reject", rejectBookingController);
+
+router.patch("/:valetId/release", releaseValetController);
 
 export default router;

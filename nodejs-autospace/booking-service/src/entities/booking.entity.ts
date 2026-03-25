@@ -1,0 +1,116 @@
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from "typeorm";
+
+export enum BookingValetStatus {
+  NONE = "NONE",
+  REQUESTED = "REQUESTED",
+  ASSIGNED = "ASSIGNED",
+  ON_THE_WAY_TO_PICKUP = "ON_THE_WAY_TO_PICKUP",
+  PICKED_UP = "PICKED_UP",
+  PARKED = "PARKED",
+  ON_THE_WAY_TO_DROP = "ON_THE_WAY_TO_DROP",
+  COMPLETED = "COMPLETED",
+  REJECTED = "REJECTED",
+}
+
+@Entity({ name: "booking" })
+export class Booking {
+  @PrimaryGeneratedColumn("uuid")
+  id!: string;
+
+  @Column("uuid")
+  userId!: string;
+
+  @Column("uuid")
+  garageId!: string;
+
+  @Column("uuid")
+  slotId!: string;
+
+  @Column("timestamp")
+  startTime!: Date;
+
+  @Column("timestamp")
+  endTime!: Date;
+
+  @Column("varchar", { default: "pending", length: 50 })
+  status!: string;
+
+  @Column({ name: "valet_requested", type: "boolean", default: false })
+  valetRequested!: boolean;
+
+  @Column({
+    name: "valet_status",
+    type: "enum",
+    enum: BookingValetStatus,
+    default: BookingValetStatus.NONE,
+  })
+  valetStatus!: BookingValetStatus;
+
+  @Column({ type: "varchar", length: 20, nullable: true })
+  vehicleType!: "sedan" | "suv" | null;
+
+  @Column({ name: "valet_id", type: "uuid", nullable: true })
+  valetId!: string | null;
+
+  @Column({ type: "varchar", length: 5, nullable: true })
+  entryPin!: string | null;
+
+  @Column({ type: "varchar", length: 5, nullable: true })
+  exitPin!: string | null;
+
+  @Column({ name: "entry_used", type: "boolean", default: false })
+  entryUsed!: boolean;
+
+  @Column({ name: "exit_used", type: "boolean", default: false })
+  exitUsed!: boolean;
+
+  @Column({ name: "pickup_pin", type: "varchar", length: 5, nullable: true })
+  pickupPin!: string | null;
+
+  @Column({ name: "pickup_pin_used", type: "boolean", default: false })
+  pickupPinUsed!: boolean;
+
+  @Column({ name: "current_valet_request_id", type: "uuid", nullable: true })
+  currentValetRequestId!: string | null;
+
+  @Column({ name: "rejected_valet_ids", type: "json", nullable: true })
+  rejectedValetIds!: string[] | null;
+
+  @Column({ type: "decimal", precision: 10, scale: 2 })
+  amount!: number;
+
+  @Column({ type: "decimal", precision: 10, scale: 7, nullable: true })
+  pickupLatitude!: number | null;
+
+  @Column({ type: "decimal", precision: 10, scale: 7, nullable: true })
+  pickupLongitude!: number | null;
+
+  @Column({ type: "varchar", nullable: true })
+  pickupAddress!: string | null;
+
+  @Column({
+    type: "varchar",
+    length: 20,
+    default: "unpaid",
+  })
+  paymentStatus!: "unpaid" | "paid" | "failed";
+
+  @Column({
+    name: "review_submitted",
+    type: "boolean",
+    default: false,
+  })
+  reviewSubmitted!: boolean;
+
+  @CreateDateColumn()
+  createdAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
+}

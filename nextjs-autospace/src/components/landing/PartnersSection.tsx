@@ -8,7 +8,8 @@ const partners = [
   { name: "Fact", src: "/company4.jpg" },
   { name: "Trek", src: "/company5.jpg" },
   { name: "X", src: "/comapany6.jpg" },
-  // Duplicate for seamless loop
+
+  // duplicate for seamless loop
   { name: "Nova", src: "/company1.jpg" },
   { name: "Kross", src: "/company3.jpg" },
   { name: "Fact", src: "/company4.jpg" },
@@ -30,32 +31,18 @@ export default function PartnersSection() {
               key={index}
               className="flex-shrink-0 w-[10%] flex justify-center items-center px-4"
             >
-              <div className="relative w-42 h-42 grayscale opacity-80 hover:grayscale-0 hover:opacity-100 transition-all">
+              <div className="relative w-42 h-32 grayscale opacity-80 hover:grayscale-0 hover:opacity-100 transition-all">
                 <Image
                   src={partner.src}
                   alt={partner.name}
                   fill
-                  className="object-contain"
+                  className="object-cover"
                 />
               </div>
             </div>
           ))}
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes marquee {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-        .animate-marquee {
-          animation: marquee 20s linear infinite;
-        }
-      `}</style>
     </section>
   );
 }

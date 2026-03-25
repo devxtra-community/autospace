@@ -7,11 +7,11 @@ const error_2 = require("../utils/error");
 const authMiddleware = (req, res, next) => {
     try {
         // console.log("Cookies in gateway:", req.cookies);
-        console.log("=== AUTH MIDDLEWARE DEBUG ===");
-        console.log("Cookies:", req.cookies);
-        console.log("Authorization header:", req.headers.authorization);
-        console.log("All headers:", req.headers);
-        console.log("===========================");
+        // console.log("=== AUTH MIDDLEWARE DEBUG ===");
+        // console.log("Cookies:", req.cookies);
+        // console.log("Authorization header:", req.headers.authorization);
+        // console.log("All headers:", req.headers);
+        // console.log("===========================");
         const tokenFromCookie = req.cookies?.accessToken;
         const authHeader = req.headers.authorization;
         const tokenFromHeader = authHeader && authHeader.startsWith("Bearer ")
@@ -23,9 +23,7 @@ const authMiddleware = (req, res, next) => {
             (0, error_1.sendAuthError)(res, error_2.AuthErrorCode.TOKEN_INVALID, "Access token missing", 401);
             return;
         }
-        // Verify token and attach to request
         const decoded = (0, jwt_utils_1.verifyAccessToken)(token);
-        // Attach full payload to request
         req.user = {
             id: decoded.id,
             email: decoded.email,
@@ -35,6 +33,7 @@ const authMiddleware = (req, res, next) => {
         req.headers["x-user-id"] = decoded.id;
         console.log("AUTH USER:", req.user);
         req.headers["x-user-role"] = decoded.role;
+        req.headers["x-user-email"] = decoded.email;
         next();
     }
     catch (error) {

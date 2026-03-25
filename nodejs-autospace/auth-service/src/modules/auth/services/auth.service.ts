@@ -16,9 +16,19 @@ import { AppDataSource } from "../../../db/data-source";
 import { User } from "../entities/user.entity";
 import { UpdateProfileInput } from "@autospace/shared";
 import { UserRole, UserStatus } from "../constants";
+import redisClient from "../../../config/redis";
+
+const repo = AppDataSource.getRepository(User);
 
 export const getUserProfile = async (userId: string) => {
-  const repo = AppDataSource.getRepository(User);
+  const cacheKey = `user:${userId}`;
+
+  // Check Redis
+  const cached = await redisClient.get(cacheKey);
+  if (cached) {
+    console.log("User from Redis");
+    return JSON.parse(cached);
+  }
 
   const user = await repo.findOne({
     where: { id: userId },
@@ -30,28 +40,33 @@ export const getUserProfile = async (userId: string) => {
       "role",
       "status",
       "created_at",
+      "companyId",
     ],
   });
 
   if (!user) throw new Error("User not found");
 
-  return {
+  const result = {
     id: user.id,
     name: user.fullname,
     email: user.email,
     phone: user.phone,
     role: user.role,
     status: user.status,
+    companyId: user.companyId,
     createdAt: user.created_at,
   };
+
+  // Store in Redis (10 min)
+  await redisClient.set(cacheKey, JSON.stringify(result), { EX: 600 });
+
+  return result;
 };
 
 export const updateUserProfile = async (
   userId: string,
   data: UpdateProfileInput,
 ) => {
-  const repo = AppDataSource.getRepository(User);
-
   const user = await repo.findOne({ where: { id: userId } });
   if (!user) throw new Error("User not found");
 
@@ -60,6 +75,7 @@ export const updateUserProfile = async (
   if (data.phone !== undefined) user.phone = data.phone;
 
   await repo.save(user);
+  await redisClient.del(`user:${userId}`);
 
   return {
     id: user.id,
@@ -71,16 +87,14 @@ export const updateUserProfile = async (
 };
 
 export const getAllUsersService = async (filters: {
-  status?: UserStatus;
-  role?: UserRole;
+  page?: number;
+  limit?: number;
   search?: string;
-  page: number;
-  limit: number;
+  role?: UserRole;
+  status?: UserStatus;
 }) => {
-  const repo = AppDataSource.getRepository(User);
-
-  const page = Math.max(filters.page, 1);
-  const limit = Math.min(filters.limit, 50);
+  const page = filters.page || 1;
+  const limit = filters.limit || 10;
   const skip = (page - 1) * limit;
 
   const qb = repo.createQueryBuilder("user");
@@ -95,23 +109,31 @@ export const getAllUsersService = async (filters: {
     "user.created_at",
   ]);
 
+  /* SEARCH */
   if (filters.search) {
-    qb.where(
-      `(user.fullname ILIKE :search 
-        OR user.email ILIKE :search 
-        OR user.phone ILIKE :search)`,
+    qb.andWhere(
+      `(user.fullname ILIKE :search
+     OR user.email ILIKE :search
+     OR user.phone ILIKE :search)`,
       { search: `%${filters.search}%` },
     );
   }
 
-  if (filters.status) {
-    qb.andWhere("user.status = :status", { status: filters.status });
-  }
-
+  /* ROLE */
   if (filters.role) {
-    qb.andWhere("user.role = :role", { role: filters.role });
+    qb.andWhere("user.role = :role", {
+      role: filters.role,
+    });
   }
 
+  /* STATUS */
+  if (filters.status) {
+    qb.andWhere("user.status = :status", {
+      status: filters.status,
+    });
+  }
+
+  /* PAGINATION */
   qb.orderBy("user.created_at", "DESC").skip(skip).take(limit);
 
   const [users, total] = await qb.getManyAndCount();
@@ -126,11 +148,35 @@ export const getAllUsersService = async (filters: {
       status: u.status,
       role: u.role,
     })),
+
     meta: {
       page,
       limit,
       total,
       totalPages: Math.ceil(total / limit),
     },
+  };
+};
+
+export const updateUserStatus = async (userId: string, status: string) => {
+  console.log("TYPE:", typeof status);
+  console.log("VALUE:", JSON.stringify(status));
+
+  const normalizedStatus = status?.trim().toLowerCase();
+
+  if (!["active", "rejected"].includes(normalizedStatus)) {
+    throw new Error("Invalid status value");
+  }
+
+  const user = await repo.findOne({ where: { id: userId } });
+  if (!user) throw new Error("User not found");
+
+  user.status = normalizedStatus as UserStatus;
+
+  const updatedUser = await repo.save(user);
+
+  return {
+    success: true,
+    data: updatedUser,
   };
 };

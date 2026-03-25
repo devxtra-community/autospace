@@ -28,4 +28,7 @@ export const env = {
 
   COOKIE_SECURE: false,
   COOKIE_SAMESITE: "lax",
+
+  GOOGLE_CLIENT_ID: requireEnv("GOOGLE_CLIENT_ID"),
+  GOOGLE_CLIENT_SECRET: requireEnv("GOOGLE_CLIENT_SECRET"),
 } as const;

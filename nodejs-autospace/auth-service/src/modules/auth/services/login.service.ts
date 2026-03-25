@@ -48,6 +48,32 @@ export const loginUser = async (
     throw new Error("User not approved");
   }
 
+  if (user.role === UserRole.MANAGER || user.role === UserRole.VALET) {
+    try {
+      // Need dynamic require or import for axios if it wasn't at the top. Let's just import it cleanly.
+      // Wait, there's no axios import at top. I'll add the check using a dynamically imported axios or require.
+      const axios = require("axios");
+      const response = await axios.get(
+        `${process.env.RESOURCE_SERVICE_URL}/garages/internal/users/${user.id}/status`,
+        {
+          headers: {
+            "x-user-id": "auth-service",
+            "x-user-role": "SERVICE",
+          },
+        },
+      );
+
+      if (response.data?.data?.status === "blocked") {
+        throw new Error("GARAGE_BLOCKED");
+      }
+    } catch (err: any) {
+      if (err.message === "GARAGE_BLOCKED") {
+        throw err;
+      }
+      console.error("Garage status check failed during login:", err.message);
+    }
+  }
+
   const tokens = generateTokenPair({
     id: user.id,
     email: user.email,

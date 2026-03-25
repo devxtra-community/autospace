@@ -1,0 +1,106 @@
+import { Router } from "express";
+import type { Router as ExpressRouter } from "express";
+// import { authMiddleware } from "../middleware/auth.middleware.js";
+import { bookingController } from "../controllers/booking.controller.js";
+import { internalAuth } from "../middleware/internal-authmiddleware.js";
+import {
+  cancelBooking,
+  enterBookingController,
+  exitBooking,
+  getActiveBooking,
+  getBookingHistory,
+  listManagerBookings,
+} from "../controllers/bookingEdge.controller.js";
+import {
+  getAverageGarageRatingController,
+  getGarageReviewsController,
+  submitGarageReviewController,
+} from "../controllers/garage-review.controller.js";
+
+const router: ExpressRouter = Router();
+
+router.get("/valet/requests", internalAuth, bookingController.getValetRequests);
+
+router.get("/valet/active", internalAuth, bookingController.getActiveJobs);
+
+router.get(
+  "/valet/completed",
+  internalAuth,
+  bookingController.getCompletedJobs,
+);
+
+router.post("/", internalAuth, bookingController.createBookingController);
+
+router.get("/my", internalAuth, bookingController.getMyBookings);
+
+router.patch(
+  "/update/:bookingId",
+  internalAuth,
+  bookingController.updateStatus,
+);
+
+router.delete(
+  "/delete/:bookingId",
+  internalAuth,
+  bookingController.deleteBooking,
+);
+
+router.patch(
+  "/:bookingId/confirm",
+  internalAuth,
+  bookingController.confirmBooking,
+);
+
+router.post("/:bookingId/enter", internalAuth, enterBookingController);
+
+router.post("/:bookingId/exit", internalAuth, exitBooking);
+
+router.patch("/:bookingId/cancel", internalAuth, cancelBooking);
+
+router.get("/my/active", internalAuth, getActiveBooking);
+
+router.get("/my/history", internalAuth, getBookingHistory);
+router.patch(
+  "/internal/:bookingId/assign",
+  internalAuth,
+  bookingController.assignValetInternal,
+);
+
+router.patch(
+  "/internal/:bookingId/reject",
+  internalAuth,
+  bookingController.rejectValet,
+);
+
+router.get(
+  "/manager/manual-assign",
+  internalAuth,
+  bookingController.getManualAssignments,
+);
+
+router.get(
+  "/company/:companyId",
+  internalAuth,
+  bookingController.getCompanyBookings,
+);
+router.get("/manager/bookings", internalAuth, listManagerBookings);
+
+router.get("/:bookingId", internalAuth, bookingController.getBooking);
+
+router.patch(
+  "/:bookingId/valet-status",
+  internalAuth,
+  bookingController.updateValetStatus,
+);
+
+router.post(
+  "/:bookingId/valet/verify-pickup",
+  internalAuth,
+  bookingController.verifyPickupPin,
+);
+
+router.post("/reviews", internalAuth, submitGarageReviewController);
+router.get("/:garageId/reviews", getGarageReviewsController);
+router.get("/:garageId/rating", getAverageGarageRatingController);
+
+export default router;

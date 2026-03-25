@@ -2,6 +2,7 @@ import "reflect-metadata";
 import { DataSource } from "typeorm";
 import { User } from "../modules/auth/entities/user.entity";
 import { RefreshToken } from "../modules/auth/entities/refreshtoken.entity";
+import { PasswordResetToken } from "../modules/auth/entities/password-reset-token.entity";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -13,5 +14,5 @@ export const AppDataSource = new DataSource({
 
   synchronize: false,
   logging: false,
-  entities: [User, RefreshToken],
+  entities: [User, RefreshToken, PasswordResetToken],
 });

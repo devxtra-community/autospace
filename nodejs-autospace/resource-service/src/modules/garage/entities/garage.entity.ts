@@ -5,12 +5,16 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  OneToMany,
 } from "typeorm";
+
+import { GarageFloor } from "./garage-floor.entity";
 
 export enum GarageStatus {
   PENDING = "pending",
   ACTIVE = "active",
   REJECTED = "rejected",
+  BLOCKED = "blocked",
 }
 
 @Entity("garages")
@@ -69,6 +73,44 @@ export class Garage {
   })
   status!: GarageStatus;
 
+  @Column({
+    type: "numeric",
+    precision: 10,
+    scale: 2,
+    name: "standard_slot_price",
+    default: 50,
+  })
+  standardSlotPrice!: number;
+
+  @Column({
+    type: "numeric",
+    precision: 10,
+    scale: 2,
+    name: "large_slot_price",
+    default: 80,
+  })
+  largeSlotPrice!: number;
+
+  @Column({
+    type: "time",
+    name: "opening_time",
+    nullable: true,
+  })
+  openingTime!: string | null;
+
+  @Column({
+    type: "time",
+    name: "closing_time",
+    nullable: true,
+  })
+  closingTime!: string | null;
+
+  @Column({
+    type: "int",
+    default: 20,
+  })
+  valetServiceRadius!: number;
+
   @Index()
   @Column("uuid")
   createdBy!: string;
@@ -78,4 +120,7 @@ export class Garage {
 
   @UpdateDateColumn()
   updatedAt!: Date;
+
+  @OneToMany(() => GarageFloor, (floor) => floor.garage)
+  floors!: GarageFloor[];
 }

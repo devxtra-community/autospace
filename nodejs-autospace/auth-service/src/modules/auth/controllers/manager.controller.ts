@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { registerManager } from "../services/manager-register.service";
 import { AppDataSource } from "../../../db/data-source";
 import { User } from "../entities/user.entity";
-import { UserRole } from "../constants";
+import { UserRole, UserStatus } from "../constants";
 import { ManagerState } from "../constants/manager-state.enum";
 
 export const managerSignup = async (req: Request, res: Response) => {
@@ -34,6 +34,8 @@ export const getManagerInternal = async (req: Request, res: Response) => {
 
   return res.json({
     id: manager.id,
+    fullname: manager.fullname,
+    email: manager.email,
     role: manager.role,
     companyId: manager.companyId,
     managerState: manager.managerState,
@@ -58,4 +60,32 @@ export const assignManagerInternal = async (req: Request, res: Response) => {
   await userRepo.save(manager);
 
   return res.json({ success: true });
+};
+
+export const getAssignableManagers = async (req: Request, res: Response) => {
+  try {
+    const companyId = req.params.companyId as string;
+
+    const userRepo = AppDataSource.getRepository(User);
+
+    const managers = await userRepo.find({
+      where: {
+        companyId,
+        role: UserRole.MANAGER,
+        status: UserStatus.ACTIVE,
+        managerState: ManagerState.UNASSIGNED,
+      },
+      select: ["id", "fullname", "email"],
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: managers,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch managers",
+    });
+  }
 };

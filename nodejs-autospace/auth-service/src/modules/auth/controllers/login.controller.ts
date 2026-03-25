@@ -53,6 +53,16 @@ export const login = async (req: Request, res: Response) => {
           },
         });
       }
+
+      if (error.message === "GARAGE_BLOCKED") {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: "GARAGE_BLOCKED",
+            message: "Your garage has been blocked by the authority",
+          },
+        });
+      }
     }
 
     return res.status(500).json({

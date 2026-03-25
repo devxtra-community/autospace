@@ -1,107 +1,102 @@
 "use client";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { MapPin, User, Layers } from "lucide-react";
 
-export type GarageStatus = "pending" | "active" | "rejected" | "suspended";
+import { MapPin, User, Layers, Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+export type GarageStatus = "pending" | "active" | "rejected";
 
 interface GarageCardProps {
+  id: string;
   name: string;
   location: string;
   status: GarageStatus;
-  slots: number;
-  total: number;
-  manager?: string;
+  capacity: number;
+  managerName?: string | null;
+
+  onOpenDetails: (garageId: string) => void;
+  onAssignManager: (garageId: string) => void;
+  onEdit: (garageId: string) => void;
 }
 
 const statusStyles: Record<GarageStatus, string> = {
   active: "bg-green-100 text-green-700",
   pending: "bg-yellow-100 text-yellow-800",
   rejected: "bg-red-100 text-red-700",
-  suspended: "bg-gray-200 text-gray-700",
 };
 
 export function GarageCard({
+  id,
   name,
   location,
   status,
-  slots,
-  total,
-  manager,
+  capacity,
+  managerName,
+  onOpenDetails,
+  onAssignManager,
+  onEdit,
 }: GarageCardProps) {
-  const [showAssign, setShowAssign] = useState(false);
-
-  const usagePercent = Math.round((slots / total) * 100);
+  const isActive = status === "active";
+  const isPending = status === "pending";
+  const isUnassigned = !managerName;
 
   return (
-    <div className="relative rounded-2xl bg-card border border-border p-5 shadow-sm hover:shadow-lg transition-all">
-      {/* Status Badge */}
+    <div className="relative rounded-2xl border bg-white p-5 shadow-sm transition hover:shadow-md">
+      {/* STATUS */}
       <span
-        className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-medium ${statusStyles[status]}`}
+        className={`absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-medium ${statusStyles[status]}`}
       >
         {status.toUpperCase()}
       </span>
 
-      {/* Header */}
-      <h3 className="text-lg font-semibold text-foreground">{name}</h3>
-      <p className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-        <MapPin size={14} /> {location}
-      </p>
+      {/* EDIT */}
+      {(isPending || isActive) && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(id);
+          }}
+          className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+        >
+          <Pencil size={16} />
+        </button>
+      )}
 
-      {/* Slot Usage */}
-      <div className="mt-4 space-y-2">
-        <div className="flex items-center justify-between text-sm">
-          <span className="flex items-center gap-1 text-muted-foreground">
-            <Layers size={14} /> Slots Used
-          </span>
-          <span className="font-medium">
-            {slots} / {total}
-          </span>
-        </div>
+      {/* CLICKABLE CONTENT ONLY */}
+      <div className="cursor-pointer" onClick={() => onOpenDetails(id)}>
+        <h3 className="mt-6 text-lg font-semibold">{name}</h3>
 
-        {/* Progress Bar */}
-        <div className="h-2 bg-muted rounded-full overflow-hidden">
-          <div
-            className="h-full bg-secondary transition-all"
-            style={{ width: `${usagePercent}%` }}
-          />
+        <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+          <MapPin size={14} /> {location}
+        </p>
+
+        <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <Layers size={14} />
+            Capacity: <strong>{capacity}</strong>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <User size={14} />
+            Manager: <strong>{managerName ?? "Unassigned"}</strong>
+          </div>
         </div>
       </div>
 
-      {/* Manager */}
-      <div className="mt-4 flex items-center justify-between text-sm">
-        <span className="flex items-center gap-1 text-muted-foreground">
-          <User size={14} /> Manager
-        </span>
-        <span className="font-medium">{manager || "Unassigned"}</span>
-      </div>
-
-      {/* Actions */}
-      <div className="mt-5 flex flex-wrap gap-2">
-        {!manager ? (
-          <>
-            <Button
-              size="sm"
-              className="bg-secondary text-black hover:bg-primary"
-              onClick={() => setShowAssign(!showAssign)}
-            >
-              Assign Manager
-            </Button>
-
-            {showAssign && (
-              <select className="border rounded-lg px-3 py-1 text-sm bg-background">
-                <option>Select Manager</option>
-                <option>John</option>
-                <option>Sarah</option>
-              </select>
-            )}
-          </>
-        ) : (
-          <Button size="sm" variant="destructive">
-            Suspend Garage
+      {/* ASSIGN MANAGER */}
+      {isActive && isUnassigned && (
+        <div className="mt-5">
+          <Button
+            size="sm"
+            className="w-full"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAssignManager(id);
+            }}
+          >
+            Assign Manager
           </Button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

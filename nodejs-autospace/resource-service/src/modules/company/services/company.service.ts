@@ -1,6 +1,9 @@
+import axios from "axios";
 import { AppDataSource } from "../../../db/data-source";
 import { Company, CompanyStatus } from "../entities/company.entity";
 import { CreateCompanyInput } from "@autospace/shared";
+import { Garage } from "../../garage/entities/garage.entity";
+import { ILike } from "typeorm";
 
 export const createCompany = async (
   ownerUserId: string,
@@ -121,17 +124,80 @@ export const getCompanyById = async (id: string) => {
   return company;
 };
 
-export const getAllCompanies = async (page = 1, limit = 10) => {
-  const repo = AppDataSource.getRepository(Company);
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL;
 
-  const [data, total] = await repo.findAndCount({
+export const getAllCompanies = async (
+  page = 1,
+  limit = 10,
+  search?: string,
+  status?: string,
+) => {
+  const companyRepo = AppDataSource.getRepository(Company);
+  const garageRepo = AppDataSource.getRepository(Garage);
+
+  const where: any = {};
+
+  if (search) {
+    where.companyName = ILike(`%${search}%`);
+  }
+
+  if (status) {
+    where.status = status.toLowerCase();
+  }
+
+  const [companies, total] = await companyRepo.findAndCount({
+    where,
+    order: { createdAt: "DESC" },
     skip: (page - 1) * limit,
     take: limit,
-    order: { createdAt: "DESC" },
   });
 
+  const enriched = await Promise.all(
+    companies.map(async (company) => {
+      let ownerName = "Unknown";
+
+      try {
+        const res = await axios.get(
+          `${AUTH_SERVICE_URL}/internal/users/${company.ownerUserId}`,
+          {
+            headers: {
+              "x-user-id": "resource-service",
+              "x-user-role": "SERVICE",
+            },
+          },
+        );
+
+        ownerName = res.data?.data?.fullname || "Unknown";
+      } catch (err) {
+        console.error("Owner fetch failed:", err);
+      }
+
+      const garagesCount = await garageRepo.count({
+        where: { companyId: company.id },
+      });
+
+      return {
+        companyId: company.id,
+        companyCode: company.businessRegistrationNumber,
+        companyName: company.companyName,
+
+        ownerName,
+
+        contactEmail: company.contactEmail,
+        contactPhone: company.contactPhone,
+        businessLocation: company.businessLocation,
+
+        garagesCount,
+
+        status: company.status.toUpperCase(),
+
+        createdAt: company.createdAt,
+      };
+    }),
+  );
+
   return {
-    data,
+    data: enriched,
     meta: {
       total,
       page,

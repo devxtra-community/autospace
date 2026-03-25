@@ -1,10 +1,13 @@
-// services/valet.service.ts
-
 import { AppDataSource } from "../../../db/data-source";
-import { Valet, ValetEmployementStatus } from "../entities/valets.entity";
+import {
+  Valet,
+  ValetAvailabilityStatus,
+  ValetEmployementStatus,
+} from "../entities/valets.entity";
 import { Garage } from "../../garage/entities/garage.entity";
+import axios from "axios";
+import { publishEvent } from "../../../config/rabbitmq";
 
-// Approve valet
 export const approveValetService = async (
   valetId: string,
   managerUserId: string,
@@ -12,41 +15,32 @@ export const approveValetService = async (
   const valetRepo = AppDataSource.getRepository(Valet);
   const garageRepo = AppDataSource.getRepository(Garage);
 
-  // 1. Find valet
   const valet = await valetRepo.findOne({
     where: { id: valetId },
   });
 
-  if (!valet) {
-    throw new Error("Valet not found");
-  }
+  if (!valet) throw new Error("Valet not found");
 
-  // 2. Check if already processed
   if (valet.employmentStatus !== ValetEmployementStatus.PENDING) {
     throw new Error(`Valet is already ${valet.employmentStatus.toLowerCase()}`);
   }
 
-  // 3. Verify manager is assigned to this garage
   const garage = await garageRepo.findOne({
     where: { id: valet.garageId },
   });
 
-  if (!garage) {
-    throw new Error("Garage not found");
-  }
+  if (!garage) throw new Error("Garage not found");
 
   if (garage.managerId !== managerUserId) {
     throw new Error("You are not the manager of this garage");
   }
 
-  // 4. Approve valet
   valet.employmentStatus = ValetEmployementStatus.ACTIVE;
   valet.approvedBy = managerUserId;
 
   return await valetRepo.save(valet);
 };
 
-// Reject valet
 export const rejectValetService = async (
   valetId: string,
   managerUserId: string,
@@ -54,89 +48,320 @@ export const rejectValetService = async (
   const valetRepo = AppDataSource.getRepository(Valet);
   const garageRepo = AppDataSource.getRepository(Garage);
 
-  // 1. Find valet
   const valet = await valetRepo.findOne({
     where: { id: valetId },
   });
 
-  if (!valet) {
-    throw new Error("Valet not found");
-  }
+  if (!valet) throw new Error("Valet not found");
 
-  // 2. Check if already processed
   if (valet.employmentStatus !== ValetEmployementStatus.PENDING) {
     throw new Error(`Valet is already ${valet.employmentStatus.toLowerCase()}`);
   }
 
-  // 3. Verify manager is assigned to this garage
   const garage = await garageRepo.findOne({
     where: { id: valet.garageId },
   });
 
-  if (!garage) {
-    throw new Error("Garage not found");
-  }
+  if (!garage) throw new Error("Garage not found");
 
   if (garage.managerId !== managerUserId) {
     throw new Error("You are not the manager of this garage");
   }
 
-  // 4. Reject valet
   valet.employmentStatus = ValetEmployementStatus.REJECTED;
   valet.approvedBy = managerUserId;
 
   return await valetRepo.save(valet);
 };
 
-// Get valets by garage (for manager)
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL!;
+
+type SimpleUser = {
+  id: string;
+  fullname: string;
+  email: string;
+  phone: string;
+};
+
+interface Filters {
+  page?: number;
+  limit?: number;
+  employmentStatus?: ValetEmployementStatus;
+  availabilityStatus?: ValetAvailabilityStatus;
+  search?: string;
+}
+
 export const getValetsByGarageService = async (
   garageId: string,
   managerUserId: string,
-  filters: {
-    status?: ValetEmployementStatus;
-    page: number;
-    limit: number;
-  },
+  filters: Filters,
 ) => {
   const valetRepo = AppDataSource.getRepository(Valet);
   const garageRepo = AppDataSource.getRepository(Garage);
 
-  // 1. Verify manager owns this garage
   const garage = await garageRepo.findOne({
     where: { id: garageId },
   });
 
-  if (!garage) {
-    throw new Error("Garage not found");
-  }
+  if (!garage) throw new Error("Garage not found");
 
-  if (garage.managerId !== managerUserId) {
-    throw new Error("You are not the manager of this garage");
-  }
+  if (garage.managerId !== managerUserId) throw new Error("Not manager");
 
-  // 2. Build query
-  const where: any = { garageId };
-  if (filters.status) {
-    where.employmentStatus = filters.status;
-  }
+  const page = filters.page || 1;
+  const limit = filters.limit || 10;
+  const skip = (page - 1) * limit;
 
-  const skip = (filters.page - 1) * filters.limit;
+  const where: any = {
+    garageId,
+  };
 
-  // 3. Get valets with count
-  const [data, total] = await valetRepo.findAndCount({
+  if (filters.employmentStatus)
+    where.employmentStatus = filters.employmentStatus;
+
+  if (filters.availabilityStatus)
+    where.availabilityStatus = filters.availabilityStatus;
+
+  const [valets, total] = await valetRepo.findAndCount({
     where,
     skip,
-    take: filters.limit,
-    order: { createdAt: "DESC" },
+    take: limit,
+    order: {
+      createdAt: "DESC",
+    },
   });
+
+  const users: SimpleUser[] = await Promise.all(
+    valets.map(async (valet) => {
+      try {
+        const res = await axios.get(
+          `${AUTH_SERVICE_URL}/internal/users/${valet.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
+              "x-user-id": "resource-service",
+              "x-user-role": "SERVICE",
+            },
+          },
+        );
+
+        return res.data.data;
+      } catch {
+        return {
+          id: valet.id,
+          fullname: "",
+          email: "",
+          phone: "",
+        };
+      }
+    }),
+  );
+
+  let data = valets.map((valet) => {
+    const user = users.find((u) => u.id === valet.id);
+
+    return {
+      id: valet.id,
+      name: user?.fullname || "",
+      email: user?.email || "",
+      phone: user?.phone || "",
+      employmentStatus: valet.employmentStatus,
+      availabilityStatus: valet.availabilityStatus,
+      createdAt: valet.createdAt,
+    };
+  });
+
+  if (filters.search) {
+    const s = filters.search.toLowerCase();
+
+    data = data.filter(
+      (v) =>
+        v.name.toLowerCase().includes(s) ||
+        v.email.toLowerCase().includes(s) ||
+        v.phone.toLowerCase().includes(s),
+    );
+  }
 
   return {
     data,
+
     meta: {
-      page: filters.page,
-      limit: filters.limit,
+      page,
+      limit,
       total,
-      totalPages: Math.ceil(total / filters.limit),
+      totalPages: Math.ceil(total / limit),
     },
   };
+};
+
+export const getAvailableValetService = async (
+  garageId: string,
+  excludeIds?: string[],
+) => {
+  const valetRepo = AppDataSource.getRepository(Valet);
+
+  const query = valetRepo
+    .createQueryBuilder("valet")
+    .where("valet.garageId = :garageId", { garageId })
+    .andWhere("valet.employmentStatus = :employmentStatus", {
+      employmentStatus: ValetEmployementStatus.ACTIVE,
+    })
+    .andWhere("valet.availabilityStatus = :availabilityStatus", {
+      availabilityStatus: ValetAvailabilityStatus.AVAILABLE,
+    })
+    .orderBy("valet.createdAt", "ASC") // oldest first
+    .limit(1);
+
+  if (excludeIds?.length) {
+    query.andWhere("valet.id NOT IN (:...excludeIds)", {
+      excludeIds,
+    });
+  }
+
+  const valet = await query.getOne();
+
+  if (!valet) return null;
+
+  // fetch user
+  try {
+    const res = await axios.get(
+      `${AUTH_SERVICE_URL}/internal/users/${valet.id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
+          "x-user-id": "booking-service",
+          "x-user-role": "SERVICE",
+        },
+      },
+    );
+
+    const user = res.data.data;
+
+    return {
+      id: valet.id,
+      name: user?.fullname ?? "",
+      phone: user?.phone ?? "",
+      availabilityStatus: valet.availabilityStatus,
+      employmentStatus: valet.employmentStatus,
+      garageId: valet.garageId,
+    };
+  } catch {
+    return {
+      id: valet.id,
+      name: "",
+      phone: "",
+      availabilityStatus: valet.availabilityStatus,
+      employmentStatus: valet.employmentStatus,
+      garageId: valet.garageId,
+    };
+  }
+};
+export const markValetBusyService = async (
+  valetId: string,
+  bookingId: string,
+) => {
+  const valetRepo = AppDataSource.getRepository(Valet);
+
+  const valet = await valetRepo.findOne({
+    where: { id: valetId },
+  });
+
+  if (!valet) throw new Error("Valet not found");
+
+  if (valet.availabilityStatus !== ValetAvailabilityStatus.AVAILABLE) {
+    throw new Error("Valet not available");
+  }
+
+  valet.availabilityStatus = ValetAvailabilityStatus.BUSY;
+  valet.currentBookingId = bookingId;
+
+  return await valetRepo.save(valet);
+};
+
+export const getAllActiveValetsService = async (garageId: string) => {
+  const valetRepo = AppDataSource.getRepository(Valet);
+
+  const valets = await valetRepo.find({
+    where: {
+      garageId,
+      employmentStatus: ValetEmployementStatus.ACTIVE,
+      availabilityStatus: ValetAvailabilityStatus.AVAILABLE,
+    },
+    order: {
+      createdAt: "ASC",
+    },
+  });
+
+  const users = await Promise.all(
+    valets.map(async (valet) => {
+      try {
+        const res = await axios.get(
+          `${process.env.AUTH_SERVICE_URL}/internal/users/${valet.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
+              "x-user-id": "booking-service",
+              "x-user-role": "SERVICE",
+            },
+          },
+        );
+
+        return res.data.data;
+      } catch {
+        return null;
+      }
+    }),
+  );
+
+  return valets.map((valet, index) => {
+    const user = users[index];
+
+    return {
+      id: valet.id,
+      name: user?.fullname || "",
+      phone: user?.phone || "",
+      email: user?.email || "",
+      availabilityStatus: valet.availabilityStatus,
+      employmentStatus: valet.employmentStatus,
+      garageId: valet.garageId,
+    };
+  });
+};
+
+export const releaseValetService = async (valetId: string) => {
+  const valetRepo = AppDataSource.getRepository(Valet);
+
+  const valet = await valetRepo.findOne({
+    where: { id: valetId },
+  });
+
+  if (!valet) throw new Error("Valet not found");
+
+  valet.availabilityStatus = ValetAvailabilityStatus.AVAILABLE;
+  valet.currentBookingId = null;
+
+  return await valetRepo.save(valet);
+};
+
+export const assignValetToBooking = async (
+  bookingId: string,
+  garageId: string,
+) => {
+  const valet = await getAvailableValetService(garageId);
+
+  if (!valet) {
+    console.log("No available valet");
+    return;
+  }
+
+  const valetId = valet.id;
+
+  await publishEvent("valet.request.created", {
+    bookingId,
+    valetId,
+  });
+
+  console.log("Valet request created:", {
+    bookingId,
+    valetId,
+  });
 };

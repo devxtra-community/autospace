@@ -8,7 +8,7 @@ import { updateCompanyProfile } from "../services/company2.service";
 export const registerCompany = async (req: Request, res: Response) => {
   console.log("Incoming body:", req.body);
   try {
-    const ownerUserId = req.headers["x-user-id"] as string;
+    const ownerUserId = req.user.id;
     console.log("owner", ownerUserId);
 
     if (!ownerUserId) {
@@ -40,7 +40,7 @@ export const registerCompany = async (req: Request, res: Response) => {
 
 export const getMyCompany = async (req: Request, res: Response) => {
   try {
-    const ownerUserId = req.headers["x-user-id"] as string;
+    const ownerUserId = req.user.id;
 
     if (!ownerUserId) {
       return res.status(401).json({
@@ -89,8 +89,10 @@ export const getAllCompaniesController = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
+    const page = req.query.page ? Number(req.query.page) : 1;
+    const limit = req.query.limit ? Number(req.query.limit) : 10;
+    const search = req.query.search ? String(req.query.search) : undefined;
+    const status = req.query.status ? String(req.query.status) : undefined;
 
     if (page < 1 || limit < 1) {
       return res.status(400).json({
@@ -99,11 +101,10 @@ export const getAllCompaniesController = async (
       });
     }
 
-    const result = await getAllCompanies(page, limit);
+    const result = await getAllCompanies(page, limit, search, status);
 
     return res.status(200).json({
       success: true,
-      message: "Companies fetched successfully",
       data: result.data,
       meta: result.meta,
     });
@@ -116,7 +117,6 @@ export const getAllCompaniesController = async (
     });
   }
 };
-
 export const updateCompanyProfileController = async (
   req: Request,
   res: Response,

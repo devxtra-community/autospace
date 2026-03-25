@@ -2,9 +2,15 @@ import { AppDataSource } from "../../../db/data-source";
 import { Garage, GarageStatus } from "../entities/garage.entity";
 import { Company, CompanyStatus } from "../../company/entities/company.entity";
 import axios from "axios";
+import { GarageSlot } from "../entities/garage-slot.entity";
+import { GarageFloor } from "../entities/garage-floor.entity";
+import {
+  Valet,
+  ValetEmployementStatus,
+} from "../../valets/entities/valets.entity";
+import { ILike } from "typeorm";
 
-const AUTH_SERVICE_URL =
-  process.env.AUTH_SERVICE_URL || "http://localhost:4001/api/manager";
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL!;
 
 export const assignManagerToGarage = async (
   ownerUserId: string,
@@ -21,9 +27,7 @@ export const assignManagerToGarage = async (
     },
   });
 
-  if (!company) {
-    throw new Error("Active company not found for owner");
-  }
+  if (!company) throw new Error("Active company not found");
 
   const garage = await garageRepo.findOne({
     where: {
@@ -33,68 +37,219 @@ export const assignManagerToGarage = async (
     },
   });
 
-  if (!garage) {
-    throw new Error("Garage not found or not active");
-  }
+  if (!garage) throw new Error("Garage not found");
 
-  if (garage.managerId) {
-    throw new Error("Garage already has a manager");
-  }
+  if (garage.managerId) throw new Error("Garage already has manager");
 
-  const { data: manager } = await axios.get(
-    `${AUTH_SERVICE_URL}/internal/${managerId}`,
+  // FIXED endpoint
+  const res = await axios.get(
+    `${AUTH_SERVICE_URL}/internal/users/${managerId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
+        "x-user-id": "resource-service",
+        "x-user-role": "SERVICE",
+      },
+    },
   );
 
-  if (manager.role !== "manager") {
-    throw new Error("User is not a manager");
-  }
+  const manager = res.data.data;
 
-  if (manager.companyId !== company.id) {
-    throw new Error("Manager does not belong to this company");
-  }
+  if (!manager) throw new Error("Manager not found");
 
-  if (manager.managerState !== "unassigned") {
+  if (manager.role !== "manager") throw new Error("User is not manager");
+
+  if (manager.companyId !== company.id)
+    throw new Error("Manager not from this company");
+
+  if (manager.managerState !== "unassigned")
     throw new Error("Manager already assigned");
-  }
 
   garage.managerId = managerId;
+
   await garageRepo.save(garage);
 
-  await axios.post(`${AUTH_SERVICE_URL}/internal/${managerId}/assign`);
+  try {
+    await axios.post(
+      `${AUTH_SERVICE_URL}/internal/users/${managerId}/assign`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
+          "x-user-id": "resource-service",
+          "x-user-role": "SERVICE",
+        },
+      },
+    );
+  } catch (error) {
+    // ROLLBACK: If Auth service call fails, remove managerId from garage
+    console.error(
+      "Failed to assign manager in Auth service, rolling back Resource service change",
+      error,
+    );
+    garage.managerId = null;
+    await garageRepo.save(garage);
+    throw new Error(
+      "Failed to synchronize manager assignment with Auth service",
+    );
+  }
 
   return {
-    garageCode: garage.garageRegistrationNumber,
+    garageCode,
     managerId,
-    message: "Manager assigned to garage successfully",
   };
 };
 
-export const getGarageById = async (id: string) => {
+export const getGarageById = async (garageId: string) => {
   const repo = AppDataSource.getRepository(Garage);
 
   const garage = await repo.findOne({
-    where: { id },
+    where: { id: garageId },
   });
 
   if (!garage) {
     throw new Error("Garage not found");
   }
 
-  return garage;
+  if (!garage.managerId) {
+    return {
+      ...garage,
+      manager: null,
+    };
+  }
+
+  try {
+    const res = await axios.get(
+      `${AUTH_SERVICE_URL}/internal/users/${garage.managerId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
+          "x-user-id": "resource-service",
+          "x-user-role": "SERVICE",
+        },
+      },
+    );
+
+    const user = res.data?.data;
+
+    return {
+      ...garage,
+      valetServiceRadius: garage.valetServiceRadius,
+      manager: user
+        ? {
+            fullname: user.fullname || user.email || "Manager",
+          }
+        : null,
+    };
+  } catch {
+    return {
+      ...garage,
+      valetServiceRadius: garage.valetServiceRadius,
+      manager: null,
+    };
+  }
 };
 
-export const getAllGarages = async (page = 1, limit = 10) => {
-  const repo = AppDataSource.getRepository(Garage);
+export const getAllGarages = async (
+  page = 1,
+  limit = 10,
+  search?: string,
+  status?: string,
+) => {
+  const garageRepo = AppDataSource.getRepository(Garage);
+  const floorRepo = AppDataSource.getRepository(GarageFloor);
+  const slotRepo = AppDataSource.getRepository(GarageSlot);
+  const valetRepo = AppDataSource.getRepository(Valet);
 
-  const [data, total] = await repo.findAndCount({
+  const where: any = {};
+
+  // search filter
+  if (search) {
+    where.name = ILike(`%${search}%`);
+  }
+
+  // status filter
+  if (status && status !== "all") {
+    where.status = status;
+  }
+
+  const [garages, total] = await garageRepo.findAndCount({
+    where,
     skip: (page - 1) * limit,
     take: limit,
-    // valetAvailable : valetAvailable,
     order: { createdAt: "DESC" },
   });
 
+  const enriched = await Promise.all(
+    garages.map(async (garage) => {
+      let managerName = "Not assigned";
+
+      if (garage.managerId) {
+        try {
+          const res = await axios.get(
+            `${AUTH_SERVICE_URL}/internal/users/${garage.managerId}`,
+            {
+              headers: {
+                "x-user-id": "resource-service",
+                "x-user-role": "SERVICE",
+              },
+            },
+          );
+
+          managerName = res.data?.data?.fullname || "Unknown";
+        } catch {
+          managerName = "Unknown";
+        }
+      }
+
+      const floorCount = await floorRepo.count({
+        where: { garageId: garage.id },
+      });
+
+      const slotCount = await slotRepo
+        .createQueryBuilder("slot")
+        .innerJoin("slot.floor", "floor")
+        .where("floor.garageId = :garageId", {
+          garageId: garage.id,
+        })
+        .getCount();
+
+      const valetCount = await valetRepo.count({
+        where: {
+          garageId: garage.id,
+          employmentStatus: ValetEmployementStatus.ACTIVE,
+        },
+      });
+
+      return {
+        garageId: garage.id,
+        garageCode: garage.garageRegistrationNumber,
+        name: garage.name,
+
+        managerName,
+
+        contactEmail: garage.contactEmail,
+        contactPhone: garage.contactPhone,
+
+        locationName: garage.locationName,
+
+        capacity: garage.capacity,
+
+        floorCount,
+        slotCount,
+        valetCount,
+
+        status: garage.status,
+        createdAt: garage.createdAt,
+        valetServiceRadius: garage.valetServiceRadius,
+
+        companyId: garage.companyId,
+      };
+    }),
+  );
+
   return {
-    data,
+    data: enriched,
     meta: {
       total,
       page,
@@ -104,22 +259,100 @@ export const getAllGarages = async (page = 1, limit = 10) => {
   };
 };
 
+interface GarageFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  managerFilter?: "assigned" | "unassigned";
+}
+
 export const getGaragesByCompanyId = async (
   companyId: string,
-  page = 1,
-  limit = 10,
+  filters: GarageFilters,
 ) => {
   const repo = AppDataSource.getRepository(Garage);
 
-  const [data, total] = await repo.findAndCount({
-    where: { companyId },
-    skip: (page - 1) * limit,
-    take: limit,
-    order: { createdAt: "DESC" },
-  });
+  const page = filters.page || 1;
+  const limit = filters.limit || 10;
+  const search = filters.search;
+  const status = filters.status;
+
+  const qb = repo
+    .createQueryBuilder("garage")
+    .where("garage.companyId = :companyId", { companyId });
+
+  /* SEARCH */
+  if (search) {
+    qb.andWhere(
+      `(LOWER(garage.name) LIKE :search
+        OR LOWER(garage.locationName) LIKE :search
+        OR LOWER(garage.garageRegistrationNumber) LIKE :search)`,
+      { search: `%${search.toLowerCase()}%` },
+    );
+  }
+
+  if (filters.managerFilter === "assigned") {
+    qb.andWhere("garage.managerId IS NOT NULL");
+  }
+
+  if (filters.managerFilter === "unassigned") {
+    qb.andWhere("garage.managerId IS NULL");
+  }
+
+  /* STATUS FILTER */
+  if (status) {
+    qb.andWhere("garage.status = :status", { status });
+  }
+
+  qb.orderBy("garage.createdAt", "DESC")
+    .skip((page - 1) * limit)
+    .take(limit);
+
+  const [garages, total] = await qb.getManyAndCount();
+
+  /* ENRICH MANAGER */
+  const enriched = await Promise.all(
+    garages.map(async (garage) => {
+      if (!garage.managerId) {
+        return { ...garage, manager: null };
+      }
+
+      try {
+        const res = await axios.get(
+          `${AUTH_SERVICE_URL}/internal/users/${garage.managerId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
+              "x-user-id": "resource-service",
+              "x-user-role": "SERVICE",
+            },
+          },
+        );
+
+        const user = res.data?.data;
+
+        return {
+          ...garage,
+          valetServiceRadius: garage.valetServiceRadius,
+          manager: user
+            ? {
+                fullname: user.fullname || user.email || "Manager",
+              }
+            : null,
+        };
+      } catch {
+        return {
+          ...garage,
+          valetServiceRadius: garage.valetServiceRadius,
+          manager: null,
+        };
+      }
+    }),
+  );
 
   return {
-    data,
+    data: enriched,
     meta: {
       total,
       page,

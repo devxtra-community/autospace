@@ -65,7 +65,7 @@ export const getPendingValetsService = async (
   limit: number = 10,
 ) => {
   return await getValetsByGarageService(garageId, managerUserId, {
-    status: ValetEmployementStatus.PENDING,
+    employmentStatus: ValetEmployementStatus.PENDING,
     page,
     limit,
   });

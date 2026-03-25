@@ -28,19 +28,43 @@ export const approveGarage = async (id: number | string) => {
 };
 
 export const rejectGarage = async (id: number | string) => {
-  const res = await apiClient.put(`/api/admin/garages/${id}/reject`);
+  const res = await apiClient.put(`/api/garages/admin/${id}/reject`);
   return res.data;
 };
 
-export const getCompanyAdmin = async () => {
-  const res = await apiClient.get("/api/companies/admin/all");
-  console.log("all companies", res.data);
+export const blockGarage = async (id: number | string) => {
+  const res = await apiClient.patch(`/api/garages/admin/${id}/block`);
   return res.data;
 };
 
-export const getGarageAdmin = async () => {
-  const res = await apiClient.get("api/garages/admin/all");
-  console.log("all garages", res.data);
+export const unblockGarage = async (id: number | string) => {
+  const res = await apiClient.patch(`/api/garages/admin/${id}/unblock`);
+  return res.data;
+};
+
+export const getCompanyAdmin = async (params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}) => {
+  const res = await apiClient.get("/api/companies/admin/all", {
+    params,
+  });
+
+  return res.data;
+};
+
+export const getGarageAdmin = async (params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}) => {
+  const res = await apiClient.get("/api/garages/admin/all", {
+    params,
+  });
+
   return res.data;
 };
 
@@ -52,5 +76,23 @@ export const getAllUsersService = async (params?: {
   status?: string;
 }) => {
   const res = await apiClient.get("api/auth/admin/allusers", { params });
+  return res.data;
+  // console.log("users", res.data);
+};
+
+export const getUserLoginStats = async () => {
+  const res = await apiClient.get("/api/auth/admin/user/stats");
+  console.log("user login stats", res.data);
+  return res.data;
+};
+
+export const updateUserStatus = async (
+  userId: string,
+  status: "ACTIVE" | "REJECTED",
+) => {
+  const res = await apiClient.patch(`/api/auth/admin/update/user/${userId}`, {
+    status,
+  });
+
   return res.data;
 };

@@ -14,7 +14,12 @@ import {
   Building2,
   Warehouse,
 } from "lucide-react";
-import { registerOwner } from "@/lib/auth.api";
+import {
+  registerUser,
+  registerOwner,
+  registerManager,
+  registerValet,
+} from "@/lib/auth.api";
 import type { RegisterApiInput } from "@autospace/shared/auth/register.schema";
 
 interface ApiErrorResponse {
@@ -75,7 +80,16 @@ export function RegisterForm({ role }: Props) {
         ...(role === "manager" && { garageId: Number(form.garageId) }),
       };
 
-      await registerOwner(payload);
+      if (role === "customer") {
+        await registerUser(payload);
+      } else if (role === "owner") {
+        await registerOwner(payload);
+      } else if (role === "manager") {
+        await registerManager(payload);
+      } else if (role === "valet") {
+        await registerValet(payload);
+      }
+
       window.location.href = "/login";
     } catch (err) {
       const axiosError = err as AxiosError<ApiErrorResponse>;

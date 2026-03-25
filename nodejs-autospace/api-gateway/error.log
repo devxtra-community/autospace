@@ -1,0 +1,53 @@
+/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/ts-node@10.9.2_@types+node@20.19.29_typescript@5.9.3/node_modules/ts-node/src/index.ts:859
+    return new TSError(diagnosticText, diagnosticCodes, diagnostics);
+           ^
+TSError: ⨯ Unable to compile TypeScript:
+src/routes/auth.proxy.ts(77,23): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'RateLimitRequestHandler' is not assignable to parameter of type 'RequestHandlerParams<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+      Type 'RateLimitRequestHandler' is not assignable to type 'RequestHandler<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+        Types of parameters 'req' and 'req' are incompatible.
+          Type 'import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-static-core@4.19.8/node_modules/@types/express-serve-static-core/index").Request<import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-static-core@4.19.8/node_modules/@typ...' is not assignable to type 'import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-static-core@5.1.1/node_modules/@types/express-serve-static-core/index").Request<import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-static-core@5.1.1/node_modules/@types...'.
+            The types of 'app.get' are incompatible between these types.
+              Type '((name: string) => any) & import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-static-core@4.19.8/node_modules/@types/express-serve-static-core/index").IRouterMatcher<import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-sta...' is not assignable to type '((name: string) => any) & import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-static-core@5.1.1/node_modules/@types/express-serve-static-core/index").IRouterMatcher<import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-stat...'.
+                Type '((name: string) => any) & IRouterMatcher<Application<Record<string, any>>, any>' is not assignable to type 'IRouterMatcher<Application<Record<string, any>>, any>'.
+                  Types of parameters 'name' and 'path' are incompatible.
+                    Type 'PathParams' is not assignable to type 'string'.
+                      Type 'RegExp' is not assignable to type 'string'.
+src/routes/auth.proxy.ts(78,26): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'RateLimitRequestHandler' is not assignable to parameter of type 'RequestHandlerParams<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+      Type 'RateLimitRequestHandler' is not assignable to type 'RequestHandler<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+        Types of parameters 'req' and 'req' are incompatible.
+          Type 'import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-static-core@4.19.8/node_modules/@types/express-serve-static-core/index").Request<import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-static-core@4.19.8/node_modules/@typ...' is not assignable to type 'import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-static-core@5.1.1/node_modules/@types/express-serve-static-core/index").Request<import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-static-core@5.1.1/node_modules/@types...'.
+            The types of 'app.get' are incompatible between these types.
+              Type '((name: string) => any) & import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-static-core@4.19.8/node_modules/@types/express-serve-static-core/index").IRouterMatcher<import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-sta...' is not assignable to type '((name: string) => any) & import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-static-core@5.1.1/node_modules/@types/express-serve-static-core/index").IRouterMatcher<import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-stat...'.
+                Type '((name: string) => any) & IRouterMatcher<Application<Record<string, any>>, any>' is not assignable to type 'IRouterMatcher<Application<Record<string, any>>, any>'.
+                  Types of parameters 'name' and 'path' are incompatible.
+                    Type 'PathParams' is not assignable to type 'string'.
+                      Type 'RegExp' is not assignable to type 'string'.
+src/routes/auth.proxy.ts(79,24): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'RateLimitRequestHandler' is not assignable to parameter of type 'RequestHandlerParams<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+      Type 'RateLimitRequestHandler' is not assignable to type 'RequestHandler<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+        Types of parameters 'req' and 'req' are incompatible.
+          Type 'import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-static-core@4.19.8/node_modules/@types/express-serve-static-core/index").Request<import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-static-core@4.19.8/node_modules/@typ...' is not assignable to type 'import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-static-core@5.1.1/node_modules/@types/express-serve-static-core/index").Request<import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-static-core@5.1.1/node_modules/@types...'.
+            The types of 'app.get' are incompatible between these types.
+              Type '((name: string) => any) & import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-static-core@4.19.8/node_modules/@types/express-serve-static-core/index").IRouterMatcher<import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-sta...' is not assignable to type '((name: string) => any) & import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-static-core@5.1.1/node_modules/@types/express-serve-static-core/index").IRouterMatcher<import("/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/@types+express-serve-stat...'.
+                Type '((name: string) => any) & IRouterMatcher<Application<Record<string, any>>, any>' is not assignable to type 'IRouterMatcher<Application<Record<string, any>>, any>'.
+                  Types of parameters 'name' and 'path' are incompatible.
+                    Type 'PathParams' is not assignable to type 'string'.
+                      Type 'RegExp' is not assignable to type 'string'.
+
+    at createTSError (/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/ts-node@10.9.2_@types+node@20.19.29_typescript@5.9.3/node_modules/ts-node/src/index.ts:859:12)
+    at reportTSError (/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/ts-node@10.9.2_@types+node@20.19.29_typescript@5.9.3/node_modules/ts-node/src/index.ts:863:19)
+    at getOutput (/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/ts-node@10.9.2_@types+node@20.19.29_typescript@5.9.3/node_modules/ts-node/src/index.ts:1077:36)
+    at Object.compile (/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/ts-node@10.9.2_@types+node@20.19.29_typescript@5.9.3/node_modules/ts-node/src/index.ts:1433:41)
+    at Module.m._compile (/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/ts-node@10.9.2_@types+node@20.19.29_typescript@5.9.3/node_modules/ts-node/src/index.ts:1617:30)
+    at node:internal/modules/cjs/loader:1893:10
+    at Object.require.extensions.<computed> [as .ts] (/home/rashiee/Desktop/devxtra/car parking/autospace/node_modules/.pnpm/ts-node@10.9.2_@types+node@20.19.29_typescript@5.9.3/node_modules/ts-node/src/index.ts:1621:12)
+    at Module.load (node:internal/modules/cjs/loader:1481:32)
+    at Module._load (node:internal/modules/cjs/loader:1300:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14) {
+  diagnosticCodes: [ 2769, 2769, 2769 ]
+}

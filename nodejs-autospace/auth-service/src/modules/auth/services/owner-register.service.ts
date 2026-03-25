@@ -36,3 +36,19 @@ export const registerOwner = async (data: OwnerRegisterDto) => {
     created_at: savedUser.created_at,
   };
 };
+
+// admin get user login stats
+
+export const getUserLoginStatsService = async () => {
+  const repo = AppDataSource.getRepository(User);
+
+  const result = await repo
+    .createQueryBuilder("user")
+    .select("TO_CHAR(user.created_at, 'Mon')", "month")
+    .addSelect("COUNT(user.id)", "users")
+    .groupBy("month")
+    .orderBy("MIN(user.created_at)", "ASC")
+    .getRawMany();
+
+  return result;
+};

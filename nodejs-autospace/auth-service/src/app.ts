@@ -3,12 +3,13 @@ import { globalErrorHandler } from "./middlewares/errorHandler";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { ownerRoutes, authRoutes, managerRoutes } from "./modules/auth";
+import internalUserRoutes from "./modules/auth/routes/internal-user.routes";
 
 const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: process.env.FRONTEND_URL!,
     credentials: true,
   }),
 );
@@ -28,5 +29,7 @@ app.get("/health", (req, res) => {
 app.use("/api/owner", ownerRoutes);
 app.use("/api/manager", managerRoutes);
 app.use("/api", authRoutes);
+app.use("/internal/users", internalUserRoutes);
 app.use(globalErrorHandler);
+
 export default app;

@@ -9,5 +9,9 @@ export const AppDataSource = new DataSource({
   },
   synchronize: false,
   logging: true,
-  entities: [__dirname + "/../modules/**/*.entity.{ts,js}"],
+  entities: [__dirname + "/../modules/**/*.entity.ts"],
 });
+
+setInterval(async () => {
+  await AppDataSource.query("SELECT 1");
+}, 300000);

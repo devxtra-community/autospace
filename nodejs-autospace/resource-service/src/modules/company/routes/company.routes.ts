@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
   getMyCompany,
   getAllCompaniesController,
-  getCompanyDetails,
+  // getCompanyDetails,
   registerCompany,
   updateCompanyProfileController,
 } from "../controllers/company.controller";
@@ -13,18 +13,24 @@ import {
 import { validateCreateCompany } from "../validators/company.validator";
 import { getPendingCompanies } from "../controllers/admin.company.controller";
 import { validateCompany } from "../controllers/internal.company.controller";
+import { internalAuth } from "../../../middlewares/internalAuth.middleware";
+import { getCompanyEmployeesController } from "../controllers/companyEmployee.controller";
 
 const router = Router();
 
-router.post("/create", validateCreateCompany, registerCompany);
-router.get("/my", getMyCompany);
+router.post("/create", internalAuth, validateCreateCompany, registerCompany);
+router.get("/my", internalAuth, getMyCompany);
 
-router.get("/admin/all", getAllCompaniesController);
-router.get("/admin/pending", getPendingCompanies);
-router.put("/admin/:id/active", approveCompany);
-router.put("/admin/:id/reject", rejectCompany);
-router.get("/:id", getCompanyDetails);
-router.put("/:id", updateCompanyProfileController);
+router.get("/admin/all", internalAuth, getAllCompaniesController);
+router.put("/admin/:id/active", internalAuth, approveCompany);
+router.put("/admin/:id/reject", internalAuth, rejectCompany);
+router.get("/admin/pending", internalAuth, getPendingCompanies);
+router.put("/:id", internalAuth, updateCompanyProfileController);
+router.get(
+  "/:companyId/employees",
+  internalAuth,
+  getCompanyEmployeesController,
+);
 
 // internal (resource service-to- auth service) check is company approved while manager registers
 
@@ -35,7 +41,5 @@ router.get(
   },
   validateCompany,
 );
-
-router.get("/:id", getCompanyDetails);
 
 export default router;

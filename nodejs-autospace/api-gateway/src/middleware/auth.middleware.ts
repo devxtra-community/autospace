@@ -39,10 +39,18 @@ export const authMiddleware = (
       return;
     }
 
-    // Verify token and attach to request
     const decoded = verifyAccessToken(token);
 
-    // Attach full payload to request
+    if (decoded.status === "rejected") {
+      sendAuthError(
+        res,
+        AuthErrorCode.TOKEN_INVALID,
+        "Account rejected. Contact admin.",
+        403,
+      );
+      return;
+    }
+
     req.user = {
       id: decoded.id,
       email: decoded.email,
@@ -53,6 +61,7 @@ export const authMiddleware = (
     req.headers["x-user-id"] = decoded.id;
     console.log("AUTH USER:", req.user);
     req.headers["x-user-role"] = decoded.role;
+    req.headers["x-user-email"] = decoded.email;
 
     next();
   } catch (error: unknown) {

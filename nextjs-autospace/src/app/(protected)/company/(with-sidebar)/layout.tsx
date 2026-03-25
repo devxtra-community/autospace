@@ -34,12 +34,12 @@ export default function CompanyWithSidebarLayout({
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-white flex">
       {/* Sidebar only for ACTIVE companies */}
       <Sidebar />
 
       {/* Main content */}
-      <div className="flex-1 md:ml-64 p-6">{children}</div>
+      <div className="flex-1 md:ml-80 p-6 bg-white">{children}</div>
     </div>
   );
 }

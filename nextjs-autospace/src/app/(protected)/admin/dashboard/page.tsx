@@ -2,44 +2,36 @@
 
 import { useEffect, useState } from "react";
 import {
-  getPendingCompanies,
-  getPendingGarages,
+  getAllUsersService,
+  getCompanyAdmin,
+  getGarageAdmin,
 } from "@/services/admin.service";
-import {
-  Loader2,
-  Building2,
-  Warehouse,
-  Users,
-  UserRound,
-  BarChart3,
-  TrendingUp,
-} from "lucide-react";
-
-// Extracted Components
-import { StatCard } from "@/components/admin/StatCard";
+import { Loader2, Building2, Warehouse, ArrowRight, Users } from "lucide-react";
+import Link from "next/link";
+import UserLoginChart from "@/components/admin/userLoginChart";
 
 export default function AdminOverviewPage() {
   const [stats, setStats] = useState({
-    pendingCompanies: 0,
-    pendingGarages: 0,
-    totalCompanies: 12, // Mock data
-    totalGarages: 28, // Mock data
+    companies: 0,
+    garages: 0,
+    users: 0,
   });
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [companiesData, garagesData] = await Promise.all([
-        getPendingCompanies(),
-        getPendingGarages(),
+      const [companiesData, garagesData, usersData] = await Promise.all([
+        getCompanyAdmin(),
+        getGarageAdmin(),
+        getAllUsersService(),
       ]);
       setStats({
-        pendingCompanies: companiesData.data?.length || 0,
-        pendingGarages: garagesData.data?.length || 0,
-        totalCompanies: 12, // Maintain mock for now as requested
-        totalGarages: 28,
+        companies: companiesData.meta?.total || 0,
+        garages: garagesData.meta?.total || 0,
+        users: usersData.meta.total || 0,
       });
+      // console.log("users", usersData);
     } catch (error) {
       console.error("Failed to fetch admin stats", error);
     } finally {
@@ -53,93 +45,109 @@ export default function AdminOverviewPage() {
 
   if (loading) {
     return (
-      <div className="flex h-[calc(100vh-64px)] w-full items-center justify-center bg-background">
-        <Loader2 className="h-10 w-10 animate-spin text-secondary" />
+      <div className="flex h-[calc(100vh-64px)] w-full items-center justify-center bg-[#fcfcfc]">
+        <Loader2 className="h-10 w-10 animate-spin text-gray-400" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen p-6 md:p-8 font-sans text-foreground">
-      <div className="mx-auto max-w-7xl space-y-8">
+    <div className="min-h-screen bg-[#fafafa] p-8 font-sans">
+      <div className="mx-auto max-w-6xl space-y-8">
+        {/* Header Section */}
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-foreground">
-            Admin <span className="text-secondary">Overview</span>
+          <h1 className="text-xl font-semibold text-gray-900 mb-1">
+            Dashboard
           </h1>
-          <p className="mt-2 text-lg text-muted-foreground">
-            High-level summary of the AutoSpace platform.
+          <div className="h-px bg-gray-200 w-full mb-8 mt-5"></div>
+
+          <h2 className="text-2xl font-semibold text-gray-900 mt-2 flex items-center">
+            Welcome Back, Admin
+          </h2>
+          <p className="mt-2 text-[15px] text-gray-500 font-medium">
+            Your Team's Success Starts Here.
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            title="Pending Companies"
-            value={stats.pendingCompanies}
-            icon={Building2}
-            colorClass="bg-indigo-500"
-          />
-          <StatCard
-            title="Pending Garages"
-            value={stats.pendingGarages}
-            icon={Warehouse}
-            colorClass="bg-orange-500"
-          />
-          <StatCard
-            title="Total Companies"
-            value={stats.totalCompanies}
-            icon={Building2}
-            colorClass="bg-secondary"
-          />
-          <StatCard
-            title="Total Garages"
-            value={stats.totalGarages}
-            icon={Warehouse}
-            colorClass="bg-pink-500"
-          />
-        </div>
-
-        {/* Charts / Activity Section */}
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex flex-col h-[400px]">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-secondary" />
-                Revenue Activity
-              </h3>
-              <span className="text-xs font-medium bg-secondary/10 text-secondary px-2 py-1 rounded-full">
-                Last 30 Days
-              </span>
-            </div>
-            <div className="flex-1 bg-muted/30 rounded-2xl flex items-center justify-center relative overflow-hidden">
-              <div className="absolute inset-0 opacity-10">
-                <BarChart3 className="h-full w-full p-10" />
+        {/* Metric Cards Section */}
+        <div className="grid gap-6 md:grid-cols-3">
+          {/* Companies Card */}
+          <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-gray-100 p-6 flex flex-col gap-5">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-[#2e9c74] text-white">
+                <Building2 className="w-6 h-6" />
               </div>
-              <p className="text-muted-foreground font-medium z-10">
-                Revenue data chart placeholder
-              </p>
+              <div>
+                <h3 className="text-[22px] font-bold text-gray-900 leading-none mb-1">
+                  {stats.companies.toString().padStart(3, "0")}
+                </h3>
+                <p className="text-[13px] text-gray-500 font-medium">
+                  Companies
+                </p>
+              </div>
+            </div>
+            <div className="border-t border-dashed border-gray-200 pt-4 flex items-center justify-between mt-1">
+              <Link
+                href="/admin/companies"
+                className="text-[13px] text-gray-500 font-semibold hover:text-gray-900 transition-colors"
+              >
+                View details
+              </Link>
+              <ArrowRight className="w-4 h-4 text-gray-500" />
             </div>
           </div>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex flex-col h-[400px]">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                <Users className="h-5 w-5 text-secondary" />
-                User Registrations
-              </h3>
-              <span className="text-xs font-medium bg-secondary/10 text-secondary px-2 py-1 rounded-full">
-                Weekly Growth
-              </span>
-            </div>
-            <div className="flex-1 bg-muted/30 rounded-2xl flex items-center justify-center relative overflow-hidden">
-              <div className="absolute inset-0 opacity-10">
-                <UserRound className="h-full w-full p-10" />
+          {/* Garages Card */}
+          <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-gray-100 p-6 flex flex-col gap-5">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-[#4567e9] text-white">
+                <Warehouse className="w-6 h-6" />
               </div>
-              <p className="text-muted-foreground font-medium z-10">
-                Registration trends placeholder
-              </p>
+              <div>
+                <h3 className="text-[22px] font-bold text-gray-900 leading-none mb-1">
+                  {stats.garages.toString().padStart(3, "0")}
+                </h3>
+                <p className="text-[13px] text-gray-500 font-medium">Garages</p>
+              </div>
+            </div>
+            <div className="border-t border-dashed border-gray-200 pt-4 flex items-center justify-between mt-1">
+              <Link
+                href="/admin/garages"
+                className="text-[13px] text-gray-500 font-semibold hover:text-gray-900 transition-colors"
+              >
+                View details
+              </Link>
+              <ArrowRight className="w-4 h-4 text-gray-500" />
+            </div>
+          </div>
+
+          {/* Users Card */}
+          <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-gray-100 p-6 flex flex-col gap-5">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-[#ff7c42] text-white">
+                <Users className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-[22px] font-bold text-gray-900 leading-none mb-1">
+                  {stats.users.toString().padStart(3, "0")}
+                </h3>
+                <p className="text-[13px] text-gray-500 font-medium">Users</p>
+              </div>
+            </div>
+            <div className="border-t border-dashed border-gray-200 pt-4 flex items-center justify-between mt-1">
+              <Link
+                href="/admin/users"
+                className="text-[13px] text-gray-500 font-semibold hover:text-gray-900 transition-colors"
+              >
+                View details
+              </Link>
+              <ArrowRight className="w-4 h-4 text-gray-500" />
             </div>
           </div>
         </div>
+
+        {/* Chart Section */}
+        <UserLoginChart />
       </div>
     </div>
   );
