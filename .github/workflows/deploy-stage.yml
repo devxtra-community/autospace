@@ -27,8 +27,8 @@ jobs:
           echo "Deploying API Gateway..."
           cd ~/autospace
           git fetch origin
-          git checkout stage
-          git pull origin stage
+          git reset --hard origin/stage
+          git clean -fd
 
           cd nodejs-autospace/api-gateway
           pnpm install
