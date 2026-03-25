@@ -1,7 +1,6 @@
 import "reflect-metadata";
-import express from "express";
+import "dotenv/config";
 import app from "./app.js";
-import dotenv from "dotenv";
 import { logger } from "./utils/logger.js";
 import { AppDataSource } from "./data-source.js";
 import { startPendingExpiryJob } from "./jobs/pendingExpiry.jobs.js";
@@ -12,8 +11,6 @@ import { connectRedis } from "./config/redis.js";
 import { connectRabbit } from "./config/rabbitmq.js";
 import { startValetAssignedConsumer } from "./config/valet.consumer.js";
 import { startValetRequestedConsumer } from "./config/valetRequest.Consumer.js";
-
-dotenv.config();
 
 const requiredEnv = [
   "DATABASE_URL",
