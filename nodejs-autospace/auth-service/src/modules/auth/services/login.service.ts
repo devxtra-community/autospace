@@ -54,7 +54,7 @@ export const loginUser = async (
       // Wait, there's no axios import at top. I'll add the check using a dynamically imported axios or require.
       const axios = require("axios");
       const response = await axios.get(
-        `${process.env.RESOURCE_SERVICE_URL || "http://localhost:4003"}/garages/internal/users/${user.id}/status`,
+        `${process.env.RESOURCE_SERVICE_URL}/garages/internal/users/${user.id}/status`,
         {
           headers: {
             "x-user-id": "auth-service",

@@ -8,8 +8,7 @@ import { UserRole } from "../constants/role.enum";
 
 const router = Router();
 
-const AUTH_SERVICE_URL =
-  process.env.AUTH_SERVICE_URL || "http://localhost:4001";
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL!;
 
 router.use(express.json());
 router.use(express.urlencoded({ extended: true }));

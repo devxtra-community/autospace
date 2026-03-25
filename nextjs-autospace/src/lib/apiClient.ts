@@ -1,8 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { toast } from "sonner";
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 if (!BASE_URL) {
   throw new Error("base url in env not defined");

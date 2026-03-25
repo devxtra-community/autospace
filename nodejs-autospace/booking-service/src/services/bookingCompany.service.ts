@@ -29,6 +29,7 @@ export const getCompanyBookingsService = async (
     `${RESOURCE_SERVICE_URL}/garages/byCompany/${companyId}`,
     {
       headers: {
+        Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
         "x-user-id": "booking-service",
         "x-user-role": "SERVICE",
       },
@@ -134,6 +135,7 @@ export const getCompanyBookingsService = async (
           `${AUTH_SERVICE_URL}/internal/users/${b.userId}`,
           {
             headers: {
+              Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
               "x-user-id": "booking-service",
               "x-user-role": "SERVICE",
             },

@@ -10,8 +10,7 @@ import {
 } from "../../valets/entities/valets.entity";
 import { ILike } from "typeorm";
 
-const AUTH_SERVICE_URL =
-  process.env.AUTH_SERVICE_URL || "http://localhost:4001/api/manager";
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL!;
 
 export const assignManagerToGarage = async (
   ownerUserId: string,
@@ -47,6 +46,7 @@ export const assignManagerToGarage = async (
     `${AUTH_SERVICE_URL}/internal/users/${managerId}`,
     {
       headers: {
+        Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
         "x-user-id": "resource-service",
         "x-user-role": "SERVICE",
       },
@@ -69,16 +69,30 @@ export const assignManagerToGarage = async (
 
   await garageRepo.save(garage);
 
-  await axios.post(
-    `${AUTH_SERVICE_URL}/internal/users/${managerId}/assign`,
-    {},
-    {
-      headers: {
-        "x-user-id": "resource-service",
-        "x-user-role": "SERVICE",
+  try {
+    await axios.post(
+      `${AUTH_SERVICE_URL}/internal/users/${managerId}/assign`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
+          "x-user-id": "resource-service",
+          "x-user-role": "SERVICE",
+        },
       },
-    },
-  );
+    );
+  } catch (error) {
+    // ROLLBACK: If Auth service call fails, remove managerId from garage
+    console.error(
+      "Failed to assign manager in Auth service, rolling back Resource service change",
+      error,
+    );
+    garage.managerId = null;
+    await garageRepo.save(garage);
+    throw new Error(
+      "Failed to synchronize manager assignment with Auth service",
+    );
+  }
 
   return {
     garageCode,
@@ -109,6 +123,7 @@ export const getGarageById = async (garageId: string) => {
       `${AUTH_SERVICE_URL}/internal/users/${garage.managerId}`,
       {
         headers: {
+          Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
           "x-user-id": "resource-service",
           "x-user-role": "SERVICE",
         },
@@ -308,6 +323,7 @@ export const getGaragesByCompanyId = async (
           `${AUTH_SERVICE_URL}/internal/users/${garage.managerId}`,
           {
             headers: {
+              Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
               "x-user-id": "resource-service",
               "x-user-role": "SERVICE",
             },

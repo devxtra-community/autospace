@@ -16,6 +16,7 @@ export const requireActiveGarage = async (
       `${process.env.RESOURCE_SERVICE_URL}/internal/garages/users/${user.id}/status`,
       {
         headers: {
+          Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
           "x-user-id": "booking-service",
           "x-user-role": "SERVICE",
         },

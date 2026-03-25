@@ -3,12 +3,12 @@ import axios from "axios";
 import { publishEvent } from "../config/rabbitmq.js";
 
 export const startValetRequestedConsumer = async () => {
-  const conn = await amqp.connect("amqp://localhost");
+  const conn = await amqp.connect(process.env.RABBITMQ_URL!);
   const ch = await conn.createChannel();
 
   await ch.assertExchange("autospace", "topic", { durable: true });
 
-  const q = await ch.assertQueue("valet.requested.queue", {
+  const q = await ch.assertQueue("booking.valet.requested.queue", {
     durable: true,
   });
 
@@ -26,6 +26,7 @@ export const startValetRequestedConsumer = async () => {
         `${process.env.RESOURCE_SERVICE_URL}/internal/valets/available/${garageId}`,
         {
           headers: {
+            Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
             "x-user-id": "booking-service",
             "x-user-role": "SERVICE",
           },

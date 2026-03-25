@@ -7,6 +7,16 @@ export const internalAuth = (
   res: Response,
   next: NextFunction,
 ) => {
+  const authHeader = req.headers.authorization;
+
+  //   Allow INTERNAL service calls
+  if (
+    authHeader &&
+    authHeader === `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`
+  ) {
+    return next();
+  }
+
   const userId = req.headers["x-user-id"] as string | undefined;
   const role = req.headers["x-user-role"] as UserRole | undefined;
   const email = req.headers["x-user-email"] as string | undefined;

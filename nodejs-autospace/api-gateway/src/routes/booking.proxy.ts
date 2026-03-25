@@ -8,8 +8,7 @@ import type { ClientRequest } from "http";
 
 const router = Router();
 
-const BOOKING_SERVICE_URL =
-  process.env.BOOKING_SERVICE_URL || "http://localhost:4002";
+const BOOKING_SERVICE_URL = process.env.BOOKING_SERVICE_URL!;
 
 const attachUserHeaders = (proxyReq: ClientRequest, req: Request) => {
   if (req.user) {

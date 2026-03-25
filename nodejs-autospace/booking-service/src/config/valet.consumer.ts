@@ -4,7 +4,7 @@ import { Booking, BookingValetStatus } from "../entities/booking.entity.js";
 import redisClient from "./redis.js";
 
 export const startValetAssignedConsumer = async () => {
-  const conn = await amqp.connect("amqp://localhost");
+  const conn = await amqp.connect(process.env.RABBITMQ_URL!);
   const ch = await conn.createChannel();
 
   await ch.assertExchange("autospace", "topic", { durable: true });

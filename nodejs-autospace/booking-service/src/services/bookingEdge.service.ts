@@ -9,21 +9,19 @@ export async function enterBookingService(
   pin: string,
   userId: string,
 ) {
-  return await AppDataSource.transaction(async (manager) => {
+  const result = await AppDataSource.transaction(async (manager) => {
     const repo = await manager.getRepository(Booking);
 
     const booking = await repo.findOne({ where: { id: bookingId } });
 
     if (!booking) throw new Error("Booking not found");
 
-    // M4 FIX: Ownership check
-    // if (booking.userId !== userId) throw new Error("Forbidden");
-
     try {
       const garageRes = await axios.get(
         `${process.env.RESOURCE_SERVICE_URL}/internal/garages/manager/${userId}`,
         {
           headers: {
+            Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
             "x-user-id": "booking-service",
             "x-user-role": "SERVICE",
             "x-user-email": "service@internal",
@@ -47,8 +45,6 @@ export async function enterBookingService(
     if (booking.status !== "confirmed")
       throw new Error("Booking not confirmed yet");
 
-    // prevent entering before time
-
     const now = new Date();
     if (now < booking.startTime) throw new Error("Too early to enter");
 
@@ -59,33 +55,47 @@ export async function enterBookingService(
     booking.status = "occupied";
 
     await repo.save(booking);
-    try {
-      await axios.post(
-        `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}/occupy`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
-            "x-user-id": "booking-service",
-            "x-user-role": "SERVICE",
-            "x-user-email": "service@internal",
-          },
-        },
-      );
-    } catch {
-      throw new Error("Failed to occupy slot");
-    }
 
     return {
       bookingId: booking.id,
+      slotId: booking.slotId,
       exitPin: booking.exitPin,
       status: booking.status,
     };
   });
+
+  // Perform external call AFTER transaction commit
+  try {
+    await axios.post(
+      `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${result.slotId}/occupy`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
+          "x-user-id": "booking-service",
+          "x-user-role": "SERVICE",
+          "x-user-email": "service@internal",
+        },
+      },
+    );
+  } catch (err) {
+    console.error(
+      "CRITICAL: Failed to occupy slot in resource-service after DB transaction commit",
+      err,
+    );
+    // In a full production system, we'd queue this for retry.
+    // For this audit fix, we'll log it as a critical failure.
+  }
+
+  return {
+    bookingId: result.bookingId,
+    exitPin: result.exitPin,
+    status: result.status,
+  };
 }
 
 export async function exitBookingService(bookingId: string, pin: string) {
-  return await AppDataSource.transaction(async (manager) => {
+  const result = await AppDataSource.transaction(async (manager) => {
     const repo = manager.getRepository(Booking);
 
     const booking = await repo.findOne({ where: { id: bookingId } });
@@ -103,21 +113,50 @@ export async function exitBookingService(bookingId: string, pin: string) {
     booking.exitUsed = true;
 
     if (!booking.valetRequested) {
-      // Self parking → booking finishes immediately
       booking.status = "completed";
-    }
-
-    if (booking.valetRequested) {
+    } else {
       booking.status = "occupied";
       booking.valetStatus = BookingValetStatus.ON_THE_WAY_TO_DROP;
     }
 
     await repo.save(booking);
 
-    try {
-      await axios.post(
-        `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}/release`,
-        {},
+    return {
+      bookingId: booking.id,
+      slotId: booking.slotId,
+      status: booking.status,
+      valetId: booking.valetId,
+      valetRequested: booking.valetRequested,
+    };
+  });
+
+  // External slot release
+  try {
+    await axios.post(
+      `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${result.slotId}/release`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
+          "x-user-id": "booking-service",
+          "x-user-role": "SERVICE",
+          "x-user-email": "service@internal",
+        },
+      },
+    );
+  } catch (err) {
+    console.error(
+      "CRITICAL: Failed to release slot in resource-service after DB transaction commit",
+      err,
+    );
+  }
+
+  // Release valet if manual parking
+  if (!result.valetRequested && result.valetId) {
+    await axios
+      .patch(
+        `${process.env.RESOURCE_SERVICE_URL}/internal/valets/${result.valetId}/release`,
+        { bookingId: result.bookingId },
         {
           headers: {
             Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
@@ -126,38 +165,20 @@ export async function exitBookingService(bookingId: string, pin: string) {
             "x-user-email": "service@internal",
           },
         },
-      );
-    } catch {
-      throw new Error("Failed to release slot");
-    }
+      )
+      .catch((err) => {
+        console.error("Failed to release valet after exit:", err);
+      });
+  }
 
-    // M6 FIX: Release valet in resource-service after exit
-    if (!booking.valetRequested && booking.valetId) {
-      await axios
-        .patch(
-          `${process.env.RESOURCE_SERVICE_URL}/internal/valets/${booking.valetId}/release`,
-          { bookingId: booking.id },
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
-              "x-user-id": "booking-service",
-              "x-user-role": "SERVICE",
-              "x-user-email": "service@internal",
-            },
-          },
-        )
-        .catch(() => {});
-    }
-
-    return {
-      bookingId: booking.id,
-      status: booking.status,
-    };
-  });
+  return {
+    bookingId: result.bookingId,
+    status: result.status,
+  };
 }
 
 export async function cancelBookingService(bookingId: string) {
-  return await AppDataSource.transaction(async (manager) => {
+  const result = await AppDataSource.transaction(async (manager) => {
     const repo = manager.getRepository(Booking);
 
     const booking = await repo.findOne({ where: { id: bookingId } });
@@ -174,8 +195,18 @@ export async function cancelBookingService(bookingId: string) {
     }
     await repo.save(booking);
 
+    return {
+      bookingId: booking.id,
+      slotId: booking.slotId,
+      status: booking.status,
+      valetId: booking.valetId,
+    };
+  });
+
+  // Release slot OUTSIDE transaction
+  try {
     await axios.post(
-      `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}/release`,
+      `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${result.slotId}/release`,
       {},
       {
         headers: {
@@ -186,29 +217,34 @@ export async function cancelBookingService(bookingId: string) {
         },
       },
     );
+  } catch (err) {
+    console.error("Failed to release slot after cancellation:", err);
+  }
 
-    if (booking.valetId) {
-      await axios
-        .patch(
-          `${process.env.RESOURCE_SERVICE_URL}/internal/valets/${booking.valetId}/release`,
-          { bookingId: booking.id },
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
-              "x-user-id": "booking-service",
-              "x-user-role": "SERVICE",
-              "x-user-email": "service@internal",
-            },
+  // Release valet if assigned
+  if (result.valetId) {
+    await axios
+      .patch(
+        `${process.env.RESOURCE_SERVICE_URL}/internal/valets/${result.valetId}/release`,
+        { bookingId: result.bookingId },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
+            "x-user-id": "booking-service",
+            "x-user-role": "SERVICE",
+            "x-user-email": "service@internal",
           },
-        )
-        .catch(() => {});
-    }
+        },
+      )
+      .catch((err) => {
+        console.error("Failed to release valet after cancellation:", err);
+      });
+  }
 
-    return {
-      bookingId: booking.id,
-      status: booking.status,
-    };
-  });
+  return {
+    bookingId: result.bookingId,
+    status: result.status,
+  };
 }
 
 export async function getActiveBookingService(userId: string) {
@@ -226,6 +262,13 @@ export async function getActiveBookingService(userId: string) {
   if (booking.valetId) {
     const valetRes = await axios.get(
       `${process.env.AUTH_SERVICE_URL}/internal/users/${booking.valetId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
+          "x-user-id": "booking-service",
+          "x-user-role": "SERVICE",
+        },
+      },
     );
     valet = valetRes.data?.data ?? null;
   }
@@ -237,7 +280,8 @@ export async function getActiveBookingService(userId: string) {
     startTime: booking.startTime,
     endTime: booking.endTime,
     entryPin: booking.entryUsed ? null : booking.entryPin,
-    exitPin: booking.exitPin ?? null,
+    // ONLY show exitPin when car is actually occupied
+    exitPin: booking.status === "occupied" ? booking.exitPin : null,
     valet: valet,
   };
 }
@@ -305,6 +349,9 @@ export async function enrichBookingsWithSlot(bookings: Booking[]) {
 
       return {
         ...booking,
+        entryPin: "****",
+        exitPin: "****",
+        pickupPin: "****",
         slotNumber,
         slotSize,
         customerName,

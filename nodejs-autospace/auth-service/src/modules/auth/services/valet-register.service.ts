@@ -5,8 +5,7 @@ import { User } from "../entities/user.entity";
 import { UserRole, UserStatus } from "../constants";
 import { ValetRegisterDto } from "@autospace/shared";
 
-const RESOURCE_SERVICE_URL =
-  process.env.RESOURCE_SERVICE_URL || "http://localhost:4003";
+const RESOURCE_SERVICE_URL = process.env.RESOURCE_SERVICE_URL!;
 
 export const registerValetService = async (data: ValetRegisterDto) => {
   const { fullname, email, phone, password, companyBrn, garageCode } = data;

@@ -15,6 +15,24 @@ import { startValetRequestedConsumer } from "./config/valetRequest.Consumer.js";
 
 dotenv.config();
 
+const requiredEnv = [
+  "DATABASE_URL",
+  "REDIS_URL",
+  "RABBITMQ_URL",
+  "AUTH_SERVICE_URL",
+  "RESOURCE_SERVICE_URL",
+  "INTERNAL_SERVICE_TOKEN",
+  "FRONTEND_URL",
+  "STRIPE_SECRET_KEY",
+  "STRIPE_WEBHOOK_SECRET",
+];
+
+requiredEnv.forEach((env) => {
+  if (!process.env[env]) {
+    throw new Error(`Environment variable ${env} is missing`);
+  }
+});
+
 const PORT = process.env.PORT || 4002;
 
 // app.use(express.json());

@@ -59,6 +59,7 @@ export const getGarageReviewsService = async (
           `${process.env.AUTH_SERVICE_URL}/internal/users/${review.userId}`,
           {
             headers: {
+              Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
               "x-user-id": "booking-service",
               "x-user-role": "SERVICE",
             },

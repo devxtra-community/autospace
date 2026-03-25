@@ -74,7 +74,7 @@ export const rejectValetService = async (
   return await valetRepo.save(valet);
 };
 
-const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL;
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL!;
 
 type SimpleUser = {
   id: string;
@@ -137,6 +137,7 @@ export const getValetsByGarageService = async (
           `${AUTH_SERVICE_URL}/internal/users/${valet.id}`,
           {
             headers: {
+              Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
               "x-user-id": "resource-service",
               "x-user-role": "SERVICE",
             },
@@ -226,6 +227,7 @@ export const getAvailableValetService = async (
       `${AUTH_SERVICE_URL}/internal/users/${valet.id}`,
       {
         headers: {
+          Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
           "x-user-id": "booking-service",
           "x-user-role": "SERVICE",
         },
@@ -296,6 +298,7 @@ export const getAllActiveValetsService = async (garageId: string) => {
           `${process.env.AUTH_SERVICE_URL}/internal/users/${valet.id}`,
           {
             headers: {
+              Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
               "x-user-id": "booking-service",
               "x-user-role": "SERVICE",
             },

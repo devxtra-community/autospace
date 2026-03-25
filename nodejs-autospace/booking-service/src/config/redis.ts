@@ -2,7 +2,7 @@ import { createClient } from "redis";
 import type { RedisClientType } from "redis";
 
 const redisClient: RedisClientType = createClient({
-  url: process.env.REDIS_URL || "redis://localhost:6379",
+  url: process.env.REDIS_URL!,
 });
 
 redisClient.on("error", (err) => {

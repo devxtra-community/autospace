@@ -1,4 +1,19 @@
 import "reflect-metadata";
+import "dotenv/config";
+
+const requiredEnv = [
+  "DATABASE_URL",
+  "RABBITMQ_URL",
+  "AUTH_SERVICE_URL",
+  "INTERNAL_SERVICE_TOKEN",
+  "FRONTEND_URL",
+];
+
+requiredEnv.forEach((env) => {
+  if (!process.env[env]) {
+    throw new Error(`Environment variable ${env} is missing`);
+  }
+});
 import express from "express";
 import cors from "cors";
 import companyRoutes from "./modules/company/routes/company.routes";
@@ -14,7 +29,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: process.env.FRONTEND_URL!,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "x-user-id"],

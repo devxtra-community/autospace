@@ -4,7 +4,10 @@ import { assignValetToBooking } from "../modules/valets/services/valet.service";
 let channel: amqp.Channel;
 
 export const initRabbit = async (): Promise<void> => {
-  const conn = await amqp.connect("amqp://localhost");
+  if (!process.env.RABBITMQ_URL) {
+    throw new Error("RABBITMQ_URL is not defined");
+  }
+  const conn = await amqp.connect(process.env.RABBITMQ_URL);
 
   channel = await conn.createChannel();
 
@@ -33,7 +36,7 @@ export const startValetConsumer = async (): Promise<void> => {
     throw new Error("RabbitMQ not initialized");
   }
 
-  const q = await channel.assertQueue("valet.requested.queue", {
+  const q = await channel.assertQueue("resource.valet.requested.queue", {
     durable: true,
   });
 

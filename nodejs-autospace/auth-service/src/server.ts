@@ -1,5 +1,19 @@
 import "dotenv/config";
 
+const requiredEnv = [
+  "DATABASE_URL",
+  "REDIS_URL",
+  "RESOURCE_SERVICE_URL",
+  "INTERNAL_SERVICE_TOKEN",
+  "FRONTEND_URL",
+];
+
+requiredEnv.forEach((env) => {
+  if (!process.env[env]) {
+    throw new Error(`Environment variable ${env} is missing`);
+  }
+});
+
 import app from "./app";
 import { AppDataSource } from "./db/data-source";
 import { connectRedis } from "./config/redis";

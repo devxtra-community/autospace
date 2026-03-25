@@ -6,8 +6,7 @@ import { UserRole, UserStatus } from "../constants";
 import { ManagerState } from "../constants/manager-state.enum";
 import { ManagerRegisterDto } from "@autospace/shared";
 
-const RESOURCE_SERVICE_URL =
-  process.env.RESOURCE_SERVICE_URL || "http://localhost:4003";
+const RESOURCE_SERVICE_URL = process.env.RESOURCE_SERVICE_URL!;
 
 export const registerManager = async (data: ManagerRegisterDto) => {
   const { fullname, email, phone, password, businessRegistrationNumber } = data;

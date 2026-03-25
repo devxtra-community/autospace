@@ -7,8 +7,7 @@ import type { Request } from "express";
 import type { ClientRequest } from "http";
 
 const router = Router();
-const RESOURCE_SERVICE_URL =
-  process.env.RESOURCE_SERVICE_URL || "http://localhost:4003";
+const RESOURCE_SERVICE_URL = process.env.RESOURCE_SERVICE_URL!;
 
 const attachUserHeaders = (proxyReq: ClientRequest, req: Request) => {
   if (req.user) {

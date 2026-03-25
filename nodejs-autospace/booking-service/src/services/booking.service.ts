@@ -48,6 +48,7 @@ export class BookingService {
       {},
       {
         headers: {
+          Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
           "x-user-id": "booking-service",
           "x-user-role": "SERVICE",
           "x-user-email": "service@internal",
@@ -64,6 +65,7 @@ export class BookingService {
       {},
       {
         headers: {
+          Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
           "x-user-id": "booking-service",
           "x-user-role": "SERVICE",
           "x-user-email": "service@internal",
@@ -78,6 +80,7 @@ export class BookingService {
       {},
       {
         headers: {
+          Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`,
           "x-user-id": "booking-service",
           "x-user-role": "SERVICE",
           "x-user-email": "service@internal",
