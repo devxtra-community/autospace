@@ -28,7 +28,7 @@ jobs:
           cd ~/autospace
           git fetch origin
           git reset --hard origin/stage
-          git clean -fd
+         
 
           cd nodejs-autospace/api-gateway
 
@@ -38,7 +38,7 @@ jobs:
           cd ~/auth-service/autospace
           git fetch origin
           git reset --hard origin/stage
-          git clean -fd
+        
 
           cd nodejs-autospace/auth-service
           NODE_ENV=stage pm2 restart auth-service || NODE_ENV=stage pm2 start dist/server.js --name auth-service
@@ -47,7 +47,7 @@ jobs:
           cd ~/resource-service/autospace
           git fetch origin
           git reset --hard origin/stage
-          git clean -fd
+         
 
           cd nodejs-autospace/resource-service
           NODE_ENV=stage pm2 restart resource-service || NODE_ENV=stage pm2 start dist/server.js --name resource-service
@@ -57,7 +57,7 @@ jobs:
 
           git fetch origin
           git reset --hard origin/stage
-          git clean -fd
+        
 
           NODE_ENV=stage pm2 restart booking-service || NODE_ENV=stage pm2 start dist/server.js --name booking-service
 
