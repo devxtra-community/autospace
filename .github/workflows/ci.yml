@@ -36,3 +36,10 @@ jobs:
 
       - name: Build apps (optional but recommended)
         run: pnpm build
+
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build apps
+        run: pnpm build
