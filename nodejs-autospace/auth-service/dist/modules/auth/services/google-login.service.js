@@ -4,14 +4,14 @@ exports.googleLoginService = void 0;
 const google_auth_library_1 = require("google-auth-library");
 const data_source_1 = require("../../../db/data-source");
 const user_entity_1 = require("../entities/user.entity");
-const env_config_1 = require("../../../config/env.config");
+// import { env } from "../../../config/env.config";
 const constants_1 = require("../constants");
 const jwt_util_1 = require("../../../utils/jwt.util");
-const client = new google_auth_library_1.OAuth2Client(env_config_1.env.GOOGLE_CLIENT_ID);
+const client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const googleLoginService = async (idToken) => {
     const ticket = await client.verifyIdToken({
         idToken,
-        audience: env_config_1.env.GOOGLE_CLIENT_ID,
+        audience: process.env.GOOGLE_CLIENT_ID,
     });
     const payload = ticket.getPayload();
     if (!payload || !payload.email) {

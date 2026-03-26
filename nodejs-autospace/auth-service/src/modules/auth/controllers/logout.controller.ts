@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { AppDataSource } from "../../../db/data-source";
 import { RefreshToken } from "../entities/refreshtoken.entity";
 import { hashToken } from "../../../utils/hash.utils";
-import { env } from "../../../config/env.config";
+// import { env } from "../../../config/env.config";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 import { PasswordResetToken } from "../entities/password-reset-token.entity";
@@ -12,6 +12,9 @@ import bcrypt from "bcrypt";
 export const Logout = async (req: Request, res: Response) => {
   try {
     const refreshToken = req.cookies?.refreshToken;
+
+    const COOKIE_SECURE = process.env.COOKIE_SECURE === "false";
+    const COOKIE_SAMESITE = process.env.COOKIE_SAMESITE === "none";
 
     if (refreshToken) {
       const refreshRepo = AppDataSource.getRepository(RefreshToken);
@@ -23,15 +26,15 @@ export const Logout = async (req: Request, res: Response) => {
     // Clear cookies (ALWAYS clear both)
     res.clearCookie("accessToken", {
       httpOnly: true,
-      secure: env.COOKIE_SECURE,
-      sameSite: env.COOKIE_SAMESITE,
+      secure: COOKIE_SECURE,
+      sameSite: COOKIE_SAMESITE,
       path: "/",
     });
 
     res.clearCookie("refreshToken", {
       httpOnly: true,
-      secure: env.COOKIE_SECURE,
-      sameSite: env.COOKIE_SAMESITE,
+      secure: COOKIE_SECURE,
+      sameSite: COOKIE_SAMESITE,
       path: "/",
     });
 

@@ -19,4 +19,5 @@ dotenv_1.default.config({
 exports.env = {
     PORT: process.env.PORT || 4002,
     DATABASE_URL: process.env.DATABASE_URL,
+    JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET,
 };

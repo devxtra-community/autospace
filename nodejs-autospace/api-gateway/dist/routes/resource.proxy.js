@@ -6,7 +6,7 @@ const auth_middleware_1 = require("../middleware/auth.middleware");
 const rbac_middleware_1 = require("../middleware/rbac.middleware");
 const role_enum_1 = require("../constants/role.enum");
 const router = (0, express_1.Router)();
-const RESOURCE_SERVICE_URL = process.env.RESOURCE_SERVICE_URL || "http://localhost:4003";
+const RESOURCE_SERVICE_URL = process.env.RESOURCE_SERVICE_URL;
 const attachUserHeaders = (proxyReq, req) => {
     if (req.user) {
         proxyReq.setHeader("x-user-id", req.user.id);
@@ -44,7 +44,7 @@ router.use("/public", (req, _res, next) => {
     changeOrigin: true,
     pathRewrite: (path) => `/public${path}`,
 }));
-router.use("/garages", auth_middleware_1.authMiddleware, (0, rbac_middleware_1.rbac)(role_enum_1.UserRole.OWNER, role_enum_1.UserRole.ADMIN, role_enum_1.UserRole.MANAGER, role_enum_1.UserRole.CUSTOMER), (0, http_proxy_middleware_1.createProxyMiddleware)({
+router.use("/garages", auth_middleware_1.authMiddleware, (0, rbac_middleware_1.rbac)(role_enum_1.UserRole.OWNER, role_enum_1.UserRole.ADMIN, role_enum_1.UserRole.MANAGER, role_enum_1.UserRole.CUSTOMER, role_enum_1.UserRole.VALET), (0, http_proxy_middleware_1.createProxyMiddleware)({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
     pathRewrite: (path) => `/garages${path}`,

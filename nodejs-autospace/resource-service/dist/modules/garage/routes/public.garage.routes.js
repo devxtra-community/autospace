@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const garage_validator_1 = require("../validators/garage.validator");
+const public_garage_controller_1 = require("../controllers/public.garage.controller");
+const garage_image_controller_1 = require("../controllers/garage-image.controller");
+const router = (0, express_1.Router)();
+router.get("/user/garages", garage_validator_1.validatePublicGarageQuery, public_garage_controller_1.getPublicGarageController);
+router.get("/garages/:garageId/images", garage_image_controller_1.getGarageImagesController);
+router.get("/user/garages/:garageId", public_garage_controller_1.getPublicGarageById);
+exports.default = router;

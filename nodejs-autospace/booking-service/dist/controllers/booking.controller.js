@@ -1,21 +1,567 @@
-import { BookingService } from '../services/booking.service.js';
+import { BookingService } from "../services/booking.service.js";
+import { logger } from "../utils/logger.js";
+import { ValidationError, validateBookingInput, } from "../validators/booking.validator.js";
+import { BookingValetStatus } from "../entities/booking.entity.js";
+// import axios from "axios";
+import { getCompanyBookingsService } from "../services/bookingCompany.service.js";
 const bookingService = new BookingService();
-export const createBooking = async (req, res) => {
-    try {
-        const result = await bookingService.createBooking(req.body);
-        res.status(201).json(result);
+export class BookingController {
+    async createBookingController(req, res) {
+        // let locked = false;
+        const { slotId, garageId, startTime, endTime, vehicleType, amount, valetRequested, pickupAddress, pickupLatitude, pickupLongitude, } = req.body;
+        // console.log("vahicle from frontend",vehicleType);
+        const userId = req.user?.id;
+        try {
+            if (!slotId ||
+                !garageId ||
+                !startTime ||
+                !endTime ||
+                !vehicleType ||
+                !amount) {
+                return res.status(400).json({
+                    success: false,
+                    message: "slotId, garageId, startTime, endTime and vehicleType are required",
+                });
+            }
+            if (!userId) {
+                return res.status(401).json({
+                    success: false,
+                    message: "User not authenticated",
+                });
+            }
+            if (valetRequested) {
+                if (pickupLatitude === undefined ||
+                    pickupLongitude === undefined ||
+                    !pickupAddress) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "Pickup location required for valet booking",
+                    });
+                }
+            }
+            validateBookingInput({
+                slotId,
+                userId,
+                garageId,
+                startTime,
+                endTime,
+                amount,
+                vehicleType,
+                pickupAddress,
+                pickupLatitude,
+                pickupLongitude,
+                status: "pending",
+            });
+            const overlap = await bookingService.checkOverlap(slotId, new Date(startTime), new Date(endTime));
+            if (overlap) {
+                return res.status(409).json({
+                    success: false,
+                    message: "Slot already booked for this time range",
+                });
+            }
+            const booking = await bookingService.createBooking({
+                userId,
+                garageId,
+                slotId,
+                startTime: new Date(startTime),
+                endTime: new Date(endTime),
+                vehicleType,
+                amount,
+                status: "pending",
+                valetRequested: valetRequested || false,
+                pickupLatitude: valetRequested ? pickupLatitude : undefined,
+                pickupLongitude: valetRequested ? pickupLongitude : undefined,
+                pickupAddress: valetRequested ? pickupAddress : undefined,
+            });
+            logger.info("Booking created", booking.id);
+            return res.status(201).json({
+                success: true,
+                message: "Booking created successfully",
+                data: booking,
+            });
+        }
+        catch (error) {
+            if (error instanceof ValidationError) {
+                return res.status(error.status).json({
+                    success: false,
+                    message: error.message,
+                });
+            }
+            logger.error("Create booking failed", error);
+            return res.status(500).json({
+                success: false,
+                message: "Internal server error",
+            });
+        }
     }
-    catch (error) {
-        res.status(500).json({ message: error.message });
+    async getBooking(req, res) {
+        try {
+            const bookingId = Array.isArray(req.params.bookingId)
+                ? req.params.bookingId[0]
+                : req.params.bookingId;
+            if (!bookingId) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Booking ID required",
+                });
+            }
+            const booking = await bookingService.getBookingById(bookingId);
+            if (!booking) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Booking not found",
+                });
+            }
+            return res.status(200).json({
+                success: true,
+                data: booking,
+            });
+        }
+        catch (error) {
+            logger.error("Get booking failed", error);
+            return res.status(500).json({
+                success: false,
+                message: "Failed to fetch booking",
+            });
+        }
     }
-};
-export const getBooking = async (req, res) => {
-    try {
-        const result = await bookingService.getBooking(req.params.id);
-        res.status(200).json(result);
+    async getMyBookings(req, res) {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Unauthorized",
+                });
+            }
+            const bookings = await bookingService.getUserBookings(userId);
+            return res.status(200).json({
+                success: true,
+                data: bookings,
+            });
+        }
+        catch (error) {
+            logger.error("Get my bookings failed", error);
+            return res.status(500).json({
+                success: false,
+                message: "Failed to fetch bookings",
+            });
+        }
     }
-    catch (error) {
-        res.status(404).json({ message: error.message });
+    async updateStatus(req, res) {
+        try {
+            const bookingId = Array.isArray(req.params.bookingId)
+                ? req.params.bookingId[0]
+                : req.params.bookingId;
+            const { status } = req.body;
+            const valetId = req.user?.id;
+            if (!bookingId || !status) {
+                return res.status(400).json({
+                    success: false,
+                    message: "bookingId and status required",
+                });
+            }
+            if (!valetId) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Unauthorized",
+                });
+            }
+            const booking = await bookingService.getBookingById(bookingId);
+            if (!booking) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Booking not found",
+                });
+            }
+            if (booking.valetId !== valetId) {
+                console.log("booking.valetId:", booking.valetId);
+                console.log("req.user.id:", valetId);
+                return res.status(403).json({
+                    success: false,
+                    message: "Not your assigned job",
+                });
+            }
+            const updated = await bookingService.updateBookingStatus(bookingId, status);
+            return res.status(200).json({
+                success: true,
+                message: "Job completed",
+                data: updated,
+            });
+        }
+        catch (error) {
+            logger.error("Complete job failed", error);
+            return res.status(500).json({
+                success: false,
+                message: "Failed to complete job",
+            });
+        }
     }
-};
+    async deleteBooking(req, res) {
+        try {
+            const bookingId = Array.isArray(req.params.bookingId)
+                ? req.params.bookingId[0]
+                : req.params.bookingId;
+            const userId = req.user?.id;
+            if (!bookingId) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Booking ID required",
+                });
+            }
+            if (!userId) {
+                return res
+                    .status(401)
+                    .json({ success: false, message: "Unauthorized" });
+            }
+            await bookingService.verifyOwnership(bookingId, userId);
+            const deleted = await bookingService.deleteBooking(bookingId);
+            return res.status(200).json({
+                success: true,
+                message: "Booking deleted",
+                data: deleted,
+            });
+        }
+        catch (error) {
+            logger.error("Delete booking failed", error);
+            return res.status(500).json({
+                success: false,
+                message: "Failed to delete booking",
+            });
+        }
+    }
+    async confirmBooking(req, res) {
+        try {
+            const bookingId = Array.isArray(req.params.bookingId)
+                ? req.params.bookingId[0]
+                : req.params.bookingId;
+            if (!bookingId) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Booking ID required",
+                });
+            }
+            const booking = await bookingService.getBookingById(bookingId);
+            if (!booking) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Booking not found",
+                });
+            }
+            if (booking.status !== "pending") {
+                return res.status(400).json({
+                    success: false,
+                    message: "Booking already processed",
+                });
+            }
+            const updated = await bookingService.updateBookingStatus(bookingId, "confirmed");
+            return res.status(200).json({
+                success: true,
+                message: "Booking confirmed",
+                data: updated,
+            });
+        }
+        catch (error) {
+            logger.error("Confirm booking failed", error);
+            return res.status(500).json({
+                success: false,
+                message: "Confirm failed",
+            });
+        }
+    }
+    async assignValetInternal(req, res) {
+        try {
+            const bookingId = req.params.bookingId;
+            const { valetId } = req.body;
+            const managerId = req.user?.id;
+            if (!bookingId || !valetId) {
+                return res.status(400).json({
+                    success: false,
+                    message: "bookingId and valetId required",
+                });
+            }
+            if (!managerId) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Unauthorized",
+                });
+            }
+            const booking = await bookingService.getBookingById(bookingId);
+            if (!booking) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Booking not found",
+                });
+            }
+            if (!booking.valetRequested) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Valet not requested",
+                });
+            }
+            // THIS IS THE FIX
+            if (booking.valetStatus !== BookingValetStatus.REQUESTED &&
+                booking.valetStatus !== BookingValetStatus.NONE) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Valet already assigned or completed",
+                });
+            }
+            // ASSIGN VALET
+            booking.valetId = valetId;
+            booking.valetStatus = BookingValetStatus.ASSIGNED;
+            booking.status = "confirmed";
+            booking.currentValetRequestId = null;
+            booking.rejectedValetIds = [];
+            const updated = await bookingService.updateBookingWithValet(booking);
+            // occupy slot
+            // await axios.post(
+            //   `${process.env.RESOURCE_SERVICE_URL}/garages/internal/slots/${booking.slotId}/occupy`,
+            //   {},
+            //   {
+            //     headers: {
+            //       "x-user-id": "booking-service",
+            //       "x-user-role": "SERVICE",
+            //     },
+            //   },
+            // );
+            return res.status(200).json({
+                success: true,
+                data: updated,
+            });
+        }
+        catch (error) {
+            logger.error("Assign valet failed", error);
+            return res.status(500).json({
+                success: false,
+                message: "Failed to assign valet",
+            });
+        }
+    }
+    async rejectValet(req, res) {
+        try {
+            const bookingId = req.params.bookingId;
+            const { valetId } = req.body;
+            if (!bookingId || !valetId) {
+                return res.status(400).json({
+                    success: false,
+                    message: "bookingId and valetId required",
+                });
+            }
+            const updated = await bookingService.rejectValetRequest(bookingId, valetId);
+            return res.status(200).json({
+                success: true,
+                data: updated,
+            });
+        }
+        catch (error) {
+            logger.error("Reject valet failed", error);
+            return res.status(400).json({
+                success: false,
+                message: "Failed to reject valet: ",
+            });
+        }
+    }
+    async getManualAssignments(req, res) {
+        try {
+            const managerId = req.user?.id;
+            if (!managerId) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Unauthorized",
+                });
+            }
+            const bookings = await bookingService.getManualAssignments(managerId);
+            return res.status(200).json({
+                success: true,
+                data: bookings,
+            });
+        }
+        catch (error) {
+            console.error("Manual assign fetch failed:", error);
+            return res.status(500).json({
+                success: false,
+                message: "Failed to fetch manual assignments",
+            });
+        }
+    }
+    async getValetRequests(req, res) {
+        try {
+            const valetId = req.user?.id;
+            console.log("valetId:", valetId);
+            if (!valetId) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Unauthorized",
+                });
+            }
+            const requests = await bookingService.getValetRequests(valetId);
+            return res.status(200).json({
+                success: true,
+                data: requests,
+            });
+        }
+        catch (error) {
+            return res.status(500).json({
+                success: false,
+                message: "Failed to fetch valet requests",
+                error,
+            });
+        }
+    }
+    async getActiveJobs(req, res) {
+        try {
+            const valetId = req.user?.id;
+            if (!valetId) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Unauthorized",
+                });
+            }
+            const activeJobs = await bookingService.getActiveJobs(valetId);
+            return res.status(200).json({
+                success: true,
+                data: activeJobs,
+            });
+        }
+        catch (error) {
+            logger.error("Get active jobs failed", error);
+            return res.status(500).json({
+                success: false,
+                message: "Failed to fetch active jobs",
+            });
+        }
+    }
+    async getCompletedJobs(req, res) {
+        try {
+            const valetId = req.user?.id;
+            if (!valetId) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Unauthorized",
+                });
+            }
+            const completedJobs = await bookingService.getCompletedJobs(valetId);
+            return res.status(200).json({
+                success: true,
+                data: completedJobs,
+            });
+        }
+        catch (error) {
+            logger.error("Get completed jobs failed", error);
+            return res.status(500).json({
+                success: false,
+                message: "Failed to fetch completed jobs",
+            });
+        }
+    }
+    async getCompanyBookings(req, res) {
+        try {
+            const companyId = req.params.companyId;
+            if (!companyId) {
+                return res.status(400).json({
+                    success: false,
+                    message: "companyId required",
+                });
+            }
+            const result = await getCompanyBookingsService(companyId, {
+                page: Number(req.query.page),
+                limit: Number(req.query.limit),
+                status: req.query.status,
+                garageId: req.query.garageId,
+                startDate: req.query.startDate,
+                endDate: req.query.endDate,
+                search: req.query.search,
+            });
+            return res.json({
+                success: true,
+                ...result,
+            });
+        }
+        catch (err) {
+            console.error(err);
+            return res.status(500).json({
+                success: false,
+                message: "Failed to fetch company bookings",
+            });
+        }
+    }
+    async updateValetStatus(req, res) {
+        try {
+            const bookingId = req.params.bookingId;
+            const { valetStatus } = req.body;
+            const valetId = req.user?.id;
+            if (!bookingId || !valetStatus) {
+                return res.status(400).json({
+                    success: false,
+                    message: "bookingId and valetStatus required",
+                });
+            }
+            if (!valetId) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Unauthorized",
+                });
+            }
+            const booking = await bookingService.getBookingById(bookingId);
+            if (!booking)
+                return res.status(404).json({
+                    success: false,
+                    message: "Booking not found",
+                });
+            if (booking.valetId !== valetId)
+                return res.status(403).json({
+                    success: false,
+                    message: "Not your assigned job",
+                });
+            console.log("Logged in valetId:", valetId);
+            console.log("Booking valetId:", booking.valetId);
+            const updated = await bookingService.updateValetStatus(bookingId, valetStatus);
+            return res.json({
+                success: true,
+                data: updated,
+            });
+        }
+        catch (err) {
+            return res.status(500).json({
+                success: false,
+                message: "Failed to update valet status",
+                err,
+            });
+        }
+    }
+    async verifyPickupPin(req, res) {
+        try {
+            const bookingId = req.params.bookingId;
+            const { pin } = req.body;
+            const valetId = req.user?.id;
+            if (!bookingId || !pin) {
+                return res.status(400).json({
+                    success: false,
+                    message: "bookingId and pin required",
+                });
+            }
+            if (!valetId) {
+                return res
+                    .status(401)
+                    .json({ success: false, message: "Unauthorized" });
+            }
+            const result = await bookingService.verifyPickupPin(bookingId, valetId, pin);
+            return res.json({
+                success: true,
+                data: result,
+            });
+        }
+        catch (err) {
+            const msg = err instanceof Error ? err.message : "Pickup PIN verification failed";
+            const status = msg === "Invalid pickup PIN" ||
+                msg === "Pickup PIN already verified" ||
+                msg === "Not your assigned booking"
+                ? 400
+                : 500;
+            return res.status(status).json({ success: false, message: msg });
+        }
+    }
+}
+export const bookingController = new BookingController();
 //# sourceMappingURL=booking.controller.js.map

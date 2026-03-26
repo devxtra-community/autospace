@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { googleLoginService } from "../services/google-login.service";
-import { env } from "../../../config/env.config";
+// import { env } from "../../../config/env.config";
 
 export const googleLogin = async (req: Request, res: Response) => {
   try {
@@ -8,10 +8,13 @@ export const googleLogin = async (req: Request, res: Response) => {
 
     const { user, tokens } = await googleLoginService(token);
 
+    const COOKIE_SECURE = process.env.COOKIE_SECURE === "false";
+    const COOKIE_SAMESITE = process.env.COOKIE_SAMESITE === "none";
+
     const cookieOptions = {
       httpOnly: true,
-      secure: env.COOKIE_SECURE,
-      sameSite: env.COOKIE_SAMESITE,
+      secure: COOKIE_SECURE,
+      sameSite: COOKIE_SAMESITE,
       path: "/",
     };
 

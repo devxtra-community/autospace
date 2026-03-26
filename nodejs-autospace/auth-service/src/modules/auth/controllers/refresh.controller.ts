@@ -4,13 +4,16 @@ import { RefreshToken } from "../entities/refreshtoken.entity";
 import { generateTokenPair } from "../../../utils/jwt.util";
 import { hashToken } from "../../../utils/hash.utils";
 import { UserRole, UserStatus } from "../constants";
-import { env } from "../../../config/env.config";
+// import { env } from "../../../config/env.config";
 
 export const refresh = async (req: Request, res: Response) => {
   try {
     // console.log(" Refresh request received");
     // console.log("Cookies:", req.cookies);
     const refreshToken = req.cookies?.refreshToken;
+
+    const COOKIE_SECURE = process.env.COOKIE_SECURE === "false";
+    const COOKIE_SAMESITE = process.env.COOKIE_SAMESITE === "none";
 
     if (!refreshToken) {
       // console.log(" No refresh token in cookies");
@@ -74,8 +77,8 @@ export const refresh = async (req: Request, res: Response) => {
 
     const cookieOptions = {
       httpOnly: true,
-      secure: env.COOKIE_SECURE,
-      sameSite: env.COOKIE_SAMESITE,
+      secure: COOKIE_SECURE,
+      sameSite: COOKIE_SAMESITE,
       path: "/",
     };
 

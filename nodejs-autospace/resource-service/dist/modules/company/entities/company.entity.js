@@ -16,6 +16,7 @@ var CompanyStatus;
     CompanyStatus["PENDING"] = "pending";
     CompanyStatus["ACTIVE"] = "active";
     CompanyStatus["REJECTED"] = "rejected";
+    CompanyStatus["BLOCKER"] = "blocked";
 })(CompanyStatus || (exports.CompanyStatus = CompanyStatus = {}));
 let Company = class Company {
 };

@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const files_controller_1 = require("./files.controller");
+const internalAuth_middleware_1 = require("../../middlewares/internalAuth.middleware");
+const router = (0, express_1.Router)();
+router.post("/upload", internalAuth_middleware_1.internalAuth, files_controller_1.generateUploadUrl);
+router.post("/", internalAuth_middleware_1.internalAuth, files_controller_1.createFileRecord);
+router.get("/:id", internalAuth_middleware_1.internalAuth, files_controller_1.getFileById);
+exports.default = router;

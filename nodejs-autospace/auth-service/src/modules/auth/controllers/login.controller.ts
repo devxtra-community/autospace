@@ -1,17 +1,20 @@
 import { Request, Response } from "express";
 import { loginUser } from "../services/login.service";
-import { env } from "../../../config/env.config";
+// import { env } from "../../../config/env.config";
 
 export const login = async (req: Request, res: Response) => {
   try {
     const { user, tokens } = await loginUser(req.body);
 
-    console.log("RAW BODY:", env.COOKIE_SAMESITE, env.COOKIE_SECURE);
+    const COOKIE_SECURE = process.env.COOKIE_SECURE === "false";
+    const COOKIE_SAMESITE = process.env.COOKIE_SAMESITE === "none";
+
+    console.log("RAW BODY:", COOKIE_SAMESITE, COOKIE_SECURE);
 
     const cookieOptions = {
       httpOnly: true,
-      secure: env.COOKIE_SECURE,
-      sameSite: env.COOKIE_SAMESITE,
+      secure: COOKIE_SECURE,
+      sameSite: COOKIE_SAMESITE,
       path: "/",
     };
 

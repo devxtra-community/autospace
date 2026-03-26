@@ -5,12 +5,14 @@ const data_source_1 = require("../../../db/data-source");
 const refreshtoken_entity_1 = require("../entities/refreshtoken.entity");
 const jwt_util_1 = require("../../../utils/jwt.util");
 const hash_utils_1 = require("../../../utils/hash.utils");
-const env_config_1 = require("../../../config/env.config");
+// import { env } from "../../../config/env.config";
 const refresh = async (req, res) => {
     try {
         // console.log(" Refresh request received");
         // console.log("Cookies:", req.cookies);
         const refreshToken = req.cookies?.refreshToken;
+        const COOKIE_SECURE = process.env.COOKIE_SECURE === "false";
+        const COOKIE_SAMESITE = process.env.COOKIE_SAMESITE === "none";
         if (!refreshToken) {
             // console.log(" No refresh token in cookies");
             return res.status(401).json({
@@ -63,8 +65,8 @@ const refresh = async (req, res) => {
         });
         const cookieOptions = {
             httpOnly: true,
-            secure: env_config_1.env.COOKIE_SECURE,
-            sameSite: env_config_1.env.COOKIE_SAMESITE,
+            secure: COOKIE_SECURE,
+            sameSite: COOKIE_SAMESITE,
             path: "/",
         };
         //  Set new cookie

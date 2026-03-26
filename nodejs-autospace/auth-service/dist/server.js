@@ -5,18 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv/config");
 require("reflect-metadata");
-const requiredEnv = [
-    "DATABASE_URL",
-    "REDIS_URL",
-    "RESOURCE_SERVICE_URL",
-    "INTERNAL_SERVICE_TOKEN",
-    "FRONTEND_URL",
-];
-requiredEnv.forEach((env) => {
-    if (!process.env[env]) {
-        throw new Error(`Environment variable ${env} is missing`);
-    }
-});
 const app_1 = __importDefault(require("./app"));
 const data_source_1 = require("./db/data-source");
 const redis_1 = require("./config/redis");

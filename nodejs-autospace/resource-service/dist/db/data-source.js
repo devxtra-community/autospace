@@ -9,7 +9,10 @@ exports.AppDataSource = new typeorm_1.DataSource({
     ssl: {
         rejectUnauthorized: false,
     },
-    synchronize: true,
+    synchronize: false,
     logging: true,
-    entities: [__dirname + "/../modules/**/*.entity.{ts,js}"],
+    entities: [__dirname + "/../modules/**/*.entity.ts"],
 });
+setInterval(async () => {
+    await exports.AppDataSource.query("SELECT 1");
+}, 300000);

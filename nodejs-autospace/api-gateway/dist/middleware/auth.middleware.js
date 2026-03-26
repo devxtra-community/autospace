@@ -24,6 +24,10 @@ const authMiddleware = (req, res, next) => {
             return;
         }
         const decoded = (0, jwt_utils_1.verifyAccessToken)(token);
+        if (decoded.status === "rejected") {
+            (0, error_1.sendAuthError)(res, error_2.AuthErrorCode.TOKEN_INVALID, "Account rejected. Contact admin.", 403);
+            return;
+        }
         req.user = {
             id: decoded.id,
             email: decoded.email,

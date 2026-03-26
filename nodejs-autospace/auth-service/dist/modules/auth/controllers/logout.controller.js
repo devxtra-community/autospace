@@ -7,7 +7,7 @@ exports.resetPassword = exports.forgotPassword = exports.Logout = void 0;
 const data_source_1 = require("../../../db/data-source");
 const refreshtoken_entity_1 = require("../entities/refreshtoken.entity");
 const hash_utils_1 = require("../../../utils/hash.utils");
-const env_config_1 = require("../../../config/env.config");
+// import { env } from "../../../config/env.config";
 const crypto_1 = __importDefault(require("crypto"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const password_reset_token_entity_1 = require("../entities/password-reset-token.entity");
@@ -16,6 +16,8 @@ const bcrypt_1 = __importDefault(require("bcrypt"));
 const Logout = async (req, res) => {
     try {
         const refreshToken = req.cookies?.refreshToken;
+        const COOKIE_SECURE = process.env.COOKIE_SECURE === "false";
+        const COOKIE_SAMESITE = process.env.COOKIE_SAMESITE === "none";
         if (refreshToken) {
             const refreshRepo = data_source_1.AppDataSource.getRepository(refreshtoken_entity_1.RefreshToken);
             await refreshRepo.delete({
@@ -25,14 +27,14 @@ const Logout = async (req, res) => {
         // Clear cookies (ALWAYS clear both)
         res.clearCookie("accessToken", {
             httpOnly: true,
-            secure: env_config_1.env.COOKIE_SECURE,
-            sameSite: env_config_1.env.COOKIE_SAMESITE,
+            secure: COOKIE_SECURE,
+            sameSite: COOKIE_SAMESITE,
             path: "/",
         });
         res.clearCookie("refreshToken", {
             httpOnly: true,
-            secure: env_config_1.env.COOKIE_SECURE,
-            sameSite: env_config_1.env.COOKIE_SAMESITE,
+            secure: COOKIE_SECURE,
+            sameSite: COOKIE_SAMESITE,
             path: "/",
         });
         return res.status(200).json({

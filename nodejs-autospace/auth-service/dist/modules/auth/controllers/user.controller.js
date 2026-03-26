@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateAmdinUsers = exports.getAllUsers = exports.updateProfileController = exports.getMyProfileController = void 0;
 const auth_service_1 = require("../services/auth.service");
 const auth_service_2 = require("../services/auth.service");
+// import { success } from "zod";
 const getMyProfileController = async (req, res) => {
     try {
         console.log("HEADERS:", req.headers);

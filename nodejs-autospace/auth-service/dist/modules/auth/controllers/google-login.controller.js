@@ -2,15 +2,17 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.googleLogin = void 0;
 const google_login_service_1 = require("../services/google-login.service");
-const env_config_1 = require("../../../config/env.config");
+// import { env } from "../../../config/env.config";
 const googleLogin = async (req, res) => {
     try {
         const { token } = req.body;
         const { user, tokens } = await (0, google_login_service_1.googleLoginService)(token);
+        const COOKIE_SECURE = process.env.COOKIE_SECURE === "false";
+        const COOKIE_SAMESITE = process.env.COOKIE_SAMESITE === "none";
         const cookieOptions = {
             httpOnly: true,
-            secure: env_config_1.env.COOKIE_SECURE,
-            sameSite: env_config_1.env.COOKIE_SAMESITE,
+            secure: COOKIE_SECURE,
+            sameSite: COOKIE_SAMESITE,
             path: "/",
         };
         res.cookie("refreshToken", tokens.refreshToken, {
