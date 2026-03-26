@@ -31,7 +31,7 @@ jobs:
          
 
           cd nodejs-autospace/api-gateway
-
+          pnpm install --prod
           NODE_ENV=stage pm2 restart api-gateway || NODE_ENV=stage pm2 start dist/index.js --name api-gateway
 
           echo "Deploying Auth Service..."
@@ -41,6 +41,7 @@ jobs:
         
 
           cd nodejs-autospace/auth-service
+          pnpm install --prod
           NODE_ENV=stage pm2 restart auth-service || NODE_ENV=stage pm2 start dist/server.js --name auth-service
 
           echo "Deploying Resource Service..."
@@ -50,6 +51,7 @@ jobs:
          
 
           cd nodejs-autospace/resource-service
+          pnpm install --prod
           NODE_ENV=stage pm2 restart resource-service || NODE_ENV=stage pm2 start dist/server.js --name resource-service
 
           echo "Deploying Booking Service..."
@@ -58,7 +60,8 @@ jobs:
           git fetch origin
           git reset --hard origin/stage
         
-
+          
+          pnpm install --prod
           NODE_ENV=stage pm2 restart booking-service || NODE_ENV=stage pm2 start dist/server.js --name booking-service
 
           pm2 save
