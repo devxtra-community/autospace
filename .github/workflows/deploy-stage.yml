@@ -31,6 +31,7 @@ jobs:
          
 
           cd nodejs-autospace/api-gateway
+          export HUSKY=0
           pnpm install --prod
           NODE_ENV=stage pm2 restart api-gateway || NODE_ENV=stage pm2 start dist/index.js --name api-gateway
 
@@ -41,6 +42,7 @@ jobs:
         
 
           cd nodejs-autospace/auth-service
+          export HUSKY=0
           pnpm install --prod
           NODE_ENV=stage pm2 restart auth-service || NODE_ENV=stage pm2 start dist/server.js --name auth-service
 
@@ -51,6 +53,7 @@ jobs:
          
 
           cd nodejs-autospace/resource-service
+          export HUSKY=0
           pnpm install --prod
           NODE_ENV=stage pm2 restart resource-service || NODE_ENV=stage pm2 start dist/server.js --name resource-service
 
@@ -60,7 +63,7 @@ jobs:
           git fetch origin
           git reset --hard origin/stage
         
-          
+          export HUSKY=0
           pnpm install --prod
           NODE_ENV=stage pm2 restart booking-service || NODE_ENV=stage pm2 start dist/server.js --name booking-service
 
