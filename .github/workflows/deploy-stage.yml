@@ -37,25 +37,32 @@ jobs:
           NEXT_PUBLIC_API_BASE_URL: https://api.autospace.space
           BASE_URL_API: https://api.autospace.space 
         run: |
-          cd nextjs-autospace
+          cd nextjs-autospace 
           pnpm install
           pnpm build   
 
+      - name: Clean frontend folder
+        run: |
+          ssh -i ~/.ssh/id_ed25519 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "rm -rf ~/frontend/*"
+
       - name: Prepare frontend folder on EC2
         run: |
-          ssh -i ~/.ssh/id_ed25519 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "mkdir -p ~/frontend"
+          ssh -i ~/.ssh/id_ed25519 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "mkdir -p ~/frontend/.next"
     
-      - name: Copy frontend build to EC2
+
+
+      - name: Copy frontend build to EC2  
         run: |
-          scp -i ~/.ssh/id_ed25519 -r nextjs-autospace/.next ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/frontend/
-          scp -i ~/.ssh/id_ed25519 -r nextjs-autospace/public ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/frontend/
-          scp -i ~/.ssh/id_ed25519 nextjs-autospace/package.json ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/frontend/
-          scp -i ~/.ssh/id_ed25519 nextjs-autospace/pnpm-lock.yaml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/frontend/
+         scp -i ~/.ssh/id_ed25519 -r nextjs-autospace/.next/standalone ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/frontend/
+         scp -i ~/.ssh/id_ed25519 -r nextjs-autospace/.next/static ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/frontend/.next/
+         scp -i ~/.ssh/id_ed25519 -r nextjs-autospace/public ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/frontend/
+
 
 
       - name: Deploy to EC2
         run: |
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          
+          ssh -i ~/.ssh/id_ed25519 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
           set -e
 
           echo "Deploying API Gateway..."
@@ -98,11 +105,11 @@ jobs:
           NODE_ENV=stage pm2 restart booking-service || NODE_ENV=stage pm2 start dist/server.js --name booking-service
 
           echo "Deploying Frontend..."
-          cd ~/frontend
 
-          pnpm install --prod --ignore-scripts
+          cd ~/frontend/standalone
 
-          pm2 restart frontend || pm2 start "pnpm start" --name frontend
+          pm2 delete frontend || true
+          PORT=3000 pm2 start server.js --name frontend
 
           pm2 save
           EOF
