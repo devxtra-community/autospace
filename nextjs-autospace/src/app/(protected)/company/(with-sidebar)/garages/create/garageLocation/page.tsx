@@ -11,8 +11,8 @@ import { GarageFormValues } from "../page";
 
 interface GarageLocationProps {
   formData: {
-    name: string;
-    locationName: string;
+    name?: string;
+    locationName?: string;
     latitude?: number;
     longitude?: number;
   };
@@ -39,8 +39,10 @@ export default function GarageLocation({
   const markerRef = useRef<Marker | null>(null);
   const [locationConfirmed, setLocationConfirmed] = useState(false);
 
+  if (!formData) return null;
+
   const hasSelectedLocation =
-    formData.latitude != null && formData.longitude != null;
+    formData?.latitude != null && formData?.longitude != null;
 
   useEffect(() => {
     if (typeof window === "undefined") return; // ← server guard
