@@ -33,6 +33,8 @@ jobs:
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
       - name: Build Frontend
+        env:
+          NEXT_PUBLIC_API_URL: https://api.autospace.space
         run: |
           cd nextjs-autospace
           pnpm install
