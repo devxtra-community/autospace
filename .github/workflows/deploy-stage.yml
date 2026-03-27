@@ -106,7 +106,7 @@ jobs:
 
           echo "Deploying Frontend..."
 
-          cd ~/frontend/standalone
+          cd ~/frontend/standalone/nextjs-autospace
 
           pm2 delete frontend || true
           PORT=3000 pm2 start server.js --name frontend
