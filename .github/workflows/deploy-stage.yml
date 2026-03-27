@@ -35,7 +35,7 @@ jobs:
       - name: Build Frontend
         env:
           NEXT_PUBLIC_API_URL: https://api.autospace.space
-          BASE_URL: https://api.autospace.space 
+          BASE_URL_API: https://api.autospace.space 
         run: |
           cd nextjs-autospace
           pnpm install
