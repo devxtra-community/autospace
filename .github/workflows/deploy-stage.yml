@@ -27,35 +27,41 @@ jobs:
           echo "Deploying API Gateway..."
           cd ~/autospace
           git fetch origin
-          git checkout stage
-          git pull origin stage
+          git reset --hard origin/stage
+         
 
           cd nodejs-autospace/api-gateway
-          pnpm install
-          pnpm build
-          pm2 restart api-gateway
+          pnpm install --prod --ignore-scripts
+          NODE_ENV=stage pm2 restart api-gateway || NODE_ENV=stage pm2 start dist/index.js --name api-gateway
 
           echo "Deploying Auth Service..."
           cd ~/auth-service/autospace
           git fetch origin
-          git checkout stage
-          git pull origin stage
+          git reset --hard origin/stage
+        
 
           cd nodejs-autospace/auth-service
-          pnpm install
-          pnpm build
-          pm2 restart auth-service || NODE_ENV=stage pm2 start dist/server.js --name auth-service
+          pnpm install --prod --ignore-scripts
+          NODE_ENV=stage pm2 restart auth-service || NODE_ENV=stage pm2 start dist/server.js --name auth-service
 
           echo "Deploying Resource Service..."
           cd ~/resource-service/autospace
           git fetch origin
-          git checkout stage
-          git pull origin stage
+          git reset --hard origin/stage
+         
 
           cd nodejs-autospace/resource-service
-          pnpm install
-          pnpm build
+          pnpm install --prod --ignore-scripts
           NODE_ENV=stage pm2 restart resource-service || NODE_ENV=stage pm2 start dist/server.js --name resource-service
+
+          echo "Deploying Booking Service..."
+          cd ~/booking-service/nodejs-autospace/booking-service
+
+          git fetch origin
+          git reset --hard origin/stage
+        
+          pnpm install --prod --ignore-scripts
+          NODE_ENV=stage pm2 restart booking-service || NODE_ENV=stage pm2 start dist/server.js --name booking-service
 
           pm2 save
           EOF

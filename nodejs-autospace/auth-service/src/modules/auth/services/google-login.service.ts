@@ -1,19 +1,19 @@
 import { OAuth2Client } from "google-auth-library";
 import { AppDataSource } from "../../../db/data-source";
 import { User } from "../entities/user.entity";
-import { env } from "../../../config/env.config";
+// import { env } from "../../../config/env.config";
 import { UserRole, UserStatus } from "../constants";
 import {
   generateAccessToken,
   generateRefreshToken,
 } from "../../../utils/jwt.util";
 
-const client = new OAuth2Client(env.GOOGLE_CLIENT_ID);
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const googleLoginService = async (idToken: string) => {
   const ticket = await client.verifyIdToken({
     idToken,
-    audience: env.GOOGLE_CLIENT_ID,
+    audience: process.env.GOOGLE_CLIENT_ID,
   });
 
   const payload = ticket.getPayload();

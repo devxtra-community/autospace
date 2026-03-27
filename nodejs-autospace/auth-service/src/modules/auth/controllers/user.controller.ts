@@ -6,7 +6,7 @@ import {
 } from "../services/auth.service";
 import { getUserProfile } from "../services/auth.service";
 import { UserStatus, UserRole } from "../constants";
-import { success } from "zod";
+// import { success } from "zod";
 
 export const getMyProfileController = async (req: Request, res: Response) => {
   try {

@@ -1,0 +1,21 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const valets_validator_1 = require("../validators/valets.validator");
+const valet_controller_1 = require("../controllers/valet.controller");
+const valetGarage_controller_1 = require("../controllers/valetGarage.controller");
+const internalAuth_middleware_1 = require("../../../middlewares/internalAuth.middleware");
+const internal_valet_controller_1 = require("../controllers/internal-valet.controller");
+// import { getAvailableValetController } from "../controllers/internal-valet.controller";
+const router = (0, express_1.Router)();
+router.use(internalAuth_middleware_1.internalAuth); // Apply internal authentication middleware to all routes in this router
+router.get("/me", valet_controller_1.getMyValetController);
+router.put("/:id/manager/approve", valets_validator_1.validateValetIdParam, valet_controller_1.approveValetController);
+router.put("/:id/manager/reject", valets_validator_1.validateValetIdParam, valet_controller_1.rejectValetController);
+router.get("/pending", valetGarage_controller_1.getPendingValetsController);
+router.get("/garage/:garageId/valets/active", valetGarage_controller_1.getAvailableValetForUser);
+router.get("/garage/:garageId", valets_validator_1.validateGetValetsByGarage, valetGarage_controller_1.getValetsByGarageController);
+router.get("/company/:companyId", valets_validator_1.validateGetValetsByGarage, valetGarage_controller_1.getCompanyValetsController);
+router.get("/:id", valets_validator_1.validateValetIdParam, valetGarage_controller_1.getValetByIdController);
+router.get("/all-active/:garageId", internal_valet_controller_1.getAllActiveValetsController);
+exports.default = router;

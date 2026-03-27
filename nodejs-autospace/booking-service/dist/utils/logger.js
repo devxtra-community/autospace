@@ -13,6 +13,6 @@ export const logger = {
     },
     warn: (message, ...args) => {
         console.warn(`[WARN] ${new Date().toISOString()} - ${message}`, ...args);
-    }
+    },
 };
 //# sourceMappingURL=logger.js.map

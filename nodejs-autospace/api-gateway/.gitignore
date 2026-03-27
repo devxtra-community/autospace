@@ -4,13 +4,12 @@
 **/.env
 **/.env.*
 
-.next/
+
 
 # Dependencies
 node_modules/
 
 # Build output
-dist/
 
 # Framework output
 .next/
