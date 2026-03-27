@@ -12,12 +12,43 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Build Frontend
+        run: |
+          cd nextjs-autospace
+          pnpm install
+          pnpm build   
+
+      - name: Prepare frontend folder on EC2
+        run: |
+          ssh -i ~/.ssh/id_ed25519 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "mkdir -p ~/frontend"
+    
+      - name: Copy frontend build to EC2
+        run: |
+          scp -i ~/.ssh/id_ed25519 -r nextjs-autospace/.next ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/frontend/
+          scp -i ~/.ssh/id_ed25519 -r nextjs-autospace/public ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/frontend/
+          scp -i ~/.ssh/id_ed25519 nextjs-autospace/package.json ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/frontend/
+          scp -i ~/.ssh/id_ed25519 nextjs-autospace/pnpm-lock.yaml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/frontend/
+
 
       - name: Deploy to EC2
         run: |
@@ -62,6 +93,13 @@ jobs:
         
           pnpm install --prod --ignore-scripts
           NODE_ENV=stage pm2 restart booking-service || NODE_ENV=stage pm2 start dist/server.js --name booking-service
+
+          echo "Deploying Frontend..."
+          cd ~/frontend
+
+          pnpm install --prod --ignore-scripts
+
+          pm2 restart frontend || pm2 start "pnpm start" --name frontend
 
           pm2 save
           EOF
