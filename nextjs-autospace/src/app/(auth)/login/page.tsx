@@ -18,7 +18,6 @@ import { loginUser, getMe } from "@/lib/auth.api";
 import { redirectByRole } from "@/lib/roleredirect";
 import { LoginDto } from "@autospace/shared";
 import apiClient from "@/lib/apiClient";
-// import { useSearchParams } from "next/navigation";
 
 // interface ApiErrorResponse {
 //   success: false;
@@ -27,8 +26,6 @@ import apiClient from "@/lib/apiClient";
 // }
 
 export default function LoginPage() {
-  // const params = new useSearchParams(window.location.search);
-  // const redirect = params.get("redirect") || "/";
   const [showPassword, setShowPassword] = useState(false);
   const [loginType, setLoginType] = useState<"email" | "phone">("email");
 
