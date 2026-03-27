@@ -8,8 +8,11 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { createGarage } from "@/services/garage.service";
-import GarageForm from "./garageForm/page";
-import GarageLocation from "./garageLocation/page";
+
+const GarageForm = dynamic(() => import("./garageForm/page"), { ssr: false });
+const GarageLocation = dynamic(() => import("./garageLocation/page"), {
+  ssr: false,
+});
 
 const GarageSidebar = dynamic(() => import("./garageSidebar/page"), {
   ssr: false,
