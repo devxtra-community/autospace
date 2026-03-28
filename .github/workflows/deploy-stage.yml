@@ -44,7 +44,7 @@ jobs:
       - name: Compress build
         run: |
           cd nextjs-autospace
-          tar -czf frontend.tar.gz .next public
+          tar -czf frontend.tar.gz .next public next.config.js package.json
 
       - name: Upload to EC2
         run: |
