@@ -5,14 +5,11 @@ on:
     branches:
       - stage
 
-
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -24,7 +21,23 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
+      #  BUILD FRONTEND
+      - name: Build Frontend
+        env:
+          NEXT_PUBLIC_API_BASE_URL: https://api.autospace.space
+          BASE_URL_API: https://api.autospace.space
+        run: |
+          cd nextjs-autospace
+          pnpm install
+          pnpm build
 
+      # PACKAGE EVERYTHING NEEDED
+      - name: Compress Frontend
+        run: |
+          cd nextjs-autospace
+          tar -czf frontend.tar.gz .next public
+
+      # SSH SETUP
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
@@ -32,90 +45,66 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Build Frontend
-        env:
-          NEXT_PUBLIC_API_BASE_URL: https://api.autospace.space
-          BASE_URL_API: https://api.autospace.space 
-        run: |
-          cd nextjs-autospace 
-          pnpm install
-          pnpm build   
-
-      - name: Compress build
-        run: |
-          cd nextjs-autospace
-          tar -czf frontend.tar.gz .next public package.json
-
+      #  UPLOAD BUILD
       - name: Upload to EC2
         run: |
-          # ssh -i ~/.ssh/id_ed25519 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "mkdir -p ~/frontend"
           scp -i ~/.ssh/id_ed25519 nextjs-autospace/frontend.tar.gz ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/frontend/
 
+      #  DEPLOY EVERYTHING
       - name: Deploy to EC2
         run: |
-          
           ssh -i ~/.ssh/id_ed25519 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
           set -e
 
           export CI=true
 
-          echo "Deploying API Gateway..."
+          echo " Backend Deploy..."
+
           cd ~/autospace
           git fetch origin
           git reset --hard origin/stage
-         
 
           cd nodejs-autospace/api-gateway
-          CI=true pnpm install --prod --ignore-scripts
-          NODE_ENV=stage pm2 restart api-gateway || NODE_ENV=stage pm2 start dist/index.js --name api-gateway
+          pnpm install --prod --ignore-scripts
+          pm2 restart api-gateway || pm2 start dist/index.js --name api-gateway
 
-          echo "Deploying Auth Service..."
-          cd ~/auth-service/autospace
-          git fetch origin
-          git reset --hard origin/stage
-        
+          cd ~/auth-service/autospace/nodejs-autospace/auth-service
+          pnpm install --prod --ignore-scripts
+          pm2 restart auth-service || pm2 start dist/server.js --name auth-service
 
-          cd nodejs-autospace/auth-service
-          CI=true pnpm install --prod --ignore-scripts
-          NODE_ENV=stage pm2 restart auth-service || NODE_ENV=stage pm2 start dist/server.js --name auth-service
+          cd ~/resource-service/autospace/nodejs-autospace/resource-service
+          pnpm install --prod --ignore-scripts
+          pm2 restart resource-service || pm2 start dist/server.js --name resource-service
 
-          echo "Deploying Resource Service..."
-          cd ~/resource-service/autospace
-          git fetch origin
-          git reset --hard origin/stage
-         
-
-          cd nodejs-autospace/resource-service
-          CI=true pnpm install --prod --ignore-scripts
-          NODE_ENV=stage pm2 restart resource-service || NODE_ENV=stage pm2 start dist/server.js --name resource-service
-
-          echo "Deploying Booking Service..."
           cd ~/booking-service/nodejs-autospace/booking-service
+          pnpm install --prod --ignore-scripts
+          pm2 restart booking-service || pm2 start dist/server.js --name booking-service
 
-          git fetch origin
-          git reset --hard origin/stage
-        
-          CI=true pnpm install --prod --ignore-scripts
-          NODE_ENV=stage pm2 restart booking-service || NODE_ENV=stage pm2 start dist/server.js --name booking-service
-
-
-          echo "Cleaning frontend..."
-
+          echo " Clean frontend..."
           rm -rf ~/frontend/app
           mkdir -p ~/frontend/app
 
-          echo "Extracting frontend..."
-
+          echo " Extract frontend..."
           cd ~/frontend
           tar -xzf frontend.tar.gz -C app
           rm frontend.tar.gz
 
-          echo "Deploying Frontend..."
+          echo " Fix standalone runtime (IMPORTANT)"
 
           cd ~/frontend/app/.next/standalone/nextjs-autospace
 
+          mkdir -p .next
+
+          cp -r ~/frontend/app/.next/static .next/
+          cp -r ~/frontend/app/.next/server .next/
+          cp ~/frontend/app/.next/BUILD_ID .next/
+          cp -r ~/frontend/app/public ./public
+
+          echo " Restart frontend"
           pm2 delete frontend || true
           PORT=3000 pm2 start server.js --name frontend
 
           pm2 save
+
+          echo " DEPLOY DONE"
           EOF
