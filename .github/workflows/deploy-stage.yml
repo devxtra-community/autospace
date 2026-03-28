@@ -44,11 +44,11 @@ jobs:
       - name: Compress build
         run: |
           cd nextjs-autospace
-          tar -czf frontend.tar.gz .next/standalone .next/static public
+          tar -czf frontend.tar.gz .next public
 
       - name: Upload to EC2
         run: |
-          ssh -i ~/.ssh/id_ed25519 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "mkdir -p ~/frontend"
+          # ssh -i ~/.ssh/id_ed25519 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "mkdir -p ~/frontend"
           scp -i ~/.ssh/id_ed25519 nextjs-autospace/frontend.tar.gz ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/frontend/
 
       - name: Deploy to EC2
@@ -103,14 +103,14 @@ jobs:
           mkdir -p ~/frontend/app
 
           echo "Extracting frontend..."
-          
+
           cd ~/frontend
           tar -xzf frontend.tar.gz -C app
           rm frontend.tar.gz
 
           echo "Deploying Frontend..."
 
-          cd ~/frontend/standalone/nextjs-autospace
+          cd ~/frontend/app/.next/standalone/nextjs-autospace
 
           pm2 delete frontend || true
           PORT=3000 pm2 start server.js --name frontend
