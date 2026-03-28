@@ -16,11 +16,29 @@ const booking_proxy_1 = __importDefault(require("./routes/booking.proxy"));
 const app = (0, express_1.default)();
 const port = process.env.GATEWAY_PORT || 4000;
 app.use((0, helmet_1.default)());
+// app.use(
+//   cors({
+//     origin: process.env.FRONTEND_URL!,
+//     credentials: true,
+//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+//     allowedHeaders: ["Content-Type", "Authorization", "x-user-id", "x-role"],
+//   }),
+// );
+// in local commend that
+const allowedOrigins = [
+    "https://autospace.space",
+    "https://www.autospace.space",
+];
 app.use((0, cors_1.default)({
-    origin: process.env.FRONTEND_URL,
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        }
+        else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization", "x-user-id", "x-role"],
 }));
 console.log("AUTH_SERVICE_URL =", process.env.AUTH_SERVICE_URL);
 app.use(express_1.default.json());
