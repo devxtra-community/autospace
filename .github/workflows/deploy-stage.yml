@@ -41,20 +41,15 @@ jobs:
           pnpm install
           pnpm build   
 
-      - name: Clean frontend folder
+      - name: Compress build
         run: |
-          ssh -i ~/.ssh/id_ed25519 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "rm -rf ~/frontend/*"
+          cd nextjs-autospace
+          tar -czf frontend.tar.gz .next/standalone .next/static public
 
-      - name: Prepare frontend folder on EC2
+      - name: Upload to EC2
         run: |
-          ssh -i ~/.ssh/id_ed25519 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "mkdir -p ~/frontend/standalone/nextjs-autospace/.next"
-
-      - name: Copy frontend build to EC2
-        run: |
-          # copy standalone properly
-          scp -i ~/.ssh/id_ed25519 -r nextjs-autospace/.next/standalone/* ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/frontend/standalone/
-          scp -i ~/.ssh/id_ed25519 -r nextjs-autospace/.next/static ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/frontend/standalone/nextjs-autospace/.next/
-          scp -i ~/.ssh/id_ed25519 -r nextjs-autospace/public ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/frontend/
+          ssh -i ~/.ssh/id_ed25519 ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "mkdir -p ~/frontend"
+          scp -i ~/.ssh/id_ed25519 nextjs-autospace/frontend.tar.gz ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/frontend/
 
       - name: Deploy to EC2
         run: |
@@ -100,6 +95,18 @@ jobs:
         
           pnpm install --prod --ignore-scripts
           NODE_ENV=stage pm2 restart booking-service || NODE_ENV=stage pm2 start dist/server.js --name booking-service
+
+
+          echo "Cleaning frontend..."
+
+          rm -rf ~/frontend/app
+          mkdir -p ~/frontend/app
+
+          echo "Extracting frontend..."
+          
+          cd ~/frontend
+          tar -xzf frontend.tar.gz -C app
+          rm frontend.tar.gz
 
           echo "Deploying Frontend..."
 
