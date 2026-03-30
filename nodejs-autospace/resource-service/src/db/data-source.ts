@@ -9,7 +9,7 @@ export const AppDataSource = new DataSource({
   },
   synchronize: false,
   logging: true,
-  entities: [__dirname + "/../modules/**/*.entity.ts"],
+  entities: [__dirname + "/../modules/**/*.entity.js"],
 });
 
 setInterval(async () => {

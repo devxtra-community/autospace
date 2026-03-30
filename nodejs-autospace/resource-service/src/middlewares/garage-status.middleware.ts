@@ -10,6 +10,10 @@ export const requireActiveGarage = async (
   next: NextFunction,
 ) => {
   try {
+    if (req.path.startsWith("/api/public")) {
+      return next();
+    }
+
     const user = req.user;
     if (!user) return next();
 
