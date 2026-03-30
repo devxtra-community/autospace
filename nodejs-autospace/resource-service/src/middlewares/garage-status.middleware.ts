@@ -10,7 +10,7 @@ export const requireActiveGarage = async (
   next: NextFunction,
 ) => {
   try {
-    if (req.path.startsWith("/api/public")) {
+    if (req.path.startsWith("/public")) {
       return next();
     }
 
