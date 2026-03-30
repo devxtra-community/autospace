@@ -32,6 +32,8 @@ const allowedOrigins = [
   "https://www.autospace.space",
 ];
 
+app.set("trust proxy", 1);
+
 app.use(
   cors({
     origin: (origin, callback) => {
