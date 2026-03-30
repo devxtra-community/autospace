@@ -69,17 +69,35 @@ jobs:
           pnpm build
           pm2 restart api-gateway || pm2 start dist/index.js --name api-gateway
 
-          cd ~/auth-service/autospace/nodejs-autospace/auth-service
+          #Auth service
+
+          cd ~/auth-service/autospace
+          git fetch origin
+          git reset --hard origin/stage
+
+          cd nodejs-autospace/auth-service
           pnpm install
           pnpm build
           pm2 restart auth-service || pm2 start dist/server.js --name auth-service
 
-          cd ~/resource-service/autospace/nodejs-autospace/resource-service
+          #Resource service
+
+          cd ~/resource-service/autospace
+          git fetch origin
+          git reset --hard origin/stage
+
+          cd nodejs-autospace/resource-service
           pnpm install
           pnpm build
           pm2 restart resource-service || pm2 start dist/server.js --name resource-service
 
-          cd ~/booking-service/nodejs-autospace/booking-service
+          #Booking service
+
+          cd ~/booking-service
+          git fetch origin
+          git reset --hard origin/stage
+
+          cd nodejs-autospace/booking-service
           pnpm install
           pnpm build
           pm2 restart booking-service || pm2 start dist/server.js --name booking-service
