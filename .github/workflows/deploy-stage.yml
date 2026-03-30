@@ -65,19 +65,23 @@ jobs:
           git reset --hard origin/stage
 
           cd nodejs-autospace/api-gateway
-          pnpm install --prod --ignore-scripts
+          pnpm install
+          pnpm build
           pm2 restart api-gateway || pm2 start dist/index.js --name api-gateway
 
           cd ~/auth-service/autospace/nodejs-autospace/auth-service
-          pnpm install --prod --ignore-scripts
+          pnpm install
+          pnpm build
           pm2 restart auth-service || pm2 start dist/server.js --name auth-service
 
           cd ~/resource-service/autospace/nodejs-autospace/resource-service
-          pnpm install --prod --ignore-scripts
+          pnpm install
+          pnpm build
           pm2 restart resource-service || pm2 start dist/server.js --name resource-service
 
           cd ~/booking-service/nodejs-autospace/booking-service
-          pnpm install --prod --ignore-scripts
+          pnpm install
+          pnpm build
           pm2 restart booking-service || pm2 start dist/server.js --name booking-service
 
           echo " Clean frontend..."

@@ -27,25 +27,21 @@ app.use(helmet());
 
 // in local commend that here change on lacal
 
-const allowedOrigins = [
-  "https://autospace.space",
-  "https://www.autospace.space",
-];
-
-app.set("trust proxy", 1);
-
 app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) {
+      if (
+        origin === "https://autospace.space" ||
+        origin === "https://www.autospace.space"
+      ) {
         return callback(null, true);
       }
 
-      console.log(" Blocked by CORS:", origin);
+      console.log("Blocked by CORS:", origin);
 
-      return callback(null, false);
+      return callback(null, false); //  THIS LINE ONLY
     },
     credentials: true,
   }),
