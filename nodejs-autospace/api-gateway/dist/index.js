@@ -24,19 +24,21 @@ app.use((0, helmet_1.default)());
 //     allowedHeaders: ["Content-Type", "Authorization", "x-user-id", "x-role"],
 //   }),
 // );
-// in local commend that
+// in local commend that here change on lacal
 const allowedOrigins = [
     "https://autospace.space",
     "https://www.autospace.space",
 ];
+app.set("trust proxy", 1);
 app.use((0, cors_1.default)({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
+        if (!origin)
+            return callback(null, true);
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
         }
-        else {
-            callback(new Error("Not allowed by CORS"));
-        }
+        console.log(" Blocked by CORS:", origin);
+        return callback(null, false);
     },
     credentials: true,
 }));
