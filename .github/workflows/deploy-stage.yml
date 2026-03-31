@@ -26,6 +26,9 @@ jobs:
         env:
           NEXT_PUBLIC_API_BASE_URL: https://api.autospace.space
           BASE_URL_API: https://api.autospace.space
+          NEXT_PUBLIC_API_URL : https://api.autospace.space
+          NEXT_PUBLIC_R2_PUBLIC_BASE_URL : https://pub-ff3db0610a93483399825b1ebf0d5e7d.r2.dev
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID : 1045346971721-nkrtqj1a7on5038ao84n1s4do7muf3si.apps.googleusercontent.com
         run: |
           cd nextjs-autospace
           pnpm install
