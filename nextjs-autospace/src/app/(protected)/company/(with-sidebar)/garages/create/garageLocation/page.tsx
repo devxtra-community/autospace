@@ -11,8 +11,8 @@ import { GarageFormValues } from "../page";
 
 interface GarageLocationProps {
   formData: {
-    name: string;
-    locationName: string;
+    name?: string;
+    locationName?: string;
     latitude?: number;
     longitude?: number;
   };
@@ -39,8 +39,10 @@ export default function GarageLocation({
   const markerRef = useRef<Marker | null>(null);
   const [locationConfirmed, setLocationConfirmed] = useState(false);
 
+  if (!formData) return null;
+
   const hasSelectedLocation =
-    formData.latitude != null && formData.longitude != null;
+    formData?.latitude != null && formData?.longitude != null;
 
   useEffect(() => {
     if (typeof window === "undefined") return; // ← server guard
@@ -122,7 +124,7 @@ export default function GarageLocation({
           />
         </div>
 
-        {formData.latitude && formData.longitude && (
+        {formData?.latitude != null && formData?.longitude != null && (
           <p className="text-sm text-gray-600">
             Selected: {formData.latitude.toFixed(5)},{" "}
             {formData.longitude.toFixed(5)}
@@ -182,7 +184,8 @@ export default function GarageLocation({
             Garage Created Successfully
           </h1>
           <p className="text-gray-600">
-            Your garage <strong>{formData.name}</strong> has been created.
+            Your garage <strong>{formData?.name || "Garage"}</strong> has been
+            created.
           </p>
         </div>
       </div>

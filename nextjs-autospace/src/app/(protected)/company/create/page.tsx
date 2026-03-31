@@ -87,9 +87,9 @@ export default function CreateCompanyPage() {
                 {...register("name")}
                 className="rounded-xl"
               />
-              {errors.name && (
+              {errors?.name && (
                 <p className="text-sm text-destructive">
-                  {errors.name.message}
+                  {errors?.name?.message}
                 </p>
               )}
             </div>
@@ -104,9 +104,9 @@ export default function CreateCompanyPage() {
                 {...register("email")}
                 className="rounded-xl"
               />
-              {errors.email && (
+              {errors?.email && (
                 <p className="text-sm text-destructive">
-                  {errors.email.message}
+                  {errors?.email?.message}
                 </p>
               )}
             </div>
@@ -121,9 +121,9 @@ export default function CreateCompanyPage() {
                 {...register("phone")}
                 className="rounded-xl"
               />
-              {errors.phone && (
+              {errors?.phone && (
                 <p className="text-sm text-destructive">
-                  {errors.phone.message}
+                  {errors?.phone?.message}
                 </p>
               )}
             </div>
@@ -137,9 +137,9 @@ export default function CreateCompanyPage() {
                 {...register("location")}
                 className="rounded-xl"
               />
-              {errors.location && (
+              {errors?.location && (
                 <p className="text-sm text-destructive">
-                  {errors.location.message}
+                  {errors?.location?.message}
                 </p>
               )}
             </div>

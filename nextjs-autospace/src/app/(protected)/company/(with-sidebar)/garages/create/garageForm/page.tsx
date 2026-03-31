@@ -31,6 +31,8 @@ export default function GarageForm({
     capacity: false,
   });
 
+  if (!errors || !register) return null;
+
   const allFilled = Object.values(filled).every(Boolean);
 
   return (
