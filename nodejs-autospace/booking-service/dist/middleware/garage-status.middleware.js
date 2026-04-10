@@ -1,4 +1,5 @@
 import axios from "axios";
+import { logger } from "../utils/logger.js";
 export const requireActiveGarage = async (req, res, next) => {
     try {
         const user = req.user;
@@ -22,7 +23,7 @@ export const requireActiveGarage = async (req, res, next) => {
         next();
     }
     catch (error) {
-        console.error("Garage status check failed in booking service:", error);
+        logger.error("Garage status check failed", { error: error instanceof Error ? error.message : error });
         next();
     }
 };

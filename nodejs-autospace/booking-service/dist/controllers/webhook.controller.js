@@ -3,11 +3,12 @@ import { AppDataSource } from "../data-source.js";
 import { Booking } from "../entities/booking.entity.js";
 import { Payment, PaymentStatus } from "../entities/payment.entity.js";
 import { BookingService } from "../services/booking.service.js";
+import { logger } from "../utils/logger.js";
 // Stripe, repo and service initialized inside handler
 export const stripeWebhookController = async (req, res) => {
     const stripeKey = process.env.STRIPE_SECRET_KEY;
     if (!stripeKey) {
-        console.error("STRIPE_SECRET_KEY missing in webhook");
+        logger.error("STRIPE_SECRET_KEY missing in webhook handler");
         return res.status(500).send("Configuration error");
     }
     const stripe = new Stripe(stripeKey);
@@ -24,10 +25,10 @@ export const stripeWebhookController = async (req, res) => {
         if (error instanceof Error) {
             message = error.message;
         }
-        console.log("Webhook signature verification failed:", message);
+        logger.warn("Stripe webhook signature verification failed", { message });
         return res.status(200).json({ received: true });
     }
-    console.log(" Stripe event received:", event.type);
+    logger.info("Stripe event received", { type: event.type });
     try {
         if (event.type === "checkout.session.completed") {
             const session = event.data.object;
@@ -35,7 +36,7 @@ export const stripeWebhookController = async (req, res) => {
             const paymentIntentId = session.payment_intent;
             const amount = session.amount_total ?? 0;
             if (!bookingId) {
-                console.log("No bookingId in metadata");
+                logger.warn("Stripe webhook received with no bookingId in metadata");
                 return res.status(200).send("No bookingId");
             }
             const paymentRepo = AppDataSource.getRepository(Payment);
@@ -43,7 +44,7 @@ export const stripeWebhookController = async (req, res) => {
                 where: { stripePaymentIntentId: paymentIntentId },
             });
             if (existing) {
-                console.log("Duplicate webhook ignored");
+                logger.info("Duplicate Stripe webhook ignored", { paymentIntentId });
                 return res.status(200).send("Already processed");
             }
             const updatedBooking = await AppDataSource.transaction(async (manager) => {
@@ -54,7 +55,7 @@ export const stripeWebhookController = async (req, res) => {
                     },
                 });
                 if (!booking) {
-                    console.log("Booking already finalized. Ignoring webhook.");
+                    logger.warn("Booking already finalized — ignoring webhook", { bookingId });
                     return null;
                 }
                 booking.paymentStatus = "paid";
@@ -90,7 +91,7 @@ export const stripeWebhookController = async (req, res) => {
                     });
                 }
             }
-            console.log("Payment success saved for booking:", bookingId);
+            logger.info("Payment success confirmed for booking", { bookingId, amount: amount / 100 });
         }
         if (event.type === "payment_intent.payment_failed") {
             const intent = event.data.object;
@@ -99,7 +100,7 @@ export const stripeWebhookController = async (req, res) => {
                 status: PaymentStatus.FAILED,
                 failureReason: intent.last_payment_error?.message || "Failed",
             });
-            console.log(" Payment failed:", intent.id);
+            logger.warn("Stripe payment failed", { paymentIntentId: intent.id });
         }
         if (event.type === "checkout.session.expired") {
             const session = event.data.object;
@@ -117,7 +118,10 @@ export const stripeWebhookController = async (req, res) => {
         return res.status(200).json({ received: true });
     }
     catch (err) {
-        console.error(" Webhook processing error:", err);
+        logger.error("Stripe webhook processing error", {
+            error: err instanceof Error ? err.message : err,
+            stack: err instanceof Error ? err.stack : undefined,
+        });
         return res.status(500).send("Webhook handler failed");
     }
 };

@@ -1,4 +1,5 @@
 import amqp from "amqplib";
+import { logger } from "../utils/logger.js";
 let channel;
 export const connectRabbit = async () => {
     const url = process.env.RABBITMQ_URL;
@@ -10,20 +11,20 @@ export const connectRabbit = async () => {
         try {
             const connection = await amqp.connect(url);
             connection.on("error", (err) => {
-                console.error("RabbitMQ connection error:", err);
+                logger.error("RabbitMQ connection error", { message: err.message });
             });
             connection.on("close", () => {
-                console.error("RabbitMQ connection closed");
+                logger.error("RabbitMQ connection closed unexpectedly");
             });
             channel = await connection.createChannel();
             await channel.assertExchange("autospace", "topic", {
                 durable: true,
             });
-            console.log("RabbitMQ connected");
+            logger.info("RabbitMQ connected");
             return;
         }
         catch (err) {
-            console.error("RabbitMQ connection failed, retrying...", err);
+            logger.error("RabbitMQ connection failed, retrying...", { error: err instanceof Error ? err.message : err });
             retries--;
             await new Promise((res) => setTimeout(res, 5000));
         }
@@ -32,7 +33,7 @@ export const connectRabbit = async () => {
 };
 export const publishEvent = async (routingKey, data) => {
     if (!channel) {
-        console.error("RabbitMQ channel not initialized");
+        logger.error("RabbitMQ channel not initialized — publishEvent called before connectRabbit");
         return;
     }
     channel.publish("autospace", routingKey, Buffer.from(JSON.stringify(data)), {

@@ -2,6 +2,7 @@ import amqp from "amqplib";
 import { AppDataSource } from "../data-source.js";
 import { Booking, BookingValetStatus } from "../entities/booking.entity.js";
 import redisClient from "./redis.js";
+import { logger } from "../utils/logger.js";
 export const startValetAssignedConsumer = async () => {
     const conn = await amqp.connect(process.env.RABBITMQ_URL);
     const ch = await conn.createChannel();
@@ -10,12 +11,12 @@ export const startValetAssignedConsumer = async () => {
         durable: true,
     });
     await ch.bindQueue(q.queue, "autospace", "valet.request.created");
-    console.log("Waiting for valet.request.created...");
+    logger.info("Waiting for valet.request.created messages");
     ch.consume(q.queue, async (msg) => {
         if (!msg)
             return;
         const { bookingId, valetId } = JSON.parse(msg.content.toString());
-        console.log("Valet assigned received:", bookingId, valetId);
+        logger.info("Valet assigned message received", { bookingId, valetId });
         const repo = AppDataSource.getRepository(Booking);
         await repo.update(bookingId, {
             currentValetRequestId: valetId,
@@ -23,7 +24,7 @@ export const startValetAssignedConsumer = async () => {
             valetStatus: BookingValetStatus.REQUESTED,
         });
         await redisClient.del(`booking:${bookingId}`); // Clear any existing valet request cache
-        console.log("Booking updated with valet request:", bookingId, valetId);
+        logger.info("Booking updated with valet request", { bookingId, valetId });
         ch.ack(msg);
     });
 };

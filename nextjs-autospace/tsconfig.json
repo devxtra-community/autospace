@@ -20,7 +20,8 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@autospace/shared": ["../../packages/shared/src"]
+      "@autospace/shared": ["../nodejs-autospace/packages/shared"],
+      "@autospace/shared/*": ["../nodejs-autospace/packages/shared/*"]
     }
   },
   "include": [

@@ -18,7 +18,9 @@
     "express-rate-limit": "^7.1.5",
     "helmet": "^7.1.0",
     "http-proxy-middleware": "^3.0.5",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "@autospace/shared": "workspace:*",
+    "@autospace/logger": "workspace:*"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",

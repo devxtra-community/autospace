@@ -30,7 +30,8 @@
     "redis": "^5.10.0",
     "reflect-metadata": "^0.2.2",
     "typeorm": "^0.3.28",
-    "zod": "^4.3.4"
+    "zod": "^4.3.4",
+    "@autospace/logger": "workspace:*"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",

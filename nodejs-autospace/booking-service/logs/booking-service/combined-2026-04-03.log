@@ -1,0 +1,58 @@
+{"level":"info","message":"database connected","service":"booking-service","timestamp":"2026-04-03T14:51:18.462Z"}
+{"level":"info","message":"Redis connected","service":"booking-service","timestamp":"2026-04-03T14:51:18.475Z"}
+{"level":"info","message":"redis connected","service":"booking-service","timestamp":"2026-04-03T14:51:18.481Z"}
+{"level":"info","message":"RabbitMQ connected","service":"booking-service","timestamp":"2026-04-03T14:51:18.547Z"}
+{"level":"info","message":"rabbitmq connected","service":"booking-service","timestamp":"2026-04-03T14:51:18.547Z"}
+{"level":"info","message":"Waiting for valet.request.created messages","service":"booking-service","timestamp":"2026-04-03T14:51:18.601Z"}
+{"level":"info","message":"valet assigned consumer started","service":"booking-service","timestamp":"2026-04-03T14:51:18.602Z"}
+{"level":"info","message":"Listening for valet.requested messages","service":"booking-service","timestamp":"2026-04-03T14:51:18.673Z"}
+{"level":"info","message":"Booking service running on port 4002","service":"booking-service","timestamp":"2026-04-03T14:51:18.787Z"}
+{"level":"info","message":"database connected","service":"booking-service","timestamp":"2026-04-03T14:51:34.747Z"}
+{"level":"info","message":"Redis connected","service":"booking-service","timestamp":"2026-04-03T14:51:34.757Z"}
+{"level":"info","message":"redis connected","service":"booking-service","timestamp":"2026-04-03T14:51:34.769Z"}
+{"level":"info","message":"RabbitMQ connected","service":"booking-service","timestamp":"2026-04-03T14:51:34.836Z"}
+{"level":"info","message":"rabbitmq connected","service":"booking-service","timestamp":"2026-04-03T14:51:34.836Z"}
+{"level":"info","message":"Waiting for valet.request.created messages","service":"booking-service","timestamp":"2026-04-03T14:51:34.887Z"}
+{"level":"info","message":"valet assigned consumer started","service":"booking-service","timestamp":"2026-04-03T14:51:34.887Z"}
+{"level":"info","message":"Listening for valet.requested messages","service":"booking-service","timestamp":"2026-04-03T14:51:34.937Z"}
+{"level":"info","message":"Booking service running on port 4002","service":"booking-service","timestamp":"2026-04-03T14:51:34.986Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T14:52:00.067Z cutoff=2026-04-03T14:32:00.067Z","service":"booking-service","timestamp":"2026-04-03T14:52:00.067Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T14:53:00.054Z cutoff=2026-04-03T14:33:00.054Z","service":"booking-service","timestamp":"2026-04-03T14:53:00.054Z"}
+{"level":"info","message":"database connected","service":"booking-service","timestamp":"2026-04-03T14:53:45.236Z"}
+{"level":"info","message":"Redis connected","service":"booking-service","timestamp":"2026-04-03T14:53:45.248Z"}
+{"level":"info","message":"redis connected","service":"booking-service","timestamp":"2026-04-03T14:53:45.259Z"}
+{"level":"info","message":"RabbitMQ connected","service":"booking-service","timestamp":"2026-04-03T14:53:45.325Z"}
+{"level":"info","message":"rabbitmq connected","service":"booking-service","timestamp":"2026-04-03T14:53:45.326Z"}
+{"level":"info","message":"Waiting for valet.request.created messages","service":"booking-service","timestamp":"2026-04-03T14:53:45.390Z"}
+{"level":"info","message":"valet assigned consumer started","service":"booking-service","timestamp":"2026-04-03T14:53:45.393Z"}
+{"level":"info","message":"Listening for valet.requested messages","service":"booking-service","timestamp":"2026-04-03T14:53:45.456Z"}
+{"level":"info","message":"Booking service running on port 4002","service":"booking-service","timestamp":"2026-04-03T14:53:45.514Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T14:54:00.062Z cutoff=2026-04-03T14:34:00.062Z","service":"booking-service","timestamp":"2026-04-03T14:54:00.062Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T14:55:00.055Z cutoff=2026-04-03T14:35:00.055Z","service":"booking-service","timestamp":"2026-04-03T14:55:00.055Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T14:56:00.029Z cutoff=2026-04-03T14:36:00.029Z","service":"booking-service","timestamp":"2026-04-03T14:56:00.029Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T14:57:00.029Z cutoff=2026-04-03T14:37:00.029Z","service":"booking-service","timestamp":"2026-04-03T14:57:00.029Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T14:58:00.037Z cutoff=2026-04-03T14:38:00.037Z","service":"booking-service","timestamp":"2026-04-03T14:58:00.037Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T14:59:00.125Z cutoff=2026-04-03T14:39:00.125Z","service":"booking-service","timestamp":"2026-04-03T14:59:00.125Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T15:00:00.034Z cutoff=2026-04-03T14:40:00.034Z","service":"booking-service","timestamp":"2026-04-03T15:00:00.034Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T15:01:00.038Z cutoff=2026-04-03T14:41:00.038Z","service":"booking-service","timestamp":"2026-04-03T15:01:00.038Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T15:02:00.036Z cutoff=2026-04-03T14:42:00.036Z","service":"booking-service","timestamp":"2026-04-03T15:02:00.036Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T15:03:00.035Z cutoff=2026-04-03T14:43:00.035Z","service":"booking-service","timestamp":"2026-04-03T15:03:00.035Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T15:04:00.046Z cutoff=2026-04-03T14:44:00.046Z","service":"booking-service","timestamp":"2026-04-03T15:04:00.046Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T15:05:00.041Z cutoff=2026-04-03T14:45:00.041Z","service":"booking-service","timestamp":"2026-04-03T15:05:00.041Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T15:06:00.057Z cutoff=2026-04-03T14:46:00.057Z","service":"booking-service","timestamp":"2026-04-03T15:06:00.057Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T15:07:00.042Z cutoff=2026-04-03T14:47:00.042Z","service":"booking-service","timestamp":"2026-04-03T15:07:00.042Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T15:08:00.056Z cutoff=2026-04-03T14:48:00.056Z","service":"booking-service","timestamp":"2026-04-03T15:08:00.056Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T15:09:00.051Z cutoff=2026-04-03T14:49:00.051Z","service":"booking-service","timestamp":"2026-04-03T15:09:00.051Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T15:10:00.055Z cutoff=2026-04-03T14:50:00.055Z","service":"booking-service","timestamp":"2026-04-03T15:10:00.055Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T15:11:00.039Z cutoff=2026-04-03T14:51:00.039Z","service":"booking-service","timestamp":"2026-04-03T15:11:00.039Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T15:12:00.040Z cutoff=2026-04-03T14:52:00.040Z","service":"booking-service","timestamp":"2026-04-03T15:12:00.040Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T15:13:00.051Z cutoff=2026-04-03T14:53:00.051Z","service":"booking-service","timestamp":"2026-04-03T15:13:00.051Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T15:14:00.029Z cutoff=2026-04-03T14:54:00.029Z","service":"booking-service","timestamp":"2026-04-03T15:14:00.029Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-03T15:15:00.054Z cutoff=2026-04-03T14:55:00.054Z","service":"booking-service","timestamp":"2026-04-03T15:15:00.054Z"}
+{"level":"error","message":"Redis client error Socket closed unexpectedly","service":"booking-service","timestamp":"2026-04-03T15:15:01.330Z"}
+{"level":"error","message":"Redis client error connect ECONNREFUSED 127.0.0.1:6379","service":"booking-service","timestamp":"2026-04-03T15:15:01.372Z"}
+{"level":"error","message":"Redis client error connect ECONNREFUSED 127.0.0.1:6379","service":"booking-service","timestamp":"2026-04-03T15:15:01.447Z"}
+{"level":"error","message":"Redis client error connect ECONNREFUSED 127.0.0.1:6379","service":"booking-service","timestamp":"2026-04-03T15:15:01.557Z"}
+{"level":"error","message":"RabbitMQ connection closed unexpectedly","service":"booking-service","timestamp":"2026-04-03T15:15:01.794Z"}
+{"level":"error","message":"Redis client error connect ECONNREFUSED 127.0.0.1:6379","service":"booking-service","timestamp":"2026-04-03T15:15:01.830Z"}
+{"level":"error","message":"Redis client error connect ECONNREFUSED 127.0.0.1:6379","service":"booking-service","timestamp":"2026-04-03T15:15:02.374Z"}

@@ -1,0 +1,20 @@
+{
+  "keep": {
+    "days": true,
+    "amount": 14
+  },
+  "auditLog": "/home/rashiee/Desktop/devxtra/car parking/autospace/nodejs-autospace/api-gateway/logs/api-gateway/.e56a6bccdaf6a68c2c8a1a53e0f6f6f84cc9bbd2-audit.json",
+  "files": [
+    {
+      "date": 1775228033947,
+      "name": "/home/rashiee/Desktop/devxtra/car parking/autospace/nodejs-autospace/api-gateway/logs/api-gateway/error-2026-04-03.log",
+      "hash": "6666210d7c641e0df9e6e83114041006b26ad58b67dec4c06ca5cedc7c0cc047"
+    },
+    {
+      "date": 1775813078338,
+      "name": "/home/rashiee/Desktop/devxtra/car parking/autospace/nodejs-autospace/api-gateway/logs/api-gateway/error-2026-04-10.log",
+      "hash": "9e4786b8c2e11d3bd62e4f48104054b4f5ae22e5d71627831c5b78fcf599bc71"
+    }
+  ],
+  "hashType": "sha256"
+}

@@ -1,6 +1,7 @@
 import amqp from "amqplib";
 import axios from "axios";
 import { publishEvent } from "../config/rabbitmq.js";
+import { logger } from "../utils/logger.js";
 export const startValetRequestedConsumer = async () => {
     const conn = await amqp.connect(process.env.RABBITMQ_URL);
     const ch = await conn.createChannel();
@@ -9,7 +10,7 @@ export const startValetRequestedConsumer = async () => {
         durable: true,
     });
     await ch.bindQueue(q.queue, "autospace", "valet.requested");
-    console.log("Listening for valet.requested");
+    logger.info("Listening for valet.requested messages");
     ch.consume(q.queue, async (msg) => {
         if (!msg)
             return;
@@ -24,7 +25,7 @@ export const startValetRequestedConsumer = async () => {
             });
             const valet = res.data?.data;
             if (!valet) {
-                console.log("No available valet");
+                logger.info("No available valet found", { bookingId, garageId });
                 ch.ack(msg);
                 return;
             }
@@ -34,7 +35,11 @@ export const startValetRequestedConsumer = async () => {
             });
         }
         catch (err) {
-            console.error("Valet dispatch failed", err);
+            logger.error("Valet dispatch failed", {
+                bookingId,
+                garageId,
+                error: err instanceof Error ? err.message : err,
+            });
         }
         ch.ack(msg);
     });

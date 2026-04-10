@@ -8,11 +8,17 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "paths": {
+      "@autospace/shared": ["../packages/shared"]
+    }
   },
-  "references": [{ "path": "../../packages/shared" }],
+  "references": [
+    {
+      "path": "../packages/shared"
+    }
+  ],
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

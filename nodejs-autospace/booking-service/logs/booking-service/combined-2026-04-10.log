@@ -1,0 +1,15 @@
+{"level":"info","message":"database connected","service":"booking-service","timestamp":"2026-04-10T09:25:05.514Z"}
+{"level":"info","message":"Redis connected","service":"booking-service","timestamp":"2026-04-10T09:25:05.532Z"}
+{"level":"info","message":"redis connected","service":"booking-service","timestamp":"2026-04-10T09:25:05.545Z"}
+{"level":"info","message":"RabbitMQ connected","service":"booking-service","timestamp":"2026-04-10T09:25:05.636Z"}
+{"level":"info","message":"rabbitmq connected","service":"booking-service","timestamp":"2026-04-10T09:25:05.637Z"}
+{"level":"info","message":"Waiting for valet.request.created messages","service":"booking-service","timestamp":"2026-04-10T09:25:05.715Z"}
+{"level":"info","message":"valet assigned consumer started","service":"booking-service","timestamp":"2026-04-10T09:25:05.718Z"}
+{"level":"info","message":"Listening for valet.requested messages","service":"booking-service","timestamp":"2026-04-10T09:25:05.793Z"}
+{"level":"info","message":"Booking service running on port 4002","service":"booking-service","timestamp":"2026-04-10T09:25:06.008Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-10T09:26:00.071Z cutoff=2026-04-10T09:06:00.071Z","service":"booking-service","timestamp":"2026-04-10T09:26:00.071Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-10T09:27:00.098Z cutoff=2026-04-10T09:07:00.098Z","service":"booking-service","timestamp":"2026-04-10T09:27:00.098Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-10T09:28:00.056Z cutoff=2026-04-10T09:08:00.056Z","service":"booking-service","timestamp":"2026-04-10T09:28:00.056Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-10T09:29:00.117Z cutoff=2026-04-10T09:09:00.117Z","service":"booking-service","timestamp":"2026-04-10T09:29:00.117Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-10T09:30:00.131Z cutoff=2026-04-10T09:10:00.131Z","service":"booking-service","timestamp":"2026-04-10T09:30:00.132Z"}
+{"level":"info","message":"NoShow Check | now=2026-04-10T09:31:00.080Z cutoff=2026-04-10T09:11:00.080Z","service":"booking-service","timestamp":"2026-04-10T09:31:00.080Z"}

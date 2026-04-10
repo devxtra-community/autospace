@@ -31,7 +31,8 @@
     "redis": "^5.10.0",
     "reflect-metadata": "^0.2.2",
     "typeorm": "^0.3.28",
-    "zod": "^4.3.5"
+    "zod": "^4.3.5",
+    "@autospace/logger": "workspace:*"
   },
   "devDependencies": {
     "@types/amqplib": "^0.10.8",

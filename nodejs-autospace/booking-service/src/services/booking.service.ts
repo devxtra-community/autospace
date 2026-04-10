@@ -6,6 +6,7 @@ import redisClient from "../config/redis.js";
 import { publishEvent } from "../config/rabbitmq.js";
 import { sendMail } from "../config/mail.js";
 import { calculateDistanceKm } from "../utils/distance.js";
+import { logger } from "../utils/logger.js";
 import { ValidationError } from "../validators/booking.validator.js";
 
 // Repositories are obtained inside methods to ensure AppDataSource is initialized
@@ -237,9 +238,11 @@ export class BookingService {
 
       // Optional: Detect tampering attempt
       if (bookingData.amount !== computedTotal) {
-        console.warn(
-          `⚠ Amount mismatch detected. Frontend: ${bookingData.amount}, Backend: ${computedTotal}`,
-        );
+        logger.warn("Amount mismatch detected", {
+          bookingId: bookingData.slotId,
+          frontendAmount: bookingData.amount,
+          computedAmount: computedTotal,
+        });
       }
 
       // -----------------------------------------------------------------------
@@ -327,10 +330,9 @@ export class BookingService {
       );
 
       // console.log("auth url",process.env.AUTH_SERVICE_URL);
-      console.log(
-        "url:",
-        `${process.env.AUTH_SERVICE_URL}/internal/users/${savedBooking.userId}`,
-      );
+      logger.info("Internal user fetch details", {
+        url: `${process.env.AUTH_SERVICE_URL}/internal/users/${savedBooking.userId}`,
+      });
 
       const user = userRes.data.data;
 
@@ -345,7 +347,7 @@ export class BookingService {
       );
 
       const slot = slotRes.data.data;
-      console.log("SLOT RESPONSE:", slotRes.data);
+      logger.info("Slot response received", { slotData: slotRes.data });
       const startTime = new Date(savedBooking.startTime).toLocaleString();
       const endTime = new Date(savedBooking.endTime).toLocaleString();
 
@@ -437,7 +439,7 @@ Smart Parking. Seamless Experience.
 
       return await manager.getRepository(Booking).save(booking);
     } catch {
-      console.log("Valet assignment failed");
+      logger.info("Valet assignment failed on initial request");
       return null;
     }
   }
@@ -521,7 +523,7 @@ Smart Parking. Seamless Experience.
     const cached = await redisClient.get(cacheKey);
 
     if (cached) {
-      console.log("Booking from Redis");
+      logger.info("Booking retrieved from Redis cache", { bookingId: id });
       return JSON.parse(cached);
     }
 
@@ -536,7 +538,7 @@ Smart Parking. Seamless Experience.
     //store in Redis
     await redisClient.set(cacheKey, JSON.stringify(booking), { EX: 300 });
 
-    console.log("Booking from DB");
+    logger.info("Booking retrieved from database", { bookingId: id });
 
     return booking;
   }
@@ -588,7 +590,10 @@ Smart Parking. Seamless Experience.
       );
       allAvailableValets = valetsRes.data?.data || [];
     } catch (err) {
-      console.error("Failed to fetch active valets", err);
+      logger.error("Failed to fetch active valets for manual assignment", {
+        garageId,
+        error: err instanceof Error ? err.message : err,
+      });
     }
 
     const enriched = await Promise.all(
@@ -631,7 +636,10 @@ Smart Parking. Seamless Experience.
             };
           }
         } catch (err) {
-          console.error("Failed to enrich booking", booking.id, err);
+          logger.error("Failed to enrich booking for manual assignment", {
+            bookingId: booking.id,
+            error: err instanceof Error ? err.message : err,
+          });
         }
 
         const rejectedIds = booking.rejectedValetIds || [];
@@ -680,11 +688,13 @@ Smart Parking. Seamless Experience.
           );
 
           if (!invalidCache) {
-            console.log("User bookings from Redis");
+            logger.info("User bookings retrieved from Redis", { userId });
             return parsed;
           }
 
-          console.log("Cache outdated — refreshing");
+          logger.info("User bookings cache outdated — refreshing from DB", {
+            userId,
+          });
         }
       }
 
@@ -715,15 +725,21 @@ Smart Parking. Seamless Experience.
               valet = valetRes.data?.data ?? null;
             } catch (err: unknown) {
               if (axios.isAxiosError(err)) {
-                console.error(
-                  "Valet fetch failed:",
-                  err.response?.status,
-                  err.response?.data,
-                );
+                logger.error("Valet fetch failed during enrichment", {
+                  valetId: booking.valetId,
+                  status: err.response?.status,
+                  data: err.response?.data,
+                });
               } else if (err instanceof Error) {
-                console.error("Valet fetch error:", err.message);
+                logger.error("Valet fetch error during enrichment", {
+                  valetId: booking.valetId,
+                  message: err.message,
+                });
               } else {
-                console.error("Unknown valet error:", err);
+                logger.error("Unknown valet error during enrichment", {
+                  valetId: booking.valetId,
+                  error: err,
+                });
               }
             }
           }
@@ -752,16 +768,21 @@ Smart Parking. Seamless Experience.
               }
             } catch (err: unknown) {
               if (axios.isAxiosError(err)) {
-                console.error(
-                  "Slot fetch failed:",
-                  booking.slotId,
-                  err.response?.status,
-                  err.response?.data,
-                );
+                logger.error("Slot fetch failed during enrichment", {
+                  slotId: booking.slotId,
+                  status: err.response?.status,
+                  data: err.response?.data,
+                });
               } else if (err instanceof Error) {
-                console.error("Slot fetch error:", err.message);
+                logger.error("Slot fetch error during enrichment", {
+                  slotId: booking.slotId,
+                  message: err.message,
+                });
               } else {
-                console.error("Unknown slot error:", err);
+                logger.error("Unknown slot error during enrichment", {
+                  slotId: booking.slotId,
+                  error: err,
+                });
               }
             }
           }
@@ -779,9 +800,12 @@ Smart Parking. Seamless Experience.
       return enriched;
     } catch (err: unknown) {
       if (err instanceof Error) {
-        console.error("getUserBookings failed:", err.message);
+        logger.error("getUserBookings failed", {
+          userId,
+          message: err.message,
+        });
       } else {
-        console.error("getUserBookings failed:", err);
+        logger.error("getUserBookings failed", { userId, error: err });
       }
 
       throw err;
@@ -797,10 +821,9 @@ Smart Parking. Seamless Experience.
     if (!booking) throw new Error("Booking not found");
 
     if (booking.status !== "payment_pending" && status === "confirmed") {
-      console.log(
-        "Skip status update — booking already finalized:",
-        booking.id,
-      );
+      logger.info("Skip status update — booking already finalized", {
+        bookingId: booking.id,
+      });
       return booking;
     }
 
@@ -929,7 +952,10 @@ Smart Parking. Seamless Experience.
             pickupLongitude: booking.pickupLongitude,
           };
         } catch (err) {
-          console.log("Enrich failed:", err);
+          logger.error("Booking enrichment failed", {
+            bookingId: booking.id,
+            error: err instanceof Error ? err.message : err,
+          });
           return null;
         }
       }),
@@ -947,7 +973,10 @@ Smart Parking. Seamless Experience.
       },
     });
 
-    console.log("DB returned:", bookings);
+    logger.info("Valet requests retrieved from database", {
+      valetId,
+      count: bookings.length,
+    });
 
     return await this.enrichBookings(bookings);
   }

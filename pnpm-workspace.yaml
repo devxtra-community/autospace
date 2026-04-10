@@ -1,5 +1,4 @@
 packages:
-  - "packages/*"
+  - "nodejs-autospace/packages/*"
   - "nodejs-autospace/*"
   - "nextjs-autospace"
-  

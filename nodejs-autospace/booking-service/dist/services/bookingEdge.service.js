@@ -1,6 +1,7 @@
 import axios from "axios";
 import { AppDataSource } from "../data-source.js";
 import { Booking, BookingValetStatus } from "../entities/booking.entity.js";
+import { logger } from "../utils/logger.js";
 const bookingRepo = AppDataSource.getRepository(Booking);
 export async function enterBookingService(bookingId, pin, userId) {
     const result = await AppDataSource.transaction(async (manager) => {
@@ -58,7 +59,10 @@ export async function enterBookingService(bookingId, pin, userId) {
         });
     }
     catch (err) {
-        console.error("CRITICAL: Failed to occupy slot in resource-service after DB transaction commit", err);
+        logger.error("CRITICAL: Failed to occupy slot after DB transaction commit", {
+            slotId: result.slotId,
+            error: err instanceof Error ? err.message : err,
+        });
         // In a full production system, we'd queue this for retry.
         // For this audit fix, we'll log it as a critical failure.
     }
@@ -111,7 +115,10 @@ export async function exitBookingService(bookingId, pin) {
         });
     }
     catch (err) {
-        console.error("CRITICAL: Failed to release slot in resource-service after DB transaction commit", err);
+        logger.error("CRITICAL: Failed to release slot after DB transaction commit", {
+            slotId: result.slotId,
+            error: err instanceof Error ? err.message : err,
+        });
     }
     // Release valet if manual parking
     if (!result.valetRequested && result.valetId) {
@@ -125,7 +132,10 @@ export async function exitBookingService(bookingId, pin) {
             },
         })
             .catch((err) => {
-            console.error("Failed to release valet after exit:", err);
+            logger.error("Failed to release valet after exit", {
+                valetId: result.valetId,
+                error: err instanceof Error ? err.message : err,
+            });
         });
     }
     return {
@@ -167,7 +177,10 @@ export async function cancelBookingService(bookingId) {
         });
     }
     catch (err) {
-        console.error("Failed to release slot after cancellation:", err);
+        logger.error("Failed to release slot after cancellation", {
+            slotId: result.slotId,
+            error: err instanceof Error ? err.message : err,
+        });
     }
     // Release valet if assigned
     if (result.valetId) {
@@ -181,7 +194,10 @@ export async function cancelBookingService(bookingId) {
             },
         })
             .catch((err) => {
-            console.error("Failed to release valet after cancellation:", err);
+            logger.error("Failed to release valet after cancellation", {
+                valetId: result.valetId,
+                error: err instanceof Error ? err.message : err,
+            });
         });
     }
     return {
@@ -256,7 +272,7 @@ export async function enrichBookingsWithSlot(bookings) {
             slotSize = slot.slotSize;
         }
         catch {
-            console.error("Slot fetch failed for", booking.slotId);
+            logger.error("Slot fetch failed for enrichBookings", { slotId: booking.slotId });
         }
         try {
             const userRes = await axios.get(`${process.env.AUTH_SERVICE_URL}/internal/users/${booking.userId}`, {
@@ -270,7 +286,7 @@ export async function enrichBookingsWithSlot(bookings) {
             customerEmail = user.email || "N/A";
         }
         catch {
-            console.error("User fetch failed for", booking.userId);
+            logger.error("User fetch failed for enrichBookings", { userId: booking.userId });
         }
         return {
             ...booking,

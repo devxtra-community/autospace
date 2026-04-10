@@ -226,8 +226,10 @@ export class BookingController {
       }
 
       if (booking.valetId !== valetId) {
-        console.log("booking.valetId:", booking.valetId);
-        console.log("req.user.id:", valetId);
+        logger.info("Valet mismatch on updateStatus", {
+          bookingValetId: booking.valetId,
+          requestedValetId: valetId,
+        });
 
         return res.status(403).json({
           success: false,
@@ -492,7 +494,7 @@ export class BookingController {
   async getValetRequests(req: Request, res: Response) {
     try {
       const valetId = req.user?.id;
-      console.log("valetId:", valetId);
+      logger.info("getValetRequests called", { valetId });
 
       if (!valetId) {
         return res.status(401).json({
@@ -596,7 +598,9 @@ export class BookingController {
         ...result,
       });
     } catch (err) {
-      console.error(err);
+      logger.error("getCompanyBookings failed", {
+        error: err instanceof Error ? err.message : err,
+      });
 
       return res.status(500).json({
         success: false,
@@ -640,8 +644,10 @@ export class BookingController {
           message: "Not your assigned job",
         });
 
-      console.log("Logged in valetId:", valetId);
-      console.log("Booking valetId:", booking.valetId);
+      logger.info("updateValetStatus auth check", {
+        requestedValetId: valetId,
+        bookingValetId: booking.valetId,
+      });
 
       const updated = await bookingService.updateValetStatus(
         bookingId,

@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { AppDataSource } from "../data-source.js";
 import { Booking } from "../entities/booking.entity.js";
 import { bookingService } from "../services/booking.service.js";
+import { logger } from "../utils/logger.js";
 
 // Stripe and Repo are initialized inside the handler
 
@@ -84,15 +85,21 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
       url: session.url, // frontend redirects to this
     });
   } catch (err) {
-    console.error("Create checkout error detail:", err);
+    logger.error("Create Stripe checkout session failed", {
+      bookingId,
+      error: err instanceof Error ? err.message : err,
+    });
     if (bookingId) {
       try {
         await bookingService.deleteBooking(bookingId);
-        console.log(
-          `Deleted orphan booking and released slot for ${bookingId} due to payment failure`,
-        );
+        logger.info("Deleted orphan booking after checkout failure", {
+          bookingId,
+        });
       } catch (deleteErr) {
-        console.error("Failed to cleanup orphan booking:", deleteErr);
+        logger.error("Failed to cleanup orphan booking", {
+          bookingId,
+          error: deleteErr instanceof Error ? deleteErr.message : deleteErr,
+        });
       }
     }
     return res.status(500).json({

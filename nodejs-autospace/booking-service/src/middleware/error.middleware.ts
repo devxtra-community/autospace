@@ -10,7 +10,15 @@ export const errorHandler = (
 ) => {
   void next;
 
-  logger.error("Unhandled Error", err);
+  const stack = err instanceof Error ? err.stack : undefined;
+  const message = err instanceof Error ? err.message : "Unknown error";
+
+  logger.error("Unhandled Error", {
+    message,
+    stack,
+    path: req.path,
+    method: req.method,
+  });
 
   // Handle known HttpError
   if (err instanceof HttpError) {

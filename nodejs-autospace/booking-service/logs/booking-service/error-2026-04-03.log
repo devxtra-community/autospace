@@ -1,0 +1,7 @@
+{"level":"error","message":"Redis client error Socket closed unexpectedly","service":"booking-service","timestamp":"2026-04-03T15:15:01.330Z"}
+{"level":"error","message":"Redis client error connect ECONNREFUSED 127.0.0.1:6379","service":"booking-service","timestamp":"2026-04-03T15:15:01.372Z"}
+{"level":"error","message":"Redis client error connect ECONNREFUSED 127.0.0.1:6379","service":"booking-service","timestamp":"2026-04-03T15:15:01.447Z"}
+{"level":"error","message":"Redis client error connect ECONNREFUSED 127.0.0.1:6379","service":"booking-service","timestamp":"2026-04-03T15:15:01.557Z"}
+{"level":"error","message":"RabbitMQ connection closed unexpectedly","service":"booking-service","timestamp":"2026-04-03T15:15:01.794Z"}
+{"level":"error","message":"Redis client error connect ECONNREFUSED 127.0.0.1:6379","service":"booking-service","timestamp":"2026-04-03T15:15:01.830Z"}
+{"level":"error","message":"Redis client error connect ECONNREFUSED 127.0.0.1:6379","service":"booking-service","timestamp":"2026-04-03T15:15:02.374Z"}

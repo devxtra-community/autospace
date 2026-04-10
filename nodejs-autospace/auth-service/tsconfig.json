@@ -8,12 +8,10 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
-  },
-
-  "baseUrl": ".",
-  "paths": {
-    "@autospace/shared": ["../../packages/shared"]
+    "emitDecoratorMetadata": true,
+    "paths": {
+      "@autospace/shared": ["../packages/shared"]
+    }
   },
   "include": ["src"]
 }

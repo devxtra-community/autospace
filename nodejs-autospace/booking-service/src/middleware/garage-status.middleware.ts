@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import axios from "axios";
+import { logger } from "../utils/logger.js";
 
 export const requireActiveGarage = async (
   req: Request,
@@ -33,7 +34,9 @@ export const requireActiveGarage = async (
 
     next();
   } catch (error) {
-    console.error("Garage status check failed in booking service:", error);
+    logger.error("Garage status check failed", {
+      error: error instanceof Error ? error.message : error,
+    });
     next();
   }
 };

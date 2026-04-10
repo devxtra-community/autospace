@@ -33,7 +33,9 @@
     "redis": "^5.10.0",
     "reflect-metadata": "^0.2.2",
     "stripe": "^20.3.1",
-    "typeorm": "^0.3.28"
+    "typeorm": "^0.3.28",
+    "@autospace/shared": "workspace:*",
+    "@autospace/logger": "workspace:*"
   },
   "devDependencies": {
     "@types/amqplib": "^0.10.8",
