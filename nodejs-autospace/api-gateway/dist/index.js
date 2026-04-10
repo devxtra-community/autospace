@@ -12,46 +12,44 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const auth_proxy_1 = __importDefault(require("./routes/auth.proxy"));
 const healthcheck_1 = require("./utils/healthcheck");
 const resource_proxy_1 = __importDefault(require("./routes/resource.proxy"));
+const logger_1 = require("@autospace/logger");
 const booking_proxy_1 = __importDefault(require("./routes/booking.proxy"));
 const app = (0, express_1.default)();
+const logger = (0, logger_1.createLogger)({ service: "api-gateway" });
+const httpLogger = (0, logger_1.createHttpLogger)({ service: "api-gateway" });
+app.use(httpLogger);
 const port = process.env.GATEWAY_PORT || 4000;
 app.use((0, helmet_1.default)());
+app.use((0, cors_1.default)({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-user-id", "x-role"],
+}));
+// in local commend that here change on lacal
+// const allowedOrigins = [
+//   "https://autospace.space",
+//   "https://www.autospace.space",
+// ];
 // app.use(
 //   cors({
-//     origin: process.env.FRONTEND_URL!,
+//     origin: (origin, callback) => {
+//       if (!origin) return callback(null, true);
+//       if (allowedOrigins.includes(origin)) {
+//         return callback(null, origin);
+//       }
+//       logger.warn(`Blocked by CORS: ${origin}`);
+//       return callback(new Error("Not allowed by CORS"));
+//     },
 //     credentials: true,
-//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-//     allowedHeaders: ["Content-Type", "Authorization", "x-user-id", "x-role"],
 //   }),
 // );
-// in local commend that here change on lacal
-const allowedOrigins = [
-    "https://autospace.space",
-    "https://www.autospace.space",
-];
-app.set("trust proxy", 1);
-app.use((0, cors_1.default)({
-    origin: (origin, callback) => {
-        if (!origin)
-            return callback(null, true);
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        }
-        console.log(" Blocked by CORS:", origin);
-        return callback(null, false);
-    },
-    credentials: true,
-}));
-console.log("AUTH_SERVICE_URL =", process.env.AUTH_SERVICE_URL);
+logger.info(`AUTH_SERVICE_URL = ${process.env.AUTH_SERVICE_URL}`);
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cookie_parser_1.default)());
 app.get("/debug-cookies", (req, res) => {
     res.json(req.cookies);
-});
-app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
-    next();
 });
 app.get("/health", (req, res) => {
     res.json({
@@ -79,7 +77,18 @@ app.use((req, res) => {
     });
 });
 app.listen(port, () => {
-    console.log(`server running on port ${port}`);
-    console.log("the health check on ");
+    logger.info(`server running on port ${port}`);
+    logger.info("the health check on ");
+});
+app.use((err, req, res, next) => {
+    logger.error("Unhandled error", {
+        message: err.message,
+        stack: err.stack,
+        path: req.path,
+    });
+    res.status(500).json({
+        success: false,
+        message: "Internal server error",
+    });
 });
 exports.default = app;

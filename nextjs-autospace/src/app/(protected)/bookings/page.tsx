@@ -139,7 +139,8 @@ export default function MyBookingsPage() {
     (b) =>
       b.status === "confirmed" ||
       b.status === "pending" ||
-      b.status === "occupied",
+      b.status === "occupied" ||
+      b.status === "payment_pending",
   );
 
   const historyBookings = bookings.filter(

@@ -162,9 +162,21 @@ apiClient.interceptors.response.use(
           toast.error("Please login to continue");
 
           if (typeof window !== "undefined") {
+            const currentPath = window.location.pathname;
+            const isManagementPath =
+              currentPath.startsWith("/admin") ||
+              currentPath.startsWith("/company") ||
+              currentPath.startsWith("/valet") ||
+              currentPath.startsWith("/garage") ||
+              currentPath.startsWith("/dashboard");
+
+            const redirectBase = isManagementPath
+              ? "/dashboard/login"
+              : "/login";
+
             setTimeout(() => {
               window.location.href =
-                "/login?redirect=" + window.location.pathname;
+                redirectBase + "?redirect=" + window.location.pathname;
             }, 3000);
           }
         }
@@ -195,8 +207,18 @@ apiClient.interceptors.response.use(
       toast.error("Your account is not allowed to access this feature");
 
       if (typeof window !== "undefined") {
+        const currentPath = window.location.pathname;
+        const isManagementPath =
+          currentPath.startsWith("/admin") ||
+          currentPath.startsWith("/company") ||
+          currentPath.startsWith("/valet") ||
+          currentPath.startsWith("/garage") ||
+          currentPath.startsWith("/dashboard");
+
+        const redirectBase = isManagementPath ? "/dashboard/login" : "/login";
+
         setTimeout(() => {
-          window.location.href = "/login?reason=rejected";
+          window.location.href = `${redirectBase}?reason=rejected`;
         }, 3000);
       }
 

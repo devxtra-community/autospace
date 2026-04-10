@@ -11,7 +11,7 @@ exports.AppDataSource = new typeorm_1.DataSource({
     },
     synchronize: false,
     logging: true,
-    entities: [__dirname + "/../modules/**/*.entity.ts"],
+    entities: [__dirname + "/../modules/**/*.entity.js"],
 });
 setInterval(async () => {
     await exports.AppDataSource.query("SELECT 1");

@@ -85,9 +85,18 @@ export const getMe = () => {
 };
 
 export const logoutUser = async (): Promise<void> => {
+  const currentPath =
+    typeof window !== "undefined" ? window.location.pathname : "";
+  const isManagementPath =
+    currentPath.startsWith("/admin") ||
+    currentPath.startsWith("/company") ||
+    currentPath.startsWith("/valet") ||
+    currentPath.startsWith("/garage") ||
+    currentPath.startsWith("/dashboard");
+
   try {
     await apiClient.post("/api/auth/logout");
   } finally {
-    window.location.href = "/login";
+    window.location.href = isManagementPath ? "/dashboard/login" : "/login";
   }
 };

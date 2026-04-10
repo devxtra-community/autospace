@@ -12,9 +12,15 @@ export function middleware(req: NextRequest) {
     "/garage",
   ];
 
-  const isProtected = protectedRoutes.some((route) =>
-    req.nextUrl.pathname.startsWith(route),
-  );
+  const isProtected = protectedRoutes.some((route) => {
+    if (route === "/garage") {
+      return (
+        req.nextUrl.pathname === "/garage" ||
+        req.nextUrl.pathname.startsWith("/garage/")
+      );
+    }
+    return req.nextUrl.pathname.startsWith(route);
+  });
 
   //  Not logged in → block access
   if (isProtected && !accessToken) {

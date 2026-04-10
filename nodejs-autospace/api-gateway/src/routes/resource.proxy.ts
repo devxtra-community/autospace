@@ -174,7 +174,6 @@ router.use(
 
 router.use(
   "/files",
-  authMiddleware,
   createProxyMiddleware({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,

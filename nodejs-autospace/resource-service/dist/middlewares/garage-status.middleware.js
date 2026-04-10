@@ -7,6 +7,9 @@ const valets_entity_1 = require("../modules/valets/entities/valets.entity");
 const auth_type_1 = require("../types/auth.type");
 const requireActiveGarage = async (req, res, next) => {
     try {
+        if (req.path.startsWith("/public")) {
+            return next();
+        }
         const user = req.user;
         if (!user)
             return next();

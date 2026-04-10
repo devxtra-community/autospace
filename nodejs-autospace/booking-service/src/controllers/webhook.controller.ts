@@ -5,6 +5,7 @@ import { Booking } from "../entities/booking.entity.js";
 import { Payment, PaymentStatus } from "../entities/payment.entity.js";
 import { BookingService } from "../services/booking.service.js";
 import { logger } from "../utils/logger.js";
+import redisClient from "../config/redis.js";
 
 // Stripe, repo and service initialized inside handler
 
@@ -102,6 +103,14 @@ export const stripeWebhookController = async (req: Request, res: Response) => {
           return savedBooking; //  return it
         },
       );
+
+      // Invalidate user booking list cache
+      if (updatedBooking) {
+        await redisClient.del(`userBookings:v2:${updatedBooking.userId}`);
+        logger.info("Invalidated user bookings cache after payment", {
+          userId: updatedBooking.userId,
+        });
+      }
 
       // AFTER transaction
       if (updatedBooking && updatedBooking.valetRequested) {

@@ -783,17 +783,31 @@ export default function GarageDetails({ garage }: GarageDetailsProps) {
                         </p>
                       </div>
                     </div>
-                    <button
-                      onClick={requestValet}
-                      disabled={!garage.valetAvailable}
-                      className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-wider transition-all ${valetEnabled ? "bg-primary text-gray-900 shadow-md scale-105" : "bg-white border border-gray-200 text-gray-400 hover:text-gray-900"}`}
-                    >
-                      {!garage.valetAvailable
-                        ? "Not Available"
-                        : valetEnabled
-                          ? "Valet Ready"
-                          : "Check Availability"}
-                    </button>
+                    <div className="flex flex-col items-end gap-1">
+                      <button
+                        onClick={requestValet}
+                        disabled={!garage.valetAvailable}
+                        className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-wider transition-all ${valetEnabled ? "bg-primary text-gray-900 shadow-md scale-105" : "bg-white border border-gray-200 text-gray-400 hover:text-gray-900"}`}
+                      >
+                        {!garage.valetAvailable
+                          ? "Not Available"
+                          : valetEnabled
+                            ? "Valet Ready"
+                            : "Check Availability"}
+                      </button>
+                      {valetEnabled && (
+                        <button
+                          onClick={() => {
+                            setPickupLocation(null);
+                            setSwiped(false);
+                            setValetState("AVAILABLE");
+                          }}
+                          className="text-[9px] font-black text-red-500 hover:text-red-700 uppercase tracking-tighter underline underline-offset-2"
+                        >
+                          Remove Valet
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {!garage.valetAvailable && (
                     <p className="text-xs text-red-500 font-bold">
