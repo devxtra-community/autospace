@@ -167,7 +167,8 @@ apiClient.interceptors.response.use(
               currentPath.startsWith("/admin") ||
               currentPath.startsWith("/company") ||
               currentPath.startsWith("/valet") ||
-              currentPath.startsWith("/garage") ||
+              currentPath === "/garage" ||
+              currentPath.startsWith("/garage/") ||
               currentPath.startsWith("/dashboard");
 
             const redirectBase = isManagementPath
@@ -212,7 +213,8 @@ apiClient.interceptors.response.use(
           currentPath.startsWith("/admin") ||
           currentPath.startsWith("/company") ||
           currentPath.startsWith("/valet") ||
-          currentPath.startsWith("/garage") ||
+          currentPath === "/garage" ||
+          currentPath.startsWith("/garage/") ||
           currentPath.startsWith("/dashboard");
 
         const redirectBase = isManagementPath ? "/dashboard/login" : "/login";

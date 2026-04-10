@@ -91,7 +91,8 @@ export const logoutUser = async (): Promise<void> => {
     currentPath.startsWith("/admin") ||
     currentPath.startsWith("/company") ||
     currentPath.startsWith("/valet") ||
-    currentPath.startsWith("/garage") ||
+    currentPath === "/garage" ||
+    currentPath.startsWith("/garage/") ||
     currentPath.startsWith("/dashboard");
 
   try {

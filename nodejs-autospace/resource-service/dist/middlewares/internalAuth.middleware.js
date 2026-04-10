@@ -14,6 +14,20 @@ const internalAuth = (req, res, next) => {
             message: "Unauthorized - Missing gateway identity",
         });
     }
+    // Validate internal service token if provided
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith("Bearer ")
+        ? authHeader.split(" ")[1]
+        : null;
+    if (process.env.INTERNAL_SERVICE_TOKEN &&
+        token !== process.env.INTERNAL_SERVICE_TOKEN) {
+        console.warn(`Internal token mismatch for user ${userId}`);
+        // For now, only log warn or enforce? Let's enforce for security.
+        return res.status(403).json({
+            success: false,
+            message: "Forbidden - Invalid internal service token",
+        });
+    }
     req.user = {
         id: userId,
         role,

@@ -110,7 +110,7 @@ router.use("/valets", auth_middleware_1.authMiddleware, (0, rbac_middleware_1.rb
         },
     },
 }));
-router.use("/files", auth_middleware_1.authMiddleware, (0, http_proxy_middleware_1.createProxyMiddleware)({
+router.use("/files", (0, http_proxy_middleware_1.createProxyMiddleware)({
     target: RESOURCE_SERVICE_URL,
     changeOrigin: true,
     pathRewrite: (path) => `/files${path}`,
