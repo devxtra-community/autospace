@@ -1,6 +1,0 @@
-packages:
-  - "packages/*"
-  - "api-gateway"
-  - "auth-service"
-  - "resource-service"
-  - "booking-service"
