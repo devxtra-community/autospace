@@ -12,11 +12,13 @@ import { internalAuth } from "../../../middlewares/internalAuth.middleware";
 
 const router = Router();
 
+router.use(internalAuth); // Strictly enforce internal service token for all internal routes
+
 router.post("/resolve-garage", resolveGarage);
 
 router.post("/register", registerValet);
 
-router.get("/me", internalAuth, getMyValetController);
+router.get("/me", getMyValetController);
 
 router.get("/available/:garageId", getAvailableValetController);
 

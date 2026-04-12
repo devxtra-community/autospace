@@ -38,7 +38,10 @@ import {
   createGarageFloorController,
   getMyFloorsController,
 } from "../controllers/garage-floor.controller";
-import { internalAuth } from "../../../middlewares/internalAuth.middleware";
+import {
+  identityAuth,
+  internalAuth,
+} from "../../../middlewares/internalAuth.middleware";
 import {
   freeSlot,
   getAvailableSlots,
@@ -84,42 +87,42 @@ router.get("/internal/:managerId/garageId", internalAuth, getGarageByManager);
 
 router.post(
   "/register",
-  internalAuth,
+  identityAuth,
   validateCreateGarage,
   createGarageController,
 );
 
 router.get("/", validatePublicGarageQuery, getPublicGarageController);
 
-router.put("/admin/:id/active", internalAuth, approveGarage);
-router.put("/admin/:id/reject", internalAuth, rejectGarage);
-router.patch("/admin/:id/block", internalAuth, blockGarage);
-router.patch("/admin/:id/unblock", internalAuth, unblockGarage);
-router.get("/admin/pending", internalAuth, getPendingGarages);
-router.post("/assign-manager", internalAuth, assignManagerController);
-router.get("/admin/all", internalAuth, getAllGaragesController);
+router.put("/admin/:id/active", identityAuth, approveGarage);
+router.put("/admin/:id/reject", identityAuth, rejectGarage);
+router.patch("/admin/:id/block", identityAuth, blockGarage);
+router.patch("/admin/:id/unblock", identityAuth, unblockGarage);
+router.get("/admin/pending", identityAuth, getPendingGarages);
+router.post("/assign-manager", identityAuth, assignManagerController);
+router.get("/admin/all", identityAuth, getAllGaragesController);
 
 router.get(
   "/byCompany/:companyId",
-  internalAuth,
+  identityAuth,
   getGaragesByCompanyController,
 );
 
-router.put("/:id", internalAuth, updateGarageProfileController);
-router.post("/:garageId/images", internalAuth, addGarageImageController);
-router.get("/:garageId/images", internalAuth, getGarageImagesController);
-router.get("/manager/my", internalAuth, getMyManagerGarageController);
+router.put("/:id", identityAuth, updateGarageProfileController);
+router.post("/:garageId/images", identityAuth, addGarageImageController);
+router.get("/:garageId/images", identityAuth, getGarageImagesController);
+router.get("/manager/my", identityAuth, getMyManagerGarageController);
 
-router.get("/:id", internalAuth, getGarageByIdController);
+router.get("/:id", identityAuth, getGarageByIdController);
 // slots
 router.post(
   "/slots",
   validateCreateSlot,
-  internalAuth,
+  identityAuth,
   createGarageSlotController,
 );
 
-router.get("/slots/my", internalAuth, getSlotController);
+router.get("/slots/my", identityAuth, getSlotController);
 
 // internal routes
 
@@ -133,14 +136,14 @@ router.get(
 router.post(
   "/floors",
   validateCreateFloor,
-  internalAuth,
+  identityAuth,
   createGarageFloorController,
 );
-router.get("/floors/my", internalAuth, getMyFloorsController);
-router.get("/floors/:floorId/slots", internalAuth, getSlotsByFloorController);
+router.get("/floors/my", identityAuth, getMyFloorsController);
+router.get("/floors/:floorId/slots", identityAuth, getSlotsByFloorController);
 
 // user side
 
-router.get("/:garageId/slots", internalAuth, getPublicAvailableSlotsController);
+router.get("/:garageId/slots", identityAuth, getPublicAvailableSlotsController);
 
 export default router;

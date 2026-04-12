@@ -13,22 +13,25 @@ import {
 import { validateCreateCompany } from "../validators/company.validator";
 import { getPendingCompanies } from "../controllers/admin.company.controller";
 import { validateCompany } from "../controllers/internal.company.controller";
-import { internalAuth } from "../../../middlewares/internalAuth.middleware";
 import { getCompanyEmployeesController } from "../controllers/companyEmployee.controller";
+import {
+  identityAuth,
+  internalAuth,
+} from "../../../middlewares/internalAuth.middleware";
 
 const router = Router();
 
-router.post("/create", internalAuth, validateCreateCompany, registerCompany);
-router.get("/my", internalAuth, getMyCompany);
+router.post("/create", identityAuth, validateCreateCompany, registerCompany);
+router.get("/my", identityAuth, getMyCompany);
 
-router.get("/admin/all", internalAuth, getAllCompaniesController);
-router.put("/admin/:id/active", internalAuth, approveCompany);
-router.put("/admin/:id/reject", internalAuth, rejectCompany);
-router.get("/admin/pending", internalAuth, getPendingCompanies);
-router.put("/:id", internalAuth, updateCompanyProfileController);
+router.get("/admin/all", identityAuth, getAllCompaniesController);
+router.put("/admin/:id/active", identityAuth, approveCompany);
+router.put("/admin/:id/reject", identityAuth, rejectCompany);
+router.get("/admin/pending", identityAuth, getPendingCompanies);
+router.put("/:id", identityAuth, updateCompanyProfileController);
 router.get(
   "/:companyId/employees",
-  internalAuth,
+  identityAuth,
   getCompanyEmployeesController,
 );
 

@@ -8,7 +8,7 @@ const internalAuth_middleware_1 = require("../../../middlewares/internalAuth.mid
 const internal_valet_controller_1 = require("../controllers/internal-valet.controller");
 // import { getAvailableValetController } from "../controllers/internal-valet.controller";
 const router = (0, express_1.Router)();
-router.use(internalAuth_middleware_1.internalAuth); // Apply internal authentication middleware to all routes in this router
+router.use(internalAuth_middleware_1.identityAuth); // Use identityAuth instead of internalAuth for user-facing routes
 router.get("/me", valet_controller_1.getMyValetController);
 router.put("/:id/manager/approve", valets_validator_1.validateValetIdParam, valet_controller_1.approveValetController);
 router.put("/:id/manager/reject", valets_validator_1.validateValetIdParam, valet_controller_1.rejectValetController);

@@ -16,13 +16,13 @@ import {
   getValetByIdController,
   getValetsByGarageController,
 } from "../controllers/valetGarage.controller";
-import { internalAuth } from "../../../middlewares/internalAuth.middleware";
+import { identityAuth } from "../../../middlewares/internalAuth.middleware";
 import { getAllActiveValetsController } from "../controllers/internal-valet.controller";
 // import { getAvailableValetController } from "../controllers/internal-valet.controller";
 
 const router = Router();
 
-router.use(internalAuth); // Apply internal authentication middleware to all routes in this router
+router.use(identityAuth); // Use identityAuth instead of internalAuth for user-facing routes
 router.get("/me", getMyValetController);
 router.put(
   "/:id/manager/approve",

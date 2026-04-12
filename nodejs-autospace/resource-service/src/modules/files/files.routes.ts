@@ -5,11 +5,14 @@ import {
   createFileRecord,
   getFileById,
 } from "./files.controller";
-import { internalAuth } from "../../middlewares/internalAuth.middleware";
+import {
+  identityAuth,
+  internalAuth,
+} from "../../middlewares/internalAuth.middleware";
 
 const router = Router();
-router.post("/upload", internalAuth, generateUploadUrl);
-router.post("/", internalAuth, createFileRecord);
-router.get("/:id", internalAuth, getFileById);
+router.post("/upload", identityAuth, generateUploadUrl);
+router.post("/", identityAuth, createFileRecord);
+router.get("/:id", identityAuth, getFileById);
 
 export default router;
